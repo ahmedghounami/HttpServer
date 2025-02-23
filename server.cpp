@@ -57,46 +57,6 @@ int main()
 
     clients_fds.push_back(fd);
 
-    // while (true)
-    // {
-    // // Wait for an event on the server socket (accepting new client connection)
-    // std::cout << "Waiting for client connection\n";
-    // int ret = poll(&clients_fds[0], clients_fds.size(), 5000); // Timeout set to 5 seconds
-    // std::cout << "a client connected\n";
-    // if (ret < 0)
-    // {
-    //     std::cerr << "Poll failed\n";
-    //     break;
-    // }
-    // else if (ret == 0)
-    // {
-    //     // Timeout, no events on the server socket
-    //     continue;
-    // }
-
-    // // If there is an event on the server socket
-    // if (fds[0].revents & POLLIN)
-    // {
-    //     sockaddr_in client_addr;
-    //     socklen_t client_len = sizeof(client_addr);
-    //     int client_sock = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
-    //     if (client_sock < 0)
-    //     {
-    //         std::cerr << "Accept failed\n";
-    //         continue;
-    //     }
-
-    //     char buffer[1024];
-    //     std::string request;
-    //     int data = 0;
-
-    //     // Poll on the client socket to read data
-    //     struct pollfd client_fds[1];
-    //     client_fds[0].fd = client_sock;
-    //     client_fds[0].events = POLLIN; // Monitor the client socket for reading
-    //     while (true)
-    // int fd = 0;
-    int flag = 0;
     while (true)
     {
         int ret = poll(&clients_fds[0], clients_fds.size(), 5000);
@@ -111,12 +71,13 @@ int main()
             continue;
         }
 
-        if (flag == 0)
+        if (clients_fds[0].revents & POLLIN)
         {
-            std::cout << "new connection" << std::endl;
             sockaddr_in client_addr;
             socklen_t client_len = sizeof(client_addr);
             int client_sock = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
+            std::cout << "new connection---------------: " << client_sock << std::endl;
+            sleep(1);
             if (client_sock < 0)
                 continue;
 
@@ -125,61 +86,25 @@ int main()
             newfd.events = POLLIN;
 
             clients_fds.push_back(newfd);
-            flag = 1;
+            clients[client_sock] = client_info();
         }
 
-        if (clients_fds.size() > 1 && clients_fds[1].revents & POLLIN)
+        for (int i = 1; i < clients_fds.size(); i++)
         {
-            char buffer[1024];
-            std::string request;
-            int data = recv(clients_fds[1].fd, buffer, sizeof(buffer) - 1, 0);
-            std::cout << buffer << std::endl;
+            if (clients_fds[i].revents & POLLIN)
+            {
+                char buffer[1024];
+                int data = 0;
+                data = recv(clients_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
+                if (data <= 0)
+                    continue;
+                buffer[data] = '\0';
+                clients[clients_fds[i].fd].chunk += buffer;
+                std::cout << buffer << std::endl;
+            }
         }
-        // for (int i = 0; i < clients_fds.size(); i++)
-        // {
-
-        //     if (clients_fds[i].revents & POLLIN)
-        //     {
-        //         fd = clients_fds[i].fd;
-        //         if (fd == server_fd)
-        //         {
-        //             sockaddr_in client_addr;
-        //             socklen_t client_len = sizeof(client_addr);
-        //             int client_sock = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
-        //             if (client_sock < 0)
-        //                 continue;
-        //             pollfd client_fd;
-        //             client_fd.fd = client_sock;
-        //             client_fd.events = POLLIN;
-        //             clients_fds.push_back(client_fd);
-        //             clients[client_sock] = client_info();
-        //         }
-        //         else
-        //         {
-        //             char buffer[1024];
-        //             int data = 0;
-        //             data = recv(fd, buffer, sizeof(buffer) - 1, 0);
-        //             if (data <= 0)
-        //             {
-        //                 std::cerr << "Client disconnected or error\n";
-        //                 continue;
-        //             }
-        //             buffer[data] = '\0';
-        //             clients[fd].chunk.append(buffer, data);
-        //             // std::cout << buffer << std::endl;
-        //         }
-        //     }
-        // }
     }
-    // }
-
-    // // Close the client socket
-    // close(client_sock);
-    // }
-
-    // Close the server socket
-    close(server_fd);
-    close(clients_fds[1].fd);
-
+    for (int i = 1; i < clients_fds.size(); i++)
+        close(clients_fds[i].fd);
     return 0;
 }
