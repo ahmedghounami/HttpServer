@@ -71,20 +71,68 @@ int main()
             clients[client_sock] = client_info();
         }
 
-        for (int i = 1; i < clients_fds.size(); i++)
+        // for (int i = 1; i < clients_fds.size(); i++)
+        // {
+        std::string filename = "file.png";
+        std::ofstream file(filename);
+
+        if (file.good())
         {
-            if (clients_fds[i].revents & POLLIN)
+            std::cerr << "File opened successfully\n";
+        }
+        else
+        {
+            std::cerr << "File open failed\n";
+            return 1;
+        }
+
+
+        std::string boundary;
+        if (clients_fds[1].revents & POLLIN)
+        {
+            std::string request_data;
+
+            while (true)
             {
                 char buffer[1024];
-                int data = 0;
-                data = recv(clients_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
-                if (data <= 0)
-                    continue;
-                buffer[data] = '\0';
-                clients[clients_fds[i].fd].chunk += buffer;
-                std::cout << buffer << std::endl;
+                int data = recv(clients_fds[1].fd, buffer, sizeof(buffer) - 1, 0);
+
+                if (data < 0)
+                    continue; // Ignore empty reads
+
+                buffer[data] = '\0';    // Properly terminate string
+                request_data.append(buffer, data);
+
+                if (request_data.find("\r\n\r\n") != std::string::npos)
+                {
+                    // get boundary
+                    std::string boundary_start = "boundary=";
+                    size_t boundary_start_pos = request_data.find(boundary_start);
+                    size_t boundary_end_pos = request_data.find("\r\n", boundary_start_pos);
+                    boundary = request_data.substr(boundary_start_pos + boundary_start.length(), boundary_end_pos - boundary_start_pos - boundary_start.length());
+                    request_data = request_data.substr(request_data.find("Content-Type: image/png") + 27);
+                }
+                // data
+                //
+                // ---------------------------------------------7e0d1b6e0b8f--
+                size_t pos = request_data.find(boundary + "--");
+                if (pos != std::string::npos)
+                {
+                    request_data = request_data.substr(0, pos - 4);
+                    // std::cerr << request_data;
+                    file << request_data;
+                    file.close();
+                    request_data.clear();
+                    exit(0);
+                }
+                else
+                {
+                    file << request_data;
+                    request_data.clear();
+                }
             }
         }
+        // }
     }
     for (int i = 1; i < clients_fds.size(); i++)
         close(clients_fds[i].fd);
