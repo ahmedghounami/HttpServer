@@ -105,10 +105,12 @@ int main()
                     // clients[clients_fds[i].fd].chunk = clients[clients_fds[i].fd].chunk.substr(0, pos - 4);
                     // file << clients[clients_fds[i].fd].chunk;
                     // file.close();
+                    std::cout << "File closed\n";
                     if (i == 1)
                         get_chunk(clients[clients_fds[i].fd], file, pos, 1);
                     else
                         get_chunk(clients[clients_fds[i].fd], file2, pos, 1);
+                    clients_fds[i].events = POLLOUT;
                 }
                 else
                 {
@@ -118,6 +120,16 @@ int main()
                         get_chunk(clients[clients_fds[i].fd], file2, 0, 0);
                 }
                 clients[clients_fds[i].fd].chunk.clear();
+            }
+            if (clients_fds[i].revents & POLLOUT)
+            {
+                std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>File uploaded successfully</h1></body></html>";
+                ssize_t bytes = send(clients_fds[i].fd, response.c_str(), response.length(), 0);
+                if (bytes < 0)
+                    continue;
+                close(clients_fds[i].fd);
+                clients_fds.erase(clients_fds.begin() + i);
+                
             }
         }
     }
