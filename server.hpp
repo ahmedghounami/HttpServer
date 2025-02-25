@@ -14,8 +14,11 @@
 struct client_info
 {
     std::string chunk;
+    std::string boundary;
+    std::string header;
 };
 
-std::map<int, client_info> clients;
+void get_boundary(int _client_fd, std::map<int, client_info> &clients);
+void accept_connection(int start_connection, std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);
 
 #define PORT 8080
