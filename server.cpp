@@ -41,7 +41,7 @@ int main()
     clients_fds.push_back(server_fd);
 
     ///////////////////////////////////////////////
-    std::string filename = "file.jpg";
+     std::string filename = "data";
     std::ofstream file(filename);
     if (file.good())
     {
@@ -52,17 +52,17 @@ int main()
         std::cerr << "File open failed\n";
         return 1;
     }
-    // std::string filename2 = "file.mp4";
-    // std::ofstream file2(filename2);
-    // if (file2.good())
-    // {
-    //     std::cerr << "File opened successfully\n";
-    // }
-    // else
-    // {
-    //     std::cerr << "File open failed\n";
-    //     return 1;
-    // }
+    filename = "seconddata";
+    std::ofstream file2(filename);
+    if (file2.good())
+    {
+        std::cerr << "File2 opened successfully\n";
+    }
+    else
+    {
+        std::cerr << "Fil2e open failed\n";
+        return 1;
+    }
     ///////////////////////////////////////////////
 
     
@@ -102,12 +102,21 @@ int main()
                 size_t pos = clients[clients_fds[i].fd].chunk.find(boundary_end);
                 if (pos != std::string::npos)
                 {
-                    clients[clients_fds[i].fd].chunk = clients[clients_fds[i].fd].chunk.substr(0, pos - 4);
-                    file << clients[clients_fds[i].fd].chunk;
-                    file.close();
+                    // clients[clients_fds[i].fd].chunk = clients[clients_fds[i].fd].chunk.substr(0, pos - 4);
+                    // file << clients[clients_fds[i].fd].chunk;
+                    // file.close();
+                    if (i == 1)
+                        get_chunk(clients[clients_fds[i].fd], file, pos, 1);
+                    else
+                        get_chunk(clients[clients_fds[i].fd], file2, pos, 1);
                 }
                 else
-                    file << clients[clients_fds[i].fd].chunk;
+                {
+                    if (i == 1)
+                        get_chunk(clients[clients_fds[i].fd], file, 0, 0);
+                    else
+                        get_chunk(clients[clients_fds[i].fd], file2, 0, 0);
+                }
                 clients[clients_fds[i].fd].chunk.clear();
             }
         }

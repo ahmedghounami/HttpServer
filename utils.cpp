@@ -29,7 +29,17 @@ void accept_connection(int start_connection, std::vector<pollfd> &clients_fds, s
     clients[client_sock] = client_info();
 }
 
-// void get_chunk(int _client_fd, std::map<int, client_info> &clients, std::ofstream file)
-// {
-
-// }
+void get_chunk(client_info &client, std::ofstream &file, size_t pos, int flag)
+{
+    if (flag == 1)
+    {
+        client.chunk = client.chunk.substr(0, pos - 4);
+        file << client.chunk;
+        file.close();
+        // exit(0);
+    }
+    else
+    {
+        file << client.chunk;
+    }
+}
