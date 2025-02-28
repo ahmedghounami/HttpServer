@@ -1,14 +1,10 @@
 #include "server.hpp"
 
-int main()
+server::server()
 {
-    std::map<int, client_info> clients;
-    int start_connection = socket(AF_INET, SOCK_STREAM, 0);
+    start_connection = socket(AF_INET, SOCK_STREAM, 0);
     if (start_connection == -1)
-    {
-        std::cerr << "Socket creation failed\n";
-        return 1;
-    }
+        throw std::runtime_error("Socket creation failed");
 
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
@@ -19,53 +15,33 @@ int main()
     setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     if (bind(start_connection, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
-    {
-        std::cerr << "Bind failed\n";
-        return 1;
-    }
+        throw std::runtime_error("Bind failed");
 
     if (listen(start_connection, 128) < 0)
-    {
-        std::cerr << "Listen failed\n";
-        return 1;
-    }
+        throw std::runtime_error("Listen failed");
 
     std::cout << "Server running on port " << PORT << "\n";
+}
 
+
+void server::listen_for_connections()
+{ 
     struct pollfd server_fd;
-    server_fd.fd = start_connection;
+        server_fd.fd = start_connection;
     server_fd.events = POLLIN;
-
-    std::vector<pollfd> clients_fds;
-
     clients_fds.push_back(server_fd);
 
     ///////////////////////////////////////////////
-     std::string filename = "data";
+    std::string filename = "data";
     std::ofstream file(filename);
     if (file.good())
-    {
         std::cerr << "File opened successfully\n";
-    }
     else
     {
         std::cerr << "File open failed\n";
-        return 1;
-    }
-    filename = "seconddata";
-    std::ofstream file2(filename);
-    if (file2.good())
-    {
-        std::cerr << "File2 opened successfully\n";
-    }
-    else
-    {
-        std::cerr << "Fil2e open failed\n";
-        return 1;
+        throw std::runtime_error("File open failed");
     }
     ///////////////////////////////////////////////
-
-    
     while (true)
     {
         int ret = poll(&clients_fds[0], clients_fds.size(), 5000);
@@ -83,7 +59,7 @@ int main()
         if (clients_fds[0].revents & POLLIN)
             accept_connection(start_connection, clients_fds, clients);
 
-        for (int i = 1; i < clients_fds.size(); i++)
+        for (unsigned int i = 1; i < clients_fds.size(); i++)
         {
             if (clients_fds[i].revents & POLLIN)
             {
@@ -102,23 +78,11 @@ int main()
                 size_t pos = clients[clients_fds[i].fd].chunk.find(boundary_end);
                 if (pos != std::string::npos)
                 {
-                    // clients[clients_fds[i].fd].chunk = clients[clients_fds[i].fd].chunk.substr(0, pos - 4);
-                    // file << clients[clients_fds[i].fd].chunk;
-                    // file.close();
-                    std::cout << "File closed\n";
-                    if (i == 1)
-                        get_chunk(clients[clients_fds[i].fd], file, pos, 1);
-                    else
-                        get_chunk(clients[clients_fds[i].fd], file2, pos, 1);
+                    get_chunk(clients[clients_fds[i].fd], file, pos, 1);
                     clients_fds[i].events = POLLOUT;
                 }
                 else
-                {
-                    if (i == 1)
-                        get_chunk(clients[clients_fds[i].fd], file, 0, 0);
-                    else
-                        get_chunk(clients[clients_fds[i].fd], file2, 0, 0);
-                }
+                    get_chunk(clients[clients_fds[i].fd], file, 0, 0);
                 clients[clients_fds[i].fd].chunk.clear();
             }
             if (clients_fds[i].revents & POLLOUT)
@@ -133,7 +97,22 @@ int main()
             }
         }
     }
-    for (int i = 1; i < clients_fds.size(); i++)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+server::~server()
+{
+    for (unsigned int i = 0; i < clients_fds.size(); i++)
         close(clients_fds[i].fd);
-    return 0;
 }
