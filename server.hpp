@@ -5,7 +5,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <poll.h>
 #include <fstream>
 #include <vector>
