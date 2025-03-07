@@ -1,27 +1,24 @@
-NAME = webserv
+NAME	=	webserv
 
-src = main.cpp server.cpp utils.cpp
+SRCS	=	main.cpp
+OBJS	=	$(SRCS:.cpp=.opp)
+HEADER	=	Webserv.hpp
 
-OBJ = $(src:.cpp=.o)
+CC		=	c++
+CFLAGS	=	-Wall -Wextra -Werror -std=c++98
 
-CC = c++ -std=c++98
+all: $(NAME)
 
-CFLAGS = -Wall -Wextra -Werror
+$(NAME): $(OBJS)
+	$(CC) $(OBJS) -o $(NAME)
 
-all: $(NAME) clean
-
-$(NAME): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
-
-%.o: %.cpp server.hpp
+%.opp: %.cpp $(HEADER)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ)
+	$(RM) $(OBJS)
 
 fclean: clean
 	rm -f $(NAME)
 
 re: fclean all
-
-.PHONY: clean
