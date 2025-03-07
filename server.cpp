@@ -6,11 +6,12 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:55 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/07 17:02:36 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/07 22:49:53 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server.hpp"
+#include <fstream>
 
 server::server() {
   start_connection = socket(AF_INET, SOCK_STREAM, 0);
@@ -77,16 +78,18 @@ void server::listen_for_connections() {
         buffer[data] = '\0';
         clients[clients_fds[i].fd].chunk.append(buffer, data);
 
-        if (clients[clients_fds[i].fd].chunk.find("\r\n\r\n") !=
-            std::string::npos)
-          get_boundary(clients_fds[i].fd, clients);
-        std::string boundary_end = clients[clients_fds[i].fd].boundary + "--";
-        size_t pos = clients[clients_fds[i].fd].chunk.find(boundary_end);
-        if (pos != std::string::npos) {
-          get_chunk(clients[clients_fds[i].fd], file, pos, 1);
-          clients_fds[i].events = POLLOUT;
-        } else
-          get_chunk(clients[clients_fds[i].fd], file, 0, 0);
+        // if (clients[clients_fds[i].fd].chunk.find("\r\n\r\n") !=
+        // std::string::npos)
+        //   get_boundary(clients_fds[i].fd, clients);
+        // std::string boundary_end = clients[clients_fds[i].fd].boundary +
+        // "--"; size_t pos =
+        // clients[clients_fds[i].fd].chunk.find(boundary_end);
+        // if (pos != std::string::npos) {
+        //   get_chunk(clients[clients_fds[i].fd], file, pos, 1);
+        //   clients_fds[i].events = POLLOUT;
+        // } else
+        // get_chunk(clients[clients_fds[i].fd], file);
+        get_chunk(clients[clients_fds[i].fd], file, i);
         clients[clients_fds[i].fd].chunk.clear();
       }
       if (clients_fds[i].revents & POLLOUT) {
@@ -110,3 +113,65 @@ server::~server() {
 }
 
 //-------------------------------------
+
+void server::get_chunk(client_info &client, std::ofstream &file, int index) {
+  if (client.boundary.empty() &&
+      client.chunk.find("\r\n\r\n") != std::string::npos)
+    get_boundary(clients_fds[index].fd, clients);
+  std::string boundary_end = clients[clients_fds[index].fd].boundary + "--";
+  size_t pos = clients[clients_fds[index].fd].chunk.find(boundary_end);
+  if (pos != std::string::npos) {
+    client.chunk = client.chunk.substr(0, pos - 4);
+    file << client.chunk;
+    file.close();
+  } else
+    file << client.chunk;
+
+  // if (client.method.empty()) {
+  //   size_t pos = client.chunk.find("\r\n");
+  //   if (pos == std::string::npos)
+  //     return;
+
+  //   std::string clientLine = client.chunk.substr(0, pos);
+  //   client.chunk.erase(0, pos + 2);
+
+  //   std::istringstream ss(clientLine);
+  //   ss >> client.method >> client.uri >> client.version;
+
+  //   if (client.method.empty() || client.uri.empty() ||
+  //   client.version.empty()) {
+  //     std::cerr << "Invalid client line" << std::endl;
+  //     clear(client);
+  //     return;
+  //   }
+
+  //   if (client.version != "HTTP/1.1" && client.version != "HTTP/1.0") {
+  //     std::cerr << "Unsupported HTTP version" << std::endl;
+  //     clear(client);
+  //     return;
+  //   }
+
+  //   std::cout << "Parsed client Line: " << client.method << " " << client.uri
+  //             << " " << client.version << std::endl;
+  // }
+
+  // if (client.chunk.find("\r\n\r\n") != std::string::npos) {
+  //   size_t pos2 = client.chunk.find("\r\n\r\n");
+  //   std::string headers = client.chunk.substr(0, pos2);
+  //   client.chunk.erase(0, pos2 + 4);
+
+  //   std::istringstream headerStream(headers);
+  //   std::string line;
+
+  // while (std::getline(headerStream, line)) {
+  // line = trim(line);
+  // }
+  // }
+}
+
+void clear(client_info &client) {
+  client.method.clear();
+  client.uri.clear();
+  client.version.clear();
+  client.header.clear();
+}
