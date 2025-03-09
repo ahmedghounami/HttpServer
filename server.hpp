@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:59 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/09 23:09:54 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/09 23:37:10 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,4 +65,5 @@ std::string trim(const std::string &str);
 bool isMultiValueHeader(const std::string &header);
 bool isValidHeaderKey(const std::string &key);
 bool isValidHeaderValue(const std::string &value);
+
 // void get_boundary(int _client_fd, std::map<int, client_info> &clients);
