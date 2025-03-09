@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 14:24:50 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/09 17:31:13 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/09 17:32:52 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -159,6 +159,7 @@ bool pars_headers(client_info &client) {
   for (it = client.headers.begin(); it != client.headers.end(); ++it) {
     std::cout << it->first << ": " << it->second << std::endl;
   }
+}
 
-  return true;
+return true;
 }
