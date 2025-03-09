@@ -6,11 +6,15 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 14:24:50 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/09 15:45:27 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/09 17:31:13 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server.hpp"
+#include <algorithm>
+#include <cctype>
+#include <cstddef>
+#include <string>
 
 void get_boundary(int _client_fd, std::map<int, client_info> &clients) {
   std::string boundary_start = "boundary=";
@@ -43,7 +47,7 @@ void accept_connection(int start_connection, std::vector<pollfd> &clients_fds,
   clients[client_sock] = client_info();
 }
 
-bool pars_header(client_info &client) {
+bool request_line(client_info &client) {
   if (!client.method.empty())
     return true;
   size_t pos = client.chunk.find("\r\n");
@@ -90,5 +94,71 @@ bool pars_header(client_info &client) {
     // respond then clear client;
     return false;
   }
+  return true;
+}
+
+std::string trim(const std::string &str) {
+  size_t first = str.find_first_not_of(" \t");
+  if (first == std::string::npos)
+    return "";
+  size_t last = str.find_last_not_of(" \t");
+  return str.substr(first, last - first + 1);
+}
+
+bool pars_headers(client_info &client) {
+  if (!client.headers.empty())
+    return true;
+
+  size_t pos = client.chunk.find("\r\n\r\n");
+  if (pos == std::string::npos)
+    return true;
+
+  std::string headers = client.chunk.substr(0, pos);
+  client.chunk.erase(0, pos + 4);
+
+  size_t startPos = 0;
+  while (startPos < headers.size()) {
+    size_t endPos = headers.find("\r\n", startPos);
+    if (endPos == std::string::npos)
+      break;
+
+    std::string line = headers.substr(startPos, endPos - startPos);
+    startPos = endPos + 2;
+
+    if (line.empty())
+      continue;
+
+    size_t delimiterPos = line.find(":");
+    if (delimiterPos == std::string::npos) {
+      std::cerr << "Error: Malformed header (missing ':'): " << line
+                << std::endl;
+      // respond and clear client;
+      return false;
+    }
+
+    std::string key = trim(line.substr(0, delimiterPos));
+    std::string value = trim(line.substr(delimiterPos + 1));
+
+    if (key.empty() || value.empty()) {
+      std::cerr << "Error: Empty header name or value" << std::endl;
+      // respond and clear client;
+      return false;
+    }
+
+    std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+    client.headers[key] = value;
+  }
+
+  if (client.headers.find("host") == client.headers.end()) {
+    std::cerr << "Error: Missing 'Host' header" << std::endl;
+    // respond and clear client;
+    return false;
+  }
+
+  std::map<std::string, std::string>::iterator it;
+  for (it = client.headers.begin(); it != client.headers.end(); ++it) {
+    std::cout << it->first << ": " << it->second << std::endl;
+  }
+
   return true;
 }

@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:59 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/09 15:40:55 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/09 17:10:47 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,9 +27,10 @@
 #define PORT 8080
 
 struct client_info {
-  std::string header;
-  std::string method, uri, version;
   std::string chunk;
+  std::string method, uri, version;
+
+  std::map<std::string, std::string> headers;
   std::string boundary;
   std::string boundary_end;
 };
@@ -47,7 +48,8 @@ public:
   ~server();
 };
 
-bool pars_header(client_info &client);
+bool request_line(client_info &client);
+bool pars_headers(client_info &client);
 void get_boundary(int _client_fd, std::map<int, client_info> &clients);
 void accept_connection(int start_connection, std::vector<pollfd> &clients_fds,
                        std::map<int, client_info> &clients);

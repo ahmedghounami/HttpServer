@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:55 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/09 16:01:29 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/09 17:02:35 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,7 @@ server::~server() {
 //-------------------------------------
 
 void server::pars_chunk(client_info &client, std::ofstream &file, int index) {
-  if (pars_header(client) == false)
+  if (request_line(client) == false || pars_headers(client) == false)
     return;
   // if (client.boundary.empty() &&
   //     client.chunk.find("\r\n\r\n") != std::string::npos)
