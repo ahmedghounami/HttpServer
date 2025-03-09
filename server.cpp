@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:55 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/09 17:02:35 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/09 18:00:14 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,16 +42,6 @@ void server::listen_for_connections() {
   server_fd.events = POLLIN;
   clients_fds.push_back(server_fd);
 
-  ///////////////////////////////////////////////
-  std::string filename = "data";
-  std::ofstream file(filename);
-  if (file.good())
-    std::cerr << "File opened successfully\n";
-  else {
-    std::cerr << "File open failed\n";
-    throw std::runtime_error("File open failed");
-  }
-  ///////////////////////////////////////////////
   while (true) {
     int ret = poll(&clients_fds[0], clients_fds.size(), 5000);
     if (ret < 0) {
@@ -75,7 +65,7 @@ void server::listen_for_connections() {
 
         buffer[data] = '\0';
         clients[clients_fds[i].fd].chunk.append(buffer, data);
-        pars_chunk(clients[clients_fds[i].fd], file, i);
+        pars_chunk(clients[clients_fds[i].fd], i);
         clients[clients_fds[i].fd].chunk.clear();
       }
       if (clients_fds[i].revents & POLLOUT) {
@@ -100,7 +90,7 @@ server::~server() {
 
 //-------------------------------------
 
-void server::pars_chunk(client_info &client, std::ofstream &file, int index) {
+void server::pars_chunk(client_info &client, int index) {
   if (request_line(client) == false || pars_headers(client) == false)
     return;
   // if (client.boundary.empty() &&
@@ -116,5 +106,4 @@ void server::pars_chunk(client_info &client, std::ofstream &file, int index) {
   // } else
   //   file << client.chunk;
   (void)index;
-  (void)file;
 }
