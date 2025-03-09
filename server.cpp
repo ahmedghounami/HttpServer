@@ -6,12 +6,11 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:55 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/09 18:00:14 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/09 23:09:32 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server.hpp"
-#include <fstream>
 
 server::server() {
   start_connection = socket(AF_INET, SOCK_STREAM, 0);

@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/09 18:00:59 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/09 23:27:12 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,22 @@ bool pars_headers(client_info &client) {
     }
 
     std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-    client.headers[key] = value;
+    if (!isValidHeaderKey(key)) {
+      std::cerr << "Error: Invalid header name: " << key << std::endl;
+      // respond and clear client;
+      return false;
+    }
+    if (!isValidHeaderValue(value)) {
+      std::cerr << "Error: Invalid header value: " << value << std::endl;
+      // respond and clear client;
+      return false;
+    }
+    if (isMultiValueHeader(key))
+      client.multiheaders.insert(std::make_pair(key, value));
+    // else if (client.headers.find(key) != client.headers.end())
+    //   client.headers[key] += ", " + value;
+    else
+      client.headers[key] = value;
   }
 
   if (client.headers.find("host") == client.headers.end()) {
@@ -115,9 +130,17 @@ bool pars_headers(client_info &client) {
     return false;
   }
 
+  std::cout << "Single-Value Headers:" << std::endl;
   std::map<std::string, std::string>::iterator it;
   for (it = client.headers.begin(); it != client.headers.end(); ++it) {
-    std::cout << "------->" << it->first << ": " << it->second << std::endl;
+    std::cout << "1------->" << it->first << ": " << it->second << std::endl;
+  }
+  std::cout << "Multi-Value Headers:" << std::endl;
+  std::multimap<std::string, std::string>::iterator itMulti;
+  for (itMulti = client.multiheaders.begin();
+       itMulti != client.multiheaders.end(); ++itMulti) {
+    std::cout << "2------->" << itMulti->first << ": " << itMulti->second
+              << std::endl;
   }
   return true;
 }
