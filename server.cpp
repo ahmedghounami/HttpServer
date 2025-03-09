@@ -9,7 +9,7 @@ server::server()
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(PORT);
+    server_addr.sin_port = htons(PORT); // htons() is used to convert the port number to network byte order
 
     int opt = 1;
     setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -17,7 +17,7 @@ server::server()
     if (bind(start_connection, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
         throw std::runtime_error("Bind failed");
 
-    if (listen(start_connection, 128) < 0)
+    if (listen(start_connection, 128) < 0) // 128 is the maximum number of connections that can be waiting
         throw std::runtime_error("Listen failed");
 
     std::cout << "Server running on port " << PORT << "\n";
@@ -27,7 +27,7 @@ server::server()
 void server::listen_for_connections()
 { 
     struct pollfd server_fd;
-        server_fd.fd = start_connection;
+    server_fd.fd = start_connection;
     server_fd.events = POLLIN;
     clients_fds.push_back(server_fd);
 

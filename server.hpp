@@ -22,6 +22,7 @@ class server
         int start_connection;
         std::map<int, client_info> clients;
         std::vector<pollfd> clients_fds;
+        std::vector<pollfd> listners;
 
     public:
         server();
