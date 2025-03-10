@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parsing.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/09 23:27:12 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/10 16:00:52 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,8 +59,8 @@ bool request_line(client_info &client) {
     // respond then clear client;
     return false;
   }
-  std::cout << "-----> Parsed Request Line: " << client.method << " "
-            << client.uri << " " << client.version << std::endl;
+  std::cout << "method ->" << client.method << " uri ->"
+            << client.uri << " version->" << client.version << std::endl;
 
   return true;
 }
@@ -68,7 +68,6 @@ bool request_line(client_info &client) {
 bool pars_headers(client_info &client) {
   if (!client.headers.empty())
     return true;
-
   size_t pos = client.chunk.find("\r\n\r\n");
   if (pos == std::string::npos)
     return true;
@@ -130,16 +129,14 @@ bool pars_headers(client_info &client) {
     return false;
   }
 
-  std::cout << "Single-Value Headers:" << std::endl;
   std::map<std::string, std::string>::iterator it;
   for (it = client.headers.begin(); it != client.headers.end(); ++it) {
-    std::cout << "1------->" << it->first << ": " << it->second << std::endl;
+    std::cout << "header-> " << it->first << ": " << it->second << std::endl;
   }
-  std::cout << "Multi-Value Headers:" << std::endl;
   std::multimap<std::string, std::string>::iterator itMulti;
   for (itMulti = client.multiheaders.begin();
        itMulti != client.multiheaders.end(); ++itMulti) {
-    std::cout << "2------->" << itMulti->first << ": " << itMulti->second
+    std::cout << "multiheader-> " << itMulti->first << ": " << itMulti->second
               << std::endl;
   }
   return true;
