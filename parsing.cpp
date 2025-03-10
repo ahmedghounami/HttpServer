@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/10 16:00:52 by hamza            ###   ########.fr       */
+/*   Updated: 2025/03/10 16:09:42 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,5 +139,6 @@ bool pars_headers(client_info &client) {
     std::cout << "multiheader-> " << itMulti->first << ": " << itMulti->second
               << std::endl;
   }
+  //here we check for the content lenght or th content type
   return true;
 }
