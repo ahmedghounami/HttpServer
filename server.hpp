@@ -8,6 +8,18 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include <sstream>
+
+struct server_config
+{
+    std::string host;
+    std::vector<int> ports;
+    std::string server_name;
+    std::string path;
+    std::string index;
+    bool autoindex;
+    int max_body_size;
+};
 
 struct client_info
 {
@@ -23,9 +35,11 @@ class server
         std::map<int, client_info> clients;
         std::vector<pollfd> clients_fds;
         std::vector<int> listners;
+        server_config config;
 
     public:
-        server();
+        server(std::string &config_file);
+        void parse_config(std::string config_file);
         void listen_for_connections();
         ~server();
 
