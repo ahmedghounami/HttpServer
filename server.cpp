@@ -15,7 +15,6 @@ server::server(std::string &config_file)
         server_addr.sin_port = htons(config.ports[i]);
         server_addr.sin_addr.s_addr = INADDR_ANY;
 
-
         int opt = 1;
         setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
         setsockopt(start_connection, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
