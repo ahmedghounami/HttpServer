@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
             throw std::runtime_error("Config file could not be opened");
         std::string config_file_name = argv[1];
         server obj(config_file_name);
-        obj.listen_for_connections();
+        // obj.listen_for_connections();
     }
     catch (const std::exception &e)
     {
