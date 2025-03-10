@@ -77,7 +77,6 @@ void server::parse_config(std::string config_file)
         else
             throw std::runtime_error("syntax error");
     }
-
     if (!stack.empty() || config.server_name.empty() || config.host.empty() || config.ports.empty() || config.path.empty() || config.index.empty() || config.max_body_size == 0)
         throw std::runtime_error("Invalid config file 4");
     // std::cout << "server_name: " << config.server_name << std::endl;
