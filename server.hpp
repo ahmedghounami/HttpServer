@@ -22,7 +22,7 @@ class server
         int start_connection;
         std::map<int, client_info> clients;
         std::vector<pollfd> clients_fds;
-        std::vector<pollfd> listners;
+        std::vector<int> listners;
 
     public:
         server();
@@ -32,7 +32,8 @@ class server
 };
 
 void get_boundary(int _client_fd, std::map<int, client_info> &clients);
-void accept_connection(int start_connection, std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);
+void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);
 void get_chunk(client_info &client, std::ofstream &file, size_t pos, int flag);
 
-#define PORT 8080
+#define PORT 9090
+#define PORt_2 8080
