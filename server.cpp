@@ -1,36 +1,54 @@
 #include "server.hpp"
 
+void check_ports(int port, std::string server_name, std::vector<port_used> &ports_used)
+{
+    for (unsigned int i = 0; i < ports_used.size(); i++)
+    {
+        if (ports_used[i].port == port && ports_used[i].server_name == server_name)
+            throw std::runtime_error("Port already in use");
+    }
+}
+
 server::server(std::string &config_file)
 {
     parse_config(config_file);
-    for (unsigned int i = 0; i < config.ports.size(); i++)
+    for (unsigned int i = 0; i < servers.size(); i++)
     {
-        start_connection = socket(AF_INET, SOCK_STREAM, 0);
-        listners.push_back(start_connection);
-        if (start_connection == -1)
-            throw std::runtime_error("Socket creation failed");
+        for (unsigned int j = 0; j < servers[i].ports.size(); j++)
+        {
+            check_ports(servers[i].ports[j], servers[i].server_name, ports_used);
+            start_connection = socket(AF_INET, SOCK_STREAM, 0);
+            listners.push_back(start_connection);
+            if (start_connection == -1)
+                throw std::runtime_error("Socket creation failed");
 
-        sockaddr_in server_addr;
-        server_addr.sin_family = AF_INET;
-        server_addr.sin_port = htons(config.ports[i]);
-        server_addr.sin_addr.s_addr = INADDR_ANY;
+            sockaddr_in server_addr;
+            server_addr.sin_family = AF_INET;
+            server_addr.sin_port = htons(servers[i].ports[j]);
+            server_addr.sin_addr.s_addr = INADDR_ANY;
 
-        int opt = 1;
-        setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-        setsockopt(start_connection, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+            int opt = 1;
+            setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+            setsockopt(start_connection, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
 
-        if (bind(start_connection, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
-            throw std::runtime_error("Bind failed");
+            if (bind(start_connection, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+                throw std::runtime_error("Bind failed");
 
-        if (listen(start_connection, 128) < 0) // 128 is the maximum number of connections that can be waiting
-            throw std::runtime_error("Listen failed");
+            if (listen(start_connection, 128) < 0) // 128 is the maximum number of connections that can be waiting
+                throw std::runtime_error("Listen failed");
 
-        struct pollfd server_fd;
-        server_fd.fd = start_connection;
-        server_fd.events = POLLIN;
-        clients_fds.push_back(server_fd);
+            struct pollfd server_fd;
+            server_fd.fd = start_connection;
+            server_fd.events = POLLIN;
+            clients_fds.push_back(server_fd);
 
-        std::cout << "Server started on port " << config.ports[i] << std::endl;
+            port_used port;
+            port.port = servers[i].ports[j];
+            port.server_name = servers[i].server_name;
+            ports_used.push_back(port);
+
+            std::cout << "Server started on port " << servers[i].ports[j] << std::endl;
+        }
     }
 }
 

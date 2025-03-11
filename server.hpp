@@ -16,6 +16,7 @@
 
 struct server_config
 {
+    int  server_index;
     std::string host;
     std::vector<int> ports;
     std::string server_name;
@@ -32,6 +33,12 @@ struct client_info
     std::string header;
 };
 
+struct port_used
+{
+    int port;
+    std::string server_name;
+};
+
 class server
 {
     private:
@@ -39,7 +46,8 @@ class server
         std::map<int, client_info> clients;
         std::vector<pollfd> clients_fds;
         std::vector<int> listners;
-        server_config config;
+        std::map<int, server_config> servers;
+        std::vector<port_used> ports_used;
 
     public:
         server(std::string &config_file);

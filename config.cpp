@@ -76,6 +76,7 @@ void parse_key(std::istringstream &ss, std::string &key, server_config &config)
 
 void server::parse_config(std::string config_file)
 {
+    int i = 0;
     std::stack<std::string> stack;
     std::ifstream file(config_file);
     if (!file.good())
@@ -89,38 +90,42 @@ void server::parse_config(std::string config_file)
         {
             if (!stack.empty())
                 throw std::runtime_error("cannot create server inside server");
+            servers[i].server_index = i;
             stack.push("server");
             continue;
         }
         if (line == "}")
         {
             if (stack.empty() || stack.top() != "server")
-                throw std::runtime_error("Invalid config file 3");
+                throw std::runtime_error("server block not opened");
+            else if (servers[i].server_name.empty() || servers[i].host.empty() || servers[i].ports.empty() || servers[i].path.empty() || servers[i].index.empty() || servers[i].max_body_size == 0)
+                throw std::runtime_error("key missing in server block");
             stack.pop();
-            break;
+            i++;
+            continue;
         }
         if (!stack.empty() && stack.top() == "server")
         {
             std::istringstream ss(line);
             std::string key;
-            parse_key(ss, key, this->config);
+            parse_key(ss, key, servers[i]);
         }
         else
             throw std::runtime_error("syntax error");
     }
     // if (!stack.empty() || config.server_name.empty() || config.host.empty() || config.ports.empty() || config.path.empty() || config.index.empty() || config.max_body_size == 0)
     //     throw std::runtime_error("Invalid config file 4");
-    std::cout << "server_name: " << config.server_name << std::endl;
-    std::cout << "host: " << config.host << std::endl;
-    std::cout << "ports: ";
-    for (unsigned int i = 0; i < config.ports.size(); i++)
-        std::cout << config.ports[i] << " ";
-    std::cout << std::endl;
-    std::cout << "path: " << config.path << std::endl;
-    std::cout << "index: ";
-    for (unsigned int i = 0; i < config.index.size(); i++)
-        std::cout << config.index[i] << " ";
-    std::cout << std::endl;
-    std::cout << "autoindex: " << config.autoindex << std::endl;
-    std::cout << "max_body_size: " << config.max_body_size << std::endl;
+    // for (unsigned int i = 0; i < servers.size(); i++)
+    // {
+    //     std::cout << "server_name: " << servers[i].server_name << std::endl;
+    //     std::cout << "host: " << servers[i].host << std::endl;
+    //     for (unsigned int j = 0; j < servers[i].ports.size(); j++)
+    //         std::cout << "port: " << servers[i].ports[j] << std::endl;
+    //     std::cout << "path: " << servers[i].path << std::endl;
+    //     for (unsigned int j = 0; j < servers[i].index.size(); j++)
+    //         std::cout << "index: " << servers[i].index[j] << std::endl;
+    //     std::cout << "autoindex: " << servers[i].autoindex << std::endl;
+    //     std::cout << "max_body_size: " << servers[i].max_body_size << std::endl;
+    //     std::cout << "-------------------" << std::endl;
+    // }
 }
