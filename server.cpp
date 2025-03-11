@@ -34,7 +34,7 @@ server::server(std::string &config_file)
             if (bind(start_connection, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
                 throw std::runtime_error("Bind failed");
 
-            if (listen(start_connection, 128) < 0) // 128 is the maximum number of connections that can be waiting
+            if (listen(start_connection, 128) < 0) 
                 throw std::runtime_error("Listen failed");
 
             struct pollfd server_fd;
