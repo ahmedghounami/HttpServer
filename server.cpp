@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:55 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/10 15:56:47 by hamza            ###   ########.fr       */
+/*   Updated: 2025/03/10 17:06:55 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ server::~server() {
 //-------------------------------------
 
 void server::pars_chunk(client_info &client, int index) {
-  if (request_line(client) == false || pars_headers(client) == false)
+  if (request_line(client) == false || pars_headers(client) == false || detectBodyType(client) == false)
     return;
   // if (client.boundary.empty() &&
   //     client.chunk.find("\r\n\r\n") != std::string::npos)
