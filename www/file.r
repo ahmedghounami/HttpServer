@@ -1,16 +1,12 @@
 server {
     # Server Basics
-    host 127.0.0.1;                # Specific IP address to bind (use 0.0.0.0 for all interfaces)
-    listen 8080 7878;                   # Port to listen on
-    server_name example.com;       # Server name or domain
-    root /var/www/html;            # Root directory for serving files (GET requests)
-    index index.html index.php;    # Default index files
-    autoindex off;                 # Disable directory listing
-    client_max_body_size 10M;      # Maximum client request size, M = Megabytes ,10 M = 10000000 bytes
-
-    # Logging
-    access_log /var/log/webserver/access.log;
-    error_log /var/log/webserver/error.log;
+    host 127.0.0.1;
+    listen 8080 7878;
+    server_name example.com;
+    root /var/www/html;
+    index index.html index.php;
+    autoindex off;
+    client_max_body_size 10000000;
 
     # Error Pages
     error_page 404 /errors/404.html;
@@ -19,13 +15,7 @@ server {
 
     # Upload Handling
     upload_path /var/www/uploads; # Directory for file uploads (POST requests)
-    upload_max_size 100M;
-
-    # Timeouts and Limits
-    keepalive_timeout 65;
-    send_timeout 30s;
-    recv_timeout 30s;
-
+    upload_max_size 100000000;
 
     # Location for Static Files
     location / {

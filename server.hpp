@@ -9,7 +9,6 @@
 #include <vector>
 #include <map>
 #include <sstream>
-#include <iostream>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string>
@@ -23,14 +22,9 @@ struct server_config
     std::string path;
     std::string upload_path;
     std::vector<std::string> index;
-    std::string access_log;
-    std::string error_log;
     bool autoindex;
     int max_body_size;
     int upload_max_size;
-    int keepalive_timeout;
-    int send_timeout;
-    int recv_timeout;
     std::map<std::string, std::string> error_pages;
 };
 

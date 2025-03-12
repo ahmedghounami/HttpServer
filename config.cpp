@@ -16,7 +16,7 @@ void parse_key(std::istringstream &ss, std::string &key, server_config &config)
 
     if (key == "server_name")
         ss >> config.server_name;
-    else if (key == "host:")
+    else if (key == "host")
         ss >> config.host;
     else if (key == "listen")
     {
@@ -92,49 +92,6 @@ void parse_key(std::istringstream &ss, std::string &key, server_config &config)
 
         config.upload_max_size = std::atof(upload_max_size.c_str());
     }
-    else if (key == "keepalive_timeout")
-    {
-        std::string keepalive_timeout;
-        ss >> keepalive_timeout;
-        if (atof(keepalive_timeout.c_str()) <= 0 || !is_digit(keepalive_timeout))
-            throw std::runtime_error("Invalid keepalive_timeout");
-
-        config.keepalive_timeout = std::atof(keepalive_timeout.c_str());
-    }
-    else if (key == "send_timeout")
-    {
-        std::string send_timeout;
-        ss >> send_timeout;
-        if (atof(send_timeout.c_str()) <= 0 || !is_digit(send_timeout))
-            throw std::runtime_error("Invalid send_timeout");
-
-        config.send_timeout = std::atof(send_timeout.c_str());
-    }
-    else if (key == "recv_timeout")
-    {
-        std::string recv_timeout;
-        ss >> recv_timeout;
-        if (atof(recv_timeout.c_str()) <= 0 || !is_digit(recv_timeout))
-            throw std::runtime_error("Invalid recv_timeout");
-
-        config.recv_timeout = std::atof(recv_timeout.c_str());
-    }
-    else if (key == "access_log")
-    {
-        std::string access_log;
-        ss >> access_log;
-        if (access_log.empty())
-            throw std::runtime_error("Invalid access_log");
-        config.access_log = access_log;
-    }
-    else if (key == "error_log")
-    {
-        std::string error_log;
-        ss >> error_log;
-        if (error_log.empty())
-            throw std::runtime_error("Invalid error_log");
-        config.error_log = error_log;
-    } 
     else if (key == "error_page")
     {
         std::string error_code;
@@ -207,11 +164,6 @@ void server::parse_config(std::string config_file)
         std::cout << "autoindex: " << servers[i].autoindex << std::endl;
         std::cout << "max_body_size: " << servers[i].max_body_size << std::endl;
         std::cout << "upload_max_size: " << servers[i].upload_max_size << std::endl;
-        std::cout << "keepalive_timeout: " << servers[i].keepalive_timeout << std::endl;
-        std::cout << "send_timeout: " << servers[i].send_timeout << std::endl;
-        std::cout << "recv_timeout: " << servers[i].recv_timeout << std::endl;
-        std::cout << "access_log: " << servers[i].access_log << std::endl;
-        std::cout << "error_log: " << servers[i].error_log << std::endl;
         for (std::map<std::string, std::string>::iterator it = servers[i].error_pages.begin(); it != servers[i].error_pages.end(); it++)
             std::cout << "error_page: " << it->first << " " << it->second << std::endl;
         std::cout << "-------------------" << std::endl;
