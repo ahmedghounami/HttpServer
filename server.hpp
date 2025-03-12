@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:59 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/12 15:31:13 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/12 17:34:31 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ struct client_info {
   std::string method, uri, version;
   std::map<std::string, std::string> headers;
   std::multimap<std::string, std::string> multiheaders;
+  std::map<std::string, std::string> dataInfo;
 
   // std::string header;
   // std::string boundary_end;

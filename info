@@ -1,45 +1,30 @@
-------------------form-data------------------------------
-content-type: multipart/form-data;
-  boundary=--------------------------297412223260428738469042
+GET / HTTP/1.1
+User-Agent: PostmanRuntime/7.33.0
+Accept: */*
+Postman-Token: 1abb2e32-ba23-4561-a872-f8f8940f20fb
+Host: localhost:8080
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Type: multipart/form-data; boundary=--------------------------008679325324092431230044
+Content-Length: 34074
+----------------
+GET / HTTP/1.1
+Content-Type: text/plain
+User-Agent: PostmanRuntime/7.33.0
+Accept: */*
+Postman-Token: ff467e7c-063d-4b3f-bc78-ee21aad70228
+Host: localhost:8080
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 37
 
-or
-
-content-type: multipart/form-data;
-  boundary=--------------------------190123204970151931755531
-transfer-encoding: chunked
-------------------form-data -> no-body------------------------------
-nothing: nothing
-
-or
-
-transfer-encoding: chunked
-------------------raw------------------------------------
-content-type: text/html
-
-or
-
-content-type: text/html
-transfer-encoding: chunked
-------------------binary---------------------------------
-content-length: 33855
-
-or
-
-content-length: 33855
-transfer-encoding: chunked
----------------------------------------------------------
-
-
-
-
-
-             /-> content-type[V] || content-type+chunked
-            / 
-form-data -- 
-            \
-             \-> nothing[] || chunked
-
-
-raw --> content-type[V] || content-type+chunked
-
-binary --> content-length[] || content-length+chunked
+------
+GET / HTTP/1.1
+User-Agent: PostmanRuntime/7.33.0
+Accept: */*
+Postman-Token: 84e545c7-1fd3-40b6-8795-f17e163651e5
+Host: localhost:8080
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 33855
+Content-Type: image/jpeg

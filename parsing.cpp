@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/12 15:26:53 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/12 18:15:39 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,7 @@ bool request_line(client_info &client) {
 bool pars_headers(client_info &client) {
   if (!client.headers.empty())
     return true;
+
   size_t pos = client.chunk.find("\r\n\r\n");
   if (pos == std::string::npos)
     return true;
@@ -76,16 +77,22 @@ bool pars_headers(client_info &client) {
   client.chunk.erase(0, pos + 4);
 
   size_t startPos = 0;
+  std::string lastKey;
   while (startPos < headers.size()) {
     size_t endPos = headers.find("\r\n", startPos);
     if (endPos == std::string::npos)
-      break;
+      endPos = headers.size();
 
     std::string line = headers.substr(startPos, endPos - startPos);
     startPos = endPos + 2;
 
     if (line.empty())
       continue;
+
+    if (!lastKey.empty() && (line[0] == ' ' || line[0] == '\t')) {
+      client.headers[lastKey] += " " + trim(line);
+      continue;
+    }
 
     size_t delimiterPos = line.find(":");
     if (delimiterPos == std::string::npos) {
@@ -117,10 +124,12 @@ bool pars_headers(client_info &client) {
     }
     if (isMultiValueHeader(key))
       client.multiheaders.insert(std::make_pair(key, value));
-    // else if (client.headers.find(key) != client.headers.end())
-    //   client.headers[key] += ", " + value;
+    else if (client.headers.find(key) != client.headers.end())
+      client.headers[key] += ", " + value;
     else
       client.headers[key] = value;
+      
+    lastKey = key;
   }
 
   if (client.headers.find("host") == client.headers.end()) {
@@ -150,7 +159,13 @@ bool detectBodyType(client_info& client) {
     return true;
   }
 
-  std::map<std::string, std::string>::iterator it = client.headers.find("content-type");
+  std::map<std::string, std::string>::iterator it = client.headers.find("transfer-enconding");
+  // if (it != client.headers.end()) {
+  //   client.isChunked = true;
+    
+  // }
+  
+  it = client.headers.find("content-type");
   if (it != client.headers.end()) {
       client.contentType = it->second;
       if (client.contentType.find("multipart/form-data") != std::string::npos) {
@@ -179,11 +194,11 @@ bool detectBodyType(client_info& client) {
         iss >> length;
         client.contentLength = length;
         std::cout << "Content-Length: " << client.contentLength << std::endl;
+        return true;
     } else {
-        std::cerr << "Error: Invalid Content-Length value (non-numeric characters found)\n";
-        return false;
-      }
+      // respond and clear client;
+      return false;
     }
-  //form-data : nothing
+  }
   return true;
 }
