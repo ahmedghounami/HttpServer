@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:55 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/10 17:06:55 by hamza            ###   ########.fr       */
+/*   Updated: 2025/03/12 11:47:20 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,19 +90,25 @@ server::~server() {
 //-------------------------------------
 
 void server::pars_chunk(client_info &client, int index) {
-  if (request_line(client) == false || pars_headers(client) == false || detectBodyType(client) == false)
+  if (request_line(client) == false
+    || pars_headers(client) == false
+    || detectBodyType(client) == false)
     return;
-  // if (client.boundary.empty() &&
-  //     client.chunk.find("\r\n\r\n") != std::string::npos)
-  //   get_boundary(clients_fds[index].fd, clients);
-  // std::string boundary_end = clients[clients_fds[index].fd].boundary +
-  // "--"; size_t pos =
-  // clients[clients_fds[index].fd].chunk.find(boundary_end); if (pos !=
-  // std::string::npos) {
-  //   client.chunk = client.chunk.substr(0, pos - 4);
-  //   file << client.chunk;
-  //   file.close();
-  // } else
-  //   file << client.chunk;
   (void)index;
 }
+
+
+/*
+  if (client.boundary.empty() &&
+      client.chunk.find("\r\n\r\n") != std::string::npos)
+    get_boundary(clients_fds[index].fd, clients);
+  std::string boundary_end = clients[clients_fds[index].fd].boundary +
+  "--"; size_t pos =
+  clients[clients_fds[index].fd].chunk.find(boundary_end); if (pos !=
+  std::string::npos) {
+    client.chunk = client.chunk.substr(0, pos - 4);
+    file << client.chunk;
+    file.close();
+  } else
+    file << client.chunk;
+*/

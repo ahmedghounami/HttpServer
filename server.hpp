@@ -3,14 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:59 by hboudar           #+#    #+#             */
-<<<<<<< HEAD
-/*   Updated: 2025/03/10 22:29:25 by hboudar          ###   ########.fr       */
-=======
-/*   Updated: 2025/03/10 17:08:09 by hamza            ###   ########.fr       */
->>>>>>> 291919284494711e40333dc31ca0dff459549358
+/*   Updated: 2025/03/12 12:41:15 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,12 +33,13 @@ struct client_info {
   std::string chunk;
   bool isChunked;
   int contentLength;
+  std::string boundary;
+  std::string contentType;
   std::string method, uri, version;
   std::map<std::string, std::string> headers;
   std::multimap<std::string, std::string> multiheaders;
 
   // std::string header;
-  // std::string boundary;
   // std::string boundary_end;
 };
 
@@ -74,5 +71,6 @@ bool isMultiValueHeader(const std::string &header);
 bool isValidHeaderKey(const std::string &key);
 bool isValidHeaderValue(const std::string &value);
 std::string toLower(const std::string& str);
+std::string getBoundary(const std::string &contentType);
 
 // void get_boundary(int _client_fd, std::map<int, client_info> &clients);

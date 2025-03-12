@@ -1,0 +1,9 @@
+method ->GET uri ->/ version->HTTP/1.1
+header-> accept: */*
+header-> accept-encoding: gzip, deflate, br
+header-> connection: keep-alive
+header-> content-type: text/plain
+header-> host: localhost:8080
+header-> postman-token: ae10ad28-c81e-4c6a-9c23-b552509ccdb2
+header-> user-agent: PostmanRuntime/7.33.0
+-> raw: text/plain <-

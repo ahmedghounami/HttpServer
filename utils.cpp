@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 14:24:50 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/10 17:07:55 by hamza            ###   ########.fr       */
+/*   Updated: 2025/03/12 12:02:16 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,4 +93,11 @@ std::string toLower(const std::string& str) {
         lowerStr[i] = std::tolower(lowerStr[i]);
     }
     return lowerStr;
+}
+
+std::string getBoundary(const std::string &contentType) {
+  size_t pos = contentType.find("boundary=");
+  if (pos != std::string::npos)
+    return "--" + contentType.substr(pos + 9);
+  return "";
 }
