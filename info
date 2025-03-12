@@ -1,0 +1,45 @@
+------------------form-data------------------------------
+content-type: multipart/form-data;
+  boundary=--------------------------297412223260428738469042
+
+or
+
+content-type: multipart/form-data;
+  boundary=--------------------------190123204970151931755531
+transfer-encoding: chunked
+------------------form-data------------------------------
+nothing: nothing
+
+or
+
+transfer-encoding: chunked
+------------------raw------------------------------------
+content-type: text/html
+
+or
+
+content-type: text/html
+transfer-encoding: chunked
+------------------binary---------------------------------
+content-length: 33855
+
+or
+
+content-length: 33855
+transfer-encoding: chunked
+---------------------------------------------------------
+
+
+
+
+
+             /-> content-type || content-type + chunked
+            / 
+form-data -- 
+            \
+             \-> nothing || chunked
+
+
+raw --> content-type || content-type + chunked
+
+binary --> content-length || content-length + chunked

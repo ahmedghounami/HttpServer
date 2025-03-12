@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parsing.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/10 17:12:35 by hamza            ###   ########.fr       */
+/*   Updated: 2025/03/12 12:54:32 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,37 +144,34 @@ bool pars_headers(client_info &client) {
   return true;
 }
 
+
 bool detectBodyType(client_info& client) {
-  if (client.isChunked != false || client.contentLength != 0) {
+  if (!client.contentType.empty() || client.isChunked != false || client.contentLength != 0) {
     return true;
   }
 
-    std::map<std::string, std::string>::iterator it;
-
-    it = client.headers.find("transfer-encoding");
-    if (it != client.headers.end()) {
-        if (toLower(it->second) == "chunked") {
-            client.isChunked = true;
-            std::cout << "Transfer-Encoding: chunked detected." << std::endl;
-            return true;
-        }
-    }
-
-    it = client.headers.find("content-length");
-    if (it != client.headers.end()) {
-        char* endPtr;
-        long len = std::strtol(it->second.c_str(), &endPtr, 10);
-        if (*endPtr != '\0' || len < 0) {
-            std::cerr << "Invalid Content-Length value." << std::endl;
+  std::map<std::string, std::string>::iterator it = client.headers.find("content-type");
+  if (it != client.headers.end()) {
+      client.contentType = it->second;
+      if (client.contentType.find("multipart/form-data") != std::string::npos) {
+          std::string boundary = getBoundary(client.contentType);
+          if (boundary.empty()) {
             //respond and clear client;
             return false;
-        }
-        client.contentLength = len;
-        std::cout << "Content-Length detected: " << client.contentLength << " bytes." << std::endl;
-        return true;
-    }
-
-    std::cout << "No body detected." << std::endl;
-    //respond and clear client;
-    return false;
+          }
+          client.boundary = boundary;
+          std::cout << "-> form-data: " << client.boundary << " <-" << std::endl;
+          return true;
+      } else if (client.contentType == "text/html"
+                  || client.contentType == "text/plain"
+                  || client.contentType == "text/javascript"
+                  || client.contentType == "application/json"
+                  || client.contentType == "application/xml") {
+        std::cout << "-> raw: " << client.contentType << " <-" << std::endl;
+      }
+      else {
+        std::cout << "No data type detected :" << client.contentType << std::endl;
+      }
+  }
+  return true;
 }
