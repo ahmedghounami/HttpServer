@@ -24,6 +24,7 @@ struct server_config
     std::vector<std::string> index;
     bool autoindex;
     int max_body_size;
+    std::map<std::string, std::string> error_pages;
 };
 
 struct client_info

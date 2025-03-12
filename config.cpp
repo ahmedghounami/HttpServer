@@ -65,8 +65,21 @@ void parse_key(std::istringstream &ss, std::string &key, server_config &config)
         std::string max_body_size;
         ss >> max_body_size;
         if (atof(max_body_size.c_str()) <= 0 || !is_digit(max_body_size))
-            throw std::runtime_error("Invalid max body size");
+            throw std::runtime_error("Invalid body size");
+
         config.max_body_size = std::atof(max_body_size.c_str());
+    }
+    else if (key == "error_page")
+    {
+        std::string error_code;
+        std::string error_page;
+        ss >> error_code;
+        ss >> error_page;
+        std::string something;
+        ss >> something;
+        if (error_code.empty() || error_page.empty() || !is_digit(error_code) || something.empty() == false)
+            throw std::runtime_error("Invalid error_page");
+        config.error_pages[error_code] = error_page;
     }
     else if (key.empty())
         return;
