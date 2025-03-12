@@ -2,8 +2,7 @@
 
 int is_digit(std::string str)
 {
-    int l = str[str.length() - 1] == ';' ;
-    for (unsigned int i = 0; i < str.length() - l; i++)
+    for (unsigned int i = 0; i < str.length(); i++)
     {
         if (!isdigit(str[i]))
             return 0;
@@ -17,7 +16,7 @@ void parse_key(std::istringstream &ss, std::string &key, server_config &config)
 
     if (key == "server_name")
         ss >> config.server_name;
-    else if (key == "host:")
+    else if (key == "host")
         ss >> config.host;
     else if (key == "listen")
     {
@@ -44,6 +43,21 @@ void parse_key(std::istringstream &ss, std::string &key, server_config &config)
             throw std::runtime_error("path is not writable");
         config.path = path;
     }
+    else if (key == "upload_path")
+    {
+        std::string path;
+        ss >> path;
+        struct stat info;
+        if (config.upload_path != "")
+            throw std::runtime_error("Duplicate path");
+        if (stat(path.c_str(), &info) != 0)
+            throw std::runtime_error("path does not exist");
+        else if (access(path.c_str(), R_OK) != 0)
+            throw std::runtime_error("path is not readable");
+        else if (access(path.c_str(), W_OK) != 0)
+            throw std::runtime_error("path is not writable");
+        config.upload_path = path;
+    }
     else if (key == "index")
     {
         for(std::string index; ss >> index;)
@@ -53,9 +67,9 @@ void parse_key(std::istringstream &ss, std::string &key, server_config &config)
     {
         std::string autoindex;
         ss >> autoindex;
-        if (autoindex == "on;" || autoindex == "on")
+        if (autoindex == "on" || autoindex == "on")
             config.autoindex = true;
-        else if (autoindex == "off;" || autoindex == "off")
+        else if (autoindex == "off" || autoindex == "off")
             config.autoindex = false;
         else
             throw std::runtime_error("Invalid config file1");
@@ -68,6 +82,15 @@ void parse_key(std::istringstream &ss, std::string &key, server_config &config)
             throw std::runtime_error("Invalid body size");
 
         config.max_body_size = std::atof(max_body_size.c_str());
+    }
+    else if (key == "upload_max_size")
+    {
+        std::string upload_max_size;
+        ss >> upload_max_size;
+        if (atof(upload_max_size.c_str()) <= 0 || !is_digit(upload_max_size))
+            throw std::runtime_error("Invalid upload size");
+
+        config.upload_max_size = std::atof(upload_max_size.c_str());
     }
     else if (key == "error_page")
     {
@@ -128,17 +151,21 @@ void server::parse_config(std::string config_file)
     }
     // if (!stack.empty() || config.server_name.empty() || config.host.empty() || config.ports.empty() || config.path.empty() || config.index.empty() || config.max_body_size == 0)
     //     throw std::runtime_error("Invalid config file 4");
-    // for (unsigned int i = 0; i < servers.size(); i++)
-    // {
-    //     std::cout << "server_name: " << servers[i].server_name << std::endl;
-    //     std::cout << "host: " << servers[i].host << std::endl;
-    //     for (unsigned int j = 0; j < servers[i].ports.size(); j++)
-    //         std::cout << "port: " << servers[i].ports[j] << std::endl;
-    //     std::cout << "path: " << servers[i].path << std::endl;
-    //     for (unsigned int j = 0; j < servers[i].index.size(); j++)
-    //         std::cout << "index: " << servers[i].index[j] << std::endl;
-    //     std::cout << "autoindex: " << servers[i].autoindex << std::endl;
-    //     std::cout << "max_body_size: " << servers[i].max_body_size << std::endl;
-    //     std::cout << "-------------------" << std::endl;
-    // }
+    for (unsigned int i = 0; i < servers.size(); i++)
+    {
+        std::cout << "server_name: " << servers[i].server_name << std::endl;
+        std::cout << "host: " << servers[i].host << std::endl;
+        for (unsigned int j = 0; j < servers[i].ports.size(); j++)
+            std::cout << "port: " << servers[i].ports[j] << std::endl;
+        std::cout << "path: " << servers[i].path << std::endl;
+        std::cout << "upload_path: " << servers[i].upload_path << std::endl;
+        for (unsigned int j = 0; j < servers[i].index.size(); j++)
+            std::cout << "index: " << servers[i].index[j] << std::endl;
+        std::cout << "autoindex: " << servers[i].autoindex << std::endl;
+        std::cout << "max_body_size: " << servers[i].max_body_size << std::endl;
+        std::cout << "upload_max_size: " << servers[i].upload_max_size << std::endl;
+        for (std::map<std::string, std::string>::iterator it = servers[i].error_pages.begin(); it != servers[i].error_pages.end(); it++)
+            std::cout << "error_page: " << it->first << " " << it->second << std::endl;
+        std::cout << "-------------------" << std::endl;
+    }
 }

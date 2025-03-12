@@ -9,7 +9,6 @@
 #include <vector>
 #include <map>
 #include <sstream>
-#include <iostream>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string>
@@ -21,9 +20,11 @@ struct server_config
     std::vector<int> ports;
     std::string server_name;
     std::string path;
+    std::string upload_path;
     std::vector<std::string> index;
     bool autoindex;
     int max_body_size;
+    int upload_max_size;
     std::map<std::string, std::string> error_pages;
 };
 
