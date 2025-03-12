@@ -6,7 +6,7 @@
 /*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/10 16:00:52 by hamza            ###   ########.fr       */
+/*   Updated: 2025/03/10 17:12:35 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,5 +139,42 @@ bool pars_headers(client_info &client) {
     std::cout << "multiheader-> " << itMulti->first << ": " << itMulti->second
               << std::endl;
   }
+  client.isChunked = false;
+  client.contentLength = 0;
   return true;
+}
+
+bool detectBodyType(client_info& client) {
+  if (client.isChunked != false || client.contentLength != 0) {
+    return true;
+  }
+
+    std::map<std::string, std::string>::iterator it;
+
+    it = client.headers.find("transfer-encoding");
+    if (it != client.headers.end()) {
+        if (toLower(it->second) == "chunked") {
+            client.isChunked = true;
+            std::cout << "Transfer-Encoding: chunked detected." << std::endl;
+            return true;
+        }
+    }
+
+    it = client.headers.find("content-length");
+    if (it != client.headers.end()) {
+        char* endPtr;
+        long len = std::strtol(it->second.c_str(), &endPtr, 10);
+        if (*endPtr != '\0' || len < 0) {
+            std::cerr << "Invalid Content-Length value." << std::endl;
+            //respond and clear client;
+            return false;
+        }
+        client.contentLength = len;
+        std::cout << "Content-Length detected: " << client.contentLength << " bytes." << std::endl;
+        return true;
+    }
+
+    std::cout << "No body detected." << std::endl;
+    //respond and clear client;
+    return false;
 }

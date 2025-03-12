@@ -3,10 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:59 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/09 23:40:23 by hboudar          ###   ########.fr       */
+<<<<<<< HEAD
+/*   Updated: 2025/03/10 22:29:25 by hboudar          ###   ########.fr       */
+=======
+/*   Updated: 2025/03/10 17:08:09 by hamza            ###   ########.fr       */
+>>>>>>> 291919284494711e40333dc31ca0dff459549358
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +35,8 @@
 
 struct client_info {
   std::string chunk;
+  bool isChunked;
+  int contentLength;
   std::string method, uri, version;
   std::map<std::string, std::string> headers;
   std::multimap<std::string, std::string> multiheaders;
@@ -60,11 +66,13 @@ void accept_connection(int start_connection, std::vector<pollfd> &clients_fds,
 // parsing request
 bool request_line(client_info &client);
 bool pars_headers(client_info &client);
+bool detectBodyType(client_info& client);
 
 // utils
 std::string trim(const std::string &str);
 bool isMultiValueHeader(const std::string &header);
 bool isValidHeaderKey(const std::string &key);
 bool isValidHeaderValue(const std::string &value);
+std::string toLower(const std::string& str);
 
 // void get_boundary(int _client_fd, std::map<int, client_info> &clients);
