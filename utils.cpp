@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
+/*   By: hamza <hamza@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 14:24:50 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/09 23:22:57 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/10 17:07:55 by hamza            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,4 +85,12 @@ bool isValidHeaderValue(const std::string &value) {
     }
   }
   return true;
+}
+
+std::string toLower(const std::string& str) {
+    std::string lowerStr = str;
+    for (size_t i = 0; i < lowerStr.length(); ++i) {
+        lowerStr[i] = std::tolower(lowerStr[i]);
+    }
+    return lowerStr;
 }
