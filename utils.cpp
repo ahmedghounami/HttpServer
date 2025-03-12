@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 14:24:50 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/12 12:02:16 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/12 15:33:03 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,4 +100,14 @@ std::string getBoundary(const std::string &contentType) {
   if (pos != std::string::npos)
     return "--" + contentType.substr(pos + 9);
   return "";
+}
+
+bool isValidContentLength(const std::string &lengthStr) {
+  std::string trlen = trim(lengthStr);
+  
+  for(size_t i = 0; i < trlen.length(); ++i) {
+    if (!std::isdigit(trlen[i]))
+      return false;
+  }
+  return true;
 }

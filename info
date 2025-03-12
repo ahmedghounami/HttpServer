@@ -7,7 +7,7 @@ or
 content-type: multipart/form-data;
   boundary=--------------------------190123204970151931755531
 transfer-encoding: chunked
-------------------form-data------------------------------
+------------------form-data -> no-body------------------------------
 nothing: nothing
 
 or
@@ -33,13 +33,13 @@ transfer-encoding: chunked
 
 
 
-             /-> content-type || content-type + chunked
+             /-> content-type[V] || content-type+chunked
             / 
 form-data -- 
             \
-             \-> nothing || chunked
+             \-> nothing[] || chunked
 
 
-raw --> content-type || content-type + chunked
+raw --> content-type[V] || content-type+chunked
 
-binary --> content-length || content-length + chunked
+binary --> content-length[] || content-length+chunked

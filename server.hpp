@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:59 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/12 12:41:15 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/12 15:31:13 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,5 +72,6 @@ bool isValidHeaderKey(const std::string &key);
 bool isValidHeaderValue(const std::string &value);
 std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
+bool isValidContentLength(const std::string &lengthStr);
 
 // void get_boundary(int _client_fd, std::map<int, client_info> &clients);

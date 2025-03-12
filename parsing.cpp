@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/12 12:54:32 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/12 15:26:53 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -162,16 +162,28 @@ bool detectBodyType(client_info& client) {
           client.boundary = boundary;
           std::cout << "-> form-data: " << client.boundary << " <-" << std::endl;
           return true;
-      } else if (client.contentType == "text/html"
-                  || client.contentType == "text/plain"
-                  || client.contentType == "text/javascript"
-                  || client.contentType == "application/json"
+      } else if (client.contentType == "text/html" || client.contentType == "text/plain"
+                  || client.contentType == "text/javascript" || client.contentType == "application/json"
                   || client.contentType == "application/xml") {
         std::cout << "-> raw: " << client.contentType << " <-" << std::endl;
-      }
-      else {
-        std::cout << "No data type detected :" << client.contentType << std::endl;
+        return true;
       }
   }
+  it = client.headers.find("content-length");
+  if (it != client.headers.end()) {
+    std::string lengthStr = it->second;
+    
+    if (isValidContentLength(lengthStr)) { // Convert to long and store
+        std::istringstream iss(lengthStr);
+        long length;
+        iss >> length;
+        client.contentLength = length;
+        std::cout << "Content-Length: " << client.contentLength << std::endl;
+    } else {
+        std::cerr << "Error: Invalid Content-Length value (non-numeric characters found)\n";
+        return false;
+      }
+    }
+  //form-data : nothing
   return true;
 }
