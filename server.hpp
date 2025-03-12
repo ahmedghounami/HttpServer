@@ -21,9 +21,16 @@ struct server_config
     std::vector<int> ports;
     std::string server_name;
     std::string path;
+    std::string upload_path;
     std::vector<std::string> index;
+    std::string access_log;
+    std::string error_log;
     bool autoindex;
     int max_body_size;
+    int upload_max_size;
+    int keepalive_timeout;
+    int send_timeout;
+    int recv_timeout;
     std::map<std::string, std::string> error_pages;
 };
 
