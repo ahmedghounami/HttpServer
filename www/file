@@ -1,0 +1,88 @@
+server {
+    # Server Basics
+    host 127.0.0.1;                # Specific IP address to bind (use 0.0.0.0 for all interfaces)
+    listen 8080;                   # Port to listen on
+    server_name example.com;       # Server name or domain
+    root /var/www/html;            # Root directory for serving files
+    index index.html index.php;    # Default index files
+    autoindex off;                 # Disable directory listing
+    client_max_body_size 10M;      # Maximum client request size
+
+    # Logging
+    access_log /var/log/webserver/access.log;
+    error_log /var/log/webserver/error.log;
+
+    # Error Pages
+    error_page 404 /errors/404.html;
+    error_page 500 /errors/500.html;
+    error_page 403 /errors/403.html;
+
+    # Upload Handling
+    upload_path /var/www/uploads;
+    upload_max_size 100M;
+
+    # Timeouts and Limits
+    keepalive_timeout 65;
+    send_timeout 30s;
+    recv_timeout 30s;
+
+    # SSL Configuration (Optional)
+    ssl_certificate /etc/ssl/certs/server.crt;
+    ssl_certificate_key /etc/ssl/private/server.key;
+
+    # Location for Static Files
+    location / {
+        root /var/www/html;
+        index index.html;
+        allow_methods GET POST;
+    }
+
+    # Location for Images
+    location /images/ {
+        root /var/www/media;
+        allow_methods GET;
+    }
+
+    # Location for Uploads
+    location /uploads/ {
+        root /var/www/uploads;
+        allow_methods GET POST;
+        autoindex on;
+    }
+
+    # Location for CGI
+    location /cgi-bin/ {
+        cgi_extension .php .pl;
+        cgi_path /usr/bin/php-cgi;
+        cgi_timeout 30s;
+        allow_methods POST;
+    }
+
+    # Redirects
+    location /old-path {
+        redirect /new-path;
+    }
+
+    # Access Restrictions
+    location /private/ {
+        deny 192.168.1.1;
+        allow all;
+    }
+
+    # Custom Error Responses
+    location /errors/ {
+        root /var/www/errors;
+        allow_methods GET;
+    }
+
+    # Specific Location with POST Restriction
+    location /submit {
+        allow_methods POST;
+        upload_path /var/www/uploads;
+    }
+
+    # Fallback for Undefined Routes
+    location / {
+        return 404;
+    }
+}
