@@ -16,7 +16,7 @@ server::server(std::string &config_file)
     {
         for (unsigned int j = 0; j < servers[i].ports.size(); j++)
         {
-            check_ports(servers[i].ports[j], servers[i].server_name, ports_used);
+            // check_ports(servers[i].ports[j], servers[i].server_names, ports_used);
             start_connection = socket(AF_INET, SOCK_STREAM, 0);
             listners.push_back(start_connection);
             if (start_connection == -1)
@@ -42,10 +42,10 @@ server::server(std::string &config_file)
             server_fd.events = POLLIN;
             clients_fds.push_back(server_fd);
 
-            port_used port;
-            port.port = servers[i].ports[j];
-            port.server_name = servers[i].server_name;
-            ports_used.push_back(port);
+            // port_used port;
+            // port.port = servers[i].ports[j];
+            // port.server_name = servers[i].server_name;
+            // ports_used.push_back(port);
 
             std::cout << "Server started on port " << servers[i].ports[j] << std::endl;
         }

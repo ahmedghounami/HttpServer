@@ -18,7 +18,7 @@ struct server_config
     int  server_index;
     std::string host;
     std::vector<int> ports;
-    std::string server_name;
+    std::vector<std::string> server_names;
     std::string path;
     std::string upload_path;
     std::vector<std::string> index;
