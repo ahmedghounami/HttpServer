@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/13 18:15:01 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/13 23:46:08 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,16 +166,17 @@ bool bodyType(client_info& client) {
       if (it != client.headers.end()) {
         client.contentType = it->second;
         if (client.contentType.find("multipart/form-data") != std::string::npos) {
-          std::string boundary = getBoundary(client.contentType);
-          if (boundary.empty()) {
+          client.boundary = getBoundary(client.contentType);
+          if (client.boundary.empty()) {
             std::cerr << "Error: Invalid multipart boundary" << std::endl;
             //respond and clear client;
+            client.boundary.clear();
             return false;
           }
-          client.boundary = boundary;
           return true;
         }
       }
+      //other types
   }
 
   return true;
@@ -220,11 +221,11 @@ bool multiPartFormData(client_info &client) {
     size_t endLine = headerPart.find("\r\n", typePos);
     contentType = headerPart.substr(typePos + 13, endLine - (typePos + 13));
   }
-  
-  std::cout << "Filename: " << filename << "\nContent-Type: " << contentType << std::endl;
   client.file.filename = filename;
   client.file.contentType = contentType;
-  
+
+  // pos += 2; //for the CRLF "\r\n";
+  client.chunk.erase(0, pos);
 
   return true;  
 }
