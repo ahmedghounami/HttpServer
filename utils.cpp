@@ -38,7 +38,7 @@ void get_chunk(client_info &client, std::ofstream &file, size_t pos, int flag)
     {
         client.chunk = client.chunk.substr(0, pos - 4);
         file << client.chunk;
-        // file.close();
+        file.close();
         std::cout << "File closed\n";
     }
     else

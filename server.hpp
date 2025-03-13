@@ -13,6 +13,20 @@
 #include <unistd.h>
 #include <string>
 
+struct location
+{
+    std::string loc;
+    std::string path;
+    std::string index;
+    std::string allowed_methods;
+    bool autoindex;
+    std::string cgi_extension;
+    std::string cgi_path;
+    int cgi_timeout;
+    std::string redirect;
+    std::string upload_path;
+};
+
 struct server_config
 {
     int  server_index;
@@ -26,6 +40,7 @@ struct server_config
     int max_body_size;
     int upload_max_size;
     std::map<std::string, std::string> error_pages;
+    std::map<std::string, location> locations;
 };
 
 struct client_info

@@ -24,6 +24,8 @@ void parse_key(std::istringstream &ss, std::string &key,
 			   server_config &config)
 {
 	ss >> key;
+	// if (key == "location")
+	// 	pars_location(ss, config);
 	if (key == "server_name")
 	{
 		for (std::string server_name; ss >> server_name;)

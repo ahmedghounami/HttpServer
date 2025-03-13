@@ -112,7 +112,6 @@ void server::listen_for_connections()
                     clients[clients_fds[i].fd].chunk.clear();
                 }
             }
-
             if (clients_fds[i].revents & POLLOUT)
             {
                 std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>File uploaded successfully</h1></body></html>";
