@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:55 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/12 18:16:27 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/13 15:12:19 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,14 +90,15 @@ server::~server() {
 //-------------------------------------
 
 void server::pars_chunk(client_info &client, int index) {
-  // if (request_line(client) == false
-  //   || pars_headers(client) == false
-  //   || detectBodyType(client) == false)
-  //   return;
-    if (!client.chunk.empty()) {
-      std::cout << client.chunk << std::endl;
-      client.chunk.clear();
-    }
+  if (request_line(client) == false
+    || headers(client) == false
+    || bodyType(client) == false
+    || multiPartFormData(client) == false)
+    return;
+    // if (!client.chunk.empty()) {
+    //   std::cout << client.chunk << std::endl;
+    //   client.chunk.clear();
+    // }
   (void)index;
 }
 

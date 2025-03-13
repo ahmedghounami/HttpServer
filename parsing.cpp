@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/12 18:15:39 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/13 17:02:34 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ bool request_line(client_info &client) {
   return true;
 }
 
-bool pars_headers(client_info &client) {
+bool headers(client_info &client) {
   if (!client.headers.empty())
     return true;
 
@@ -154,51 +154,146 @@ bool pars_headers(client_info &client) {
 }
 
 
-bool detectBodyType(client_info& client) {
-  if (!client.contentType.empty() || client.isChunked != false || client.contentLength != 0) {
+bool bodyType(client_info& client) {
+  if (!client.contentType.empty() || client.isChunked == true || client.contentLength != 0) {
     return true;
   }
 
-  std::map<std::string, std::string>::iterator it = client.headers.find("transfer-enconding");
-  // if (it != client.headers.end()) {
-  //   client.isChunked = true;
-    
-  // }
-  
-  it = client.headers.find("content-type");
-  if (it != client.headers.end()) {
-      client.contentType = it->second;
-      if (client.contentType.find("multipart/form-data") != std::string::npos) {
+  std::map<std::string, std::string>::iterator it = client.headers.find("transfer-encoding");
+  if (it != client.headers.end() && it->second == "chunked") {
+      client.isChunked = true;
+      it = client.headers.find("content-type");
+      if (it != client.headers.end()) {
+        client.contentType = it->second;
+        if (client.contentType.find("multipart/form-data") != std::string::npos) {
           std::string boundary = getBoundary(client.contentType);
           if (boundary.empty()) {
+            std::cerr << "Error: Invalid multipart boundary" << std::endl;
             //respond and clear client;
             return false;
           }
           client.boundary = boundary;
-          std::cout << "-> form-data: " << client.boundary << " <-" << std::endl;
           return true;
-      } else if (client.contentType == "text/html" || client.contentType == "text/plain"
-                  || client.contentType == "text/javascript" || client.contentType == "application/json"
-                  || client.contentType == "application/xml") {
-        std::cout << "-> raw: " << client.contentType << " <-" << std::endl;
-        return true;
+        }
       }
   }
-  it = client.headers.find("content-length");
-  if (it != client.headers.end()) {
-    std::string lengthStr = it->second;
-    
-    if (isValidContentLength(lengthStr)) { // Convert to long and store
-        std::istringstream iss(lengthStr);
-        long length;
-        iss >> length;
-        client.contentLength = length;
-        std::cout << "Content-Length: " << client.contentLength << std::endl;
-        return true;
-    } else {
-      // respond and clear client;
-      return false;
-    }
-  }
+
   return true;
 }
+
+bool multiPartFormData(client_info &client) {
+  if (client.boundary.empty())
+    return false;
+
+  std::string boundaryMarker = client.boundary;
+
+  size_t pos = 0;
+  while ((pos = client.chunk.find(boundaryMarker, pos)) != std::string::npos) {
+    std::cout << "it is on loop " << std::endl;
+    pos += boundaryMarker.size();
+    if (client.chunk.substr(pos, 2) == "--") {
+      break;
+    }
+
+    size_t headerEnd = client.chunk.find("\r\n\r\n", pos);
+    if (headerEnd == std::string::npos)
+      return false;
+
+    std::string headers = client.chunk.substr(pos, headerEnd - pos);
+      pos = headerEnd + 4;
+
+    std::map<std::string, std::string> partHeaders;
+    std::istringstream headerStream(headers);
+    std::string line;
+    while (std::getline(headerStream, line)) {
+      size_t delimiterPos = line.find(":");
+      if (delimiterPos != std::string::npos) {
+        std::string key = trim(line.substr(0, delimiterPos));
+        std::string value = trim(line.substr(delimiterPos + 1));
+        partHeaders[key] = value;
+      }
+    }
+    std::string fieldName, filename, contentType;
+    if (partHeaders.find("Content-Disposition") != partHeaders.end()) {
+      std::string disposition = partHeaders["Content-Disposition"];
+      size_t namePos = disposition.find("name=\"");
+      if (namePos != std::string::npos) {
+        namePos += 6;
+        size_t endPos = disposition.find("\"", namePos);
+        if (endPos != std::string::npos)
+          fieldName = disposition.substr(namePos, endPos - namePos);
+      }
+      size_t filePos = disposition.find("filename=\"");
+      if (filePos != std::string::npos) {
+        filePos += 10;
+        size_t endPos = disposition.find("\"", filePos);
+        if (endPos != std::string::npos)
+          filename = disposition.substr(filePos, endPos - filePos);
+      }
+    }
+    if (partHeaders.find("Content-Type") != partHeaders.end())
+      contentType = partHeaders["Content-Type"];
+
+    size_t nextBoundary = client.chunk.find(boundaryMarker, pos);
+    if (nextBoundary == std::string::npos)
+      return false;
+
+    std::string data = client.chunk.substr(pos, nextBoundary - pos - 2);
+    pos = nextBoundary;
+
+    FormFile file;
+    if (!filename.empty()) {
+      file.filename = filename;
+      file.contentType = contentType;
+      file.data = data;
+      client.files.push_back(file);
+    }
+    else
+      client.headers[fieldName] = data;
+      
+    std::cout << "-> File Captured: " << file.filename << std::endl;
+    std::cout << "-> ContentT: " << file.contentType << std::endl;
+    std::cout << "-> Content-Type: " << file.contentType << std::endl;
+    std::cout << "-> Data Size: " << file.data.size() << " bytes" << std::endl;
+  }
+
+  return true;  
+}
+
+
+/*
+  it = client.headers.find("content-type");
+  if (it != client.headers.end()) {
+    client.contentType = it->second;
+    if (client.contentType.find("multipart/form-data") != std::string::npos) {
+        std::string boundary = getBoundary(client.contentType);
+        if (boundary.empty()) {
+          //respond and clear client;
+          return false;
+        }
+        client.boundary = boundary;
+        std::cout << "-> form-data: " << client.boundary << " <-" << std::endl;
+        return true;
+    } else if (client.contentType == "text/html" || client.contentType == "text/plain"
+                || client.contentType == "text/javascript" || client.contentType == "application/json"
+                || client.contentType == "application/xml") {
+      std::cout << "-> raw: " << client.contentType << " <-" << std::endl;
+      return true;
+    }
+ }
+  it = client.headers.find("content-length");
+  if (it != client.headers.end()) {
+  std::string lengthStr = it->second;
+  if (isValidContentLength(lengthStr)) { // Convert to long and store
+      std::istringstream iss(lengthStr);
+      long length;
+      iss >> length;
+      client.contentLength = length;
+      std::cout << "Content-Length: " << client.contentLength << std::endl;
+      return true;
+  } else {
+    // respond and clear client;
+    return false;
+  }
+ }
+*/
