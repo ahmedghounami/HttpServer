@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:59 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/13 14:56:18 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/13 18:13:42 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@
 
 #define PORT 8080
 
-struct FormFile {
+struct FormInfo {
   std::string filename;
   std::string contentType;
   std::string data;
@@ -42,8 +42,8 @@ struct client_info {
   std::string chunk;
   std::string boundary;
   std::string contentType;
-  std::vector<FormFile> files;
   std::string method, uri, version;
+  FormInfo file;
   std::map<std::string, std::string> headers;
   std::multimap<std::string, std::string> multiheaders;
   std::map<std::string, std::string> dataInfo;

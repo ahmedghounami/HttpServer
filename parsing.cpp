@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/13 17:02:34 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/13 18:15:01 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,80 +182,49 @@ bool bodyType(client_info& client) {
 }
 
 bool multiPartFormData(client_info &client) {
-  if (client.boundary.empty())
+  if (client.boundary.empty() || !client.file.filename.empty() || !client.file.contentType.empty())
     return false;
 
+  std::cout << "-> multi part data <-" << std::endl;
+
   std::string boundaryMarker = client.boundary;
-
-  size_t pos = 0;
-  while ((pos = client.chunk.find(boundaryMarker, pos)) != std::string::npos) {
-    std::cout << "it is on loop " << std::endl;
-    pos += boundaryMarker.size();
-    if (client.chunk.substr(pos, 2) == "--") {
-      break;
-    }
-
-    size_t headerEnd = client.chunk.find("\r\n\r\n", pos);
-    if (headerEnd == std::string::npos)
-      return false;
-
-    std::string headers = client.chunk.substr(pos, headerEnd - pos);
-      pos = headerEnd + 4;
-
-    std::map<std::string, std::string> partHeaders;
-    std::istringstream headerStream(headers);
-    std::string line;
-    while (std::getline(headerStream, line)) {
-      size_t delimiterPos = line.find(":");
-      if (delimiterPos != std::string::npos) {
-        std::string key = trim(line.substr(0, delimiterPos));
-        std::string value = trim(line.substr(delimiterPos + 1));
-        partHeaders[key] = value;
-      }
-    }
-    std::string fieldName, filename, contentType;
-    if (partHeaders.find("Content-Disposition") != partHeaders.end()) {
-      std::string disposition = partHeaders["Content-Disposition"];
-      size_t namePos = disposition.find("name=\"");
-      if (namePos != std::string::npos) {
-        namePos += 6;
-        size_t endPos = disposition.find("\"", namePos);
-        if (endPos != std::string::npos)
-          fieldName = disposition.substr(namePos, endPos - namePos);
-      }
-      size_t filePos = disposition.find("filename=\"");
-      if (filePos != std::string::npos) {
-        filePos += 10;
-        size_t endPos = disposition.find("\"", filePos);
-        if (endPos != std::string::npos)
-          filename = disposition.substr(filePos, endPos - filePos);
-      }
-    }
-    if (partHeaders.find("Content-Type") != partHeaders.end())
-      contentType = partHeaders["Content-Type"];
-
-    size_t nextBoundary = client.chunk.find(boundaryMarker, pos);
-    if (nextBoundary == std::string::npos)
-      return false;
-
-    std::string data = client.chunk.substr(pos, nextBoundary - pos - 2);
-    pos = nextBoundary;
-
-    FormFile file;
-    if (!filename.empty()) {
-      file.filename = filename;
-      file.contentType = contentType;
-      file.data = data;
-      client.files.push_back(file);
-    }
-    else
-      client.headers[fieldName] = data;
-      
-    std::cout << "-> File Captured: " << file.filename << std::endl;
-    std::cout << "-> ContentT: " << file.contentType << std::endl;
-    std::cout << "-> Content-Type: " << file.contentType << std::endl;
-    std::cout << "-> Data Size: " << file.data.size() << " bytes" << std::endl;
+  size_t pos = client.chunk.find(boundaryMarker);
+  if (pos == std::string::npos) {
+    std::cerr << "Boundary not found." << std::endl;
+    return false;
   }
+  pos += boundaryMarker.length();
+
+  size_t headerEndPos = client.chunk.find("\r\n\r\n", pos);
+  if (headerEndPos == std::string::npos) {
+    std::cerr << "Malformed headers in form-data." << std::endl;
+    return false;
+  }
+  std::string headerPart = client.chunk.substr(pos, headerEndPos - pos);
+  pos = headerEndPos + 4;
+
+  std::string filename, contentType, contentDisposition;
+  size_t dispositionPos = headerPart.find("Content-Disposition:");
+  if (dispositionPos != std::string::npos) {
+    size_t endLine = headerPart.find("\r\n", dispositionPos);
+    contentDisposition = headerPart.substr(dispositionPos + 20, endLine - (dispositionPos + 20));
+    size_t filenamePos = contentDisposition.find("filename=\"");
+    if (filenamePos != std::string::npos) {
+        filename = contentDisposition.substr(filenamePos + 10);
+        filename = filename.substr(0, filename.find("\""));
+    }
+  }
+
+  size_t typePos = headerPart.find("Content-Type:");
+  if (typePos != std::string::npos) {
+    size_t endLine = headerPart.find("\r\n", typePos);
+    contentType = headerPart.substr(typePos + 13, endLine - (typePos + 13));
+  }
+  
+  std::cout << "Filename: " << filename << "\nContent-Type: " << contentType << std::endl;
+  client.file.filename = filename;
+  client.file.contentType = contentType;
+  
 
   return true;  
 }
