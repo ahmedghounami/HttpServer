@@ -17,8 +17,8 @@ struct location
 {
     std::string location_index;
     std::string path;
-    std::string index;
-    std::string allowed_methods;
+    std::vector<std::string> index;
+    std::vector<std::string> allowed_methods;
     bool autoindex;
     std::string cgi_extension;
     std::string cgi_path;
@@ -40,7 +40,7 @@ struct server_config
     int max_body_size;
     int upload_max_size;
     std::map<std::string, std::string> error_pages;
-    std::map<int, location> locations;
+    std::map<std::string, location> locations;
 };
 
 struct client_info
@@ -77,6 +77,8 @@ class server
 void get_boundary(int _client_fd, std::map<int, client_info> &clients);
 void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);
 void get_chunk(client_info &client, std::ofstream &file, size_t pos, int flag);
-
-#define PORT 9090
-#define PORt_2 8080
+void parse_key(std::istringstream &ss, std::string &key,
+               server_config &config);
+int is_digit(std::string str);
+int somthing_after(std::istringstream &ss);
+void parse_location(std::istringstream &ss, std::string &key, location &loc);
