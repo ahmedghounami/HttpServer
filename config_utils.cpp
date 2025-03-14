@@ -19,21 +19,26 @@ int somthing_after(std::istringstream &ss)
     return 0;
 }
 
+void path_checker(std::string path)
+{
+    struct stat info;
+    if (stat(path.c_str(), &info) != 0)
+        throw std::runtime_error(path + " : path does not exist");
+    else if (access(path.c_str(), R_OK) != 0)
+        throw std::runtime_error(path + " : path is not readable");
+    else if (access(path.c_str(), W_OK) != 0)
+        throw std::runtime_error(path + " : path is not writable");
+}
+
 void parse_location(std::istringstream &ss, std::string &key, location &loc)
 {
     if (key == "path")
     {
         std::string path;
         ss >> path;
-        struct stat info;
         if (loc.path != "")
             throw std::runtime_error("Duplicate path");
-        if (stat(path.c_str(), &info) != 0)
-            throw std::runtime_error("path does not exist");
-        else if (access(path.c_str(), R_OK) != 0)
-            throw std::runtime_error("path is not readable");
-        else if (access(path.c_str(), W_OK) != 0)
-            throw std::runtime_error("path is not writable");
+        path_checker(path);
         somthing_after(ss);
         loc.path = path;
     }
@@ -61,24 +66,16 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
     }
     else if (key == "cgi_extension")
     {
-        std::string cgi_extension;
-        ss >> cgi_extension;
-        somthing_after(ss);
-        loc.cgi_extension = cgi_extension;
+        for (std::string cgi_extension; ss >> cgi_extension;)
+            loc.cgi_extension.push_back(cgi_extension);
     }
     else if (key == "cgi_path")
     {
         std::string cgi_path;
         ss >> cgi_path;
-        struct stat info;
         if (loc.cgi_path != "")
-            throw std::runtime_error("Duplicate path in location");
-        if (stat(cgi_path.c_str(), &info) != 0)
-            throw std::runtime_error("path does not exist in location");
-        else if (access(cgi_path.c_str(), R_OK) != 0)
-            throw std::runtime_error("path is not readable in location");
-        else if (access(cgi_path.c_str(), W_OK) != 0)
-            throw std::runtime_error("path is not writable in location");
+            throw std::runtime_error("location: Duplicate cgi_path ");
+        path_checker(cgi_path);
         somthing_after(ss);
         loc.cgi_path = cgi_path;
     }
@@ -100,25 +97,19 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
     }
     else if (key == "upload_path")
     {
-        std::string path;
-        ss >> path;
-        struct stat info;
+        std::string upload_path;
+        ss >> upload_path;
         if (loc.upload_path != "")
             throw std::runtime_error("Duplicate path");
-        if (stat(path.c_str(), &info) != 0)
-            throw std::runtime_error("path does not exist");
-        else if (access(path.c_str(), R_OK) != 0)
-            throw std::runtime_error("path is not readable");
-        else if (access(path.c_str(), W_OK) != 0)
-            throw std::runtime_error("path is not writable");
+        path_checker(upload_path);
         somthing_after(ss);
-        loc.upload_path = path;
+        loc.upload_path = upload_path;
     }
 
     else if (key.empty())
         return;
     else
-        throw std::runtime_error("Invalid config file2");
+        throw std::runtime_error("Invalid key in location : " + key);
 }
 
 void parse_key(std::istringstream &ss, std::string &key,
@@ -127,11 +118,15 @@ void parse_key(std::istringstream &ss, std::string &key,
 
     if (key == "server_name")
     {
+        if (config.server_names.size() != 0)
+            throw std::runtime_error("Duplicate server name");
         for (std::string server_name; ss >> server_name;)
             config.server_names.push_back(server_name);
     }
     else if (key == "host")
     {
+        if (config.host != "")
+            throw std::runtime_error("Duplicate host");
         std::string host;
         ss >> host;
         if (host != "localhost")
@@ -147,6 +142,8 @@ void parse_key(std::istringstream &ss, std::string &key,
     }
     else if (key == "listen")
     {
+        if (config.ports.size() != 0)
+            throw std::runtime_error("Duplicate port");
         for (std::string port; ss >> port;)
         {
             int ports = std::atof(port.c_str());
@@ -159,15 +156,9 @@ void parse_key(std::istringstream &ss, std::string &key,
     {
         std::string path;
         ss >> path;
-        struct stat info;
         if (config.path != "")
             throw std::runtime_error("Duplicate path");
-        if (stat(path.c_str(), &info) != 0)
-            throw std::runtime_error("path does not exist");
-        else if (access(path.c_str(), R_OK) != 0)
-            throw std::runtime_error("path is not readable");
-        else if (access(path.c_str(), W_OK) != 0)
-            throw std::runtime_error("path is not writable");
+        path_checker(path);
         somthing_after(ss);
         config.path = path;
     }
@@ -175,26 +166,24 @@ void parse_key(std::istringstream &ss, std::string &key,
     {
         std::string path;
         ss >> path;
-        struct stat info;
         if (config.upload_path != "")
             throw std::runtime_error("Duplicate path");
-        if (stat(path.c_str(), &info) != 0)
-            throw std::runtime_error("path does not exist");
-        else if (access(path.c_str(), R_OK) != 0)
-            throw std::runtime_error("path is not readable");
-        else if (access(path.c_str(), W_OK) != 0)
-            throw std::runtime_error("path is not writable");
-
+        path_checker(path);
         somthing_after(ss);
         config.upload_path = path;
     }
     else if (key == "index")
     {
+        if (config.index.size() != 0)
+            throw std::runtime_error("Duplicate index");
         for (std::string index; ss >> index;)
             config.index.push_back(index);
     }
     else if (key == "autoindex")
     {
+        static int i = 0;
+        if (i != 0)
+            throw std::runtime_error("Duplicate autoindex");
         std::string autoindex;
         ss >> autoindex;
         if (autoindex == "on" || autoindex == "on")
@@ -204,9 +193,12 @@ void parse_key(std::istringstream &ss, std::string &key,
         else
             throw std::runtime_error("Invalid config file1");
         somthing_after(ss);
+        i++;
     }
     else if (key == "client_max_body_size")
     {
+        if (config.max_body_size != 0)
+            throw std::runtime_error("Duplicate body size");
         std::string max_body_size;
         ss >> max_body_size;
         if (atof(max_body_size.c_str()) <= 0 || !is_digit(max_body_size))
@@ -216,6 +208,8 @@ void parse_key(std::istringstream &ss, std::string &key,
     }
     else if (key == "upload_max_size")
     {
+        if (config.upload_max_size != 0)
+            throw std::runtime_error("Duplicate upload size");
         std::string upload_max_size;
         ss >> upload_max_size;
         if (atof(upload_max_size.c_str()) <= 0 || !is_digit(upload_max_size))
@@ -229,6 +223,8 @@ void parse_key(std::istringstream &ss, std::string &key,
         std::string error_page;
         ss >> error_code;
         ss >> error_page;
+        if (config.error_pages.find(error_code) != config.error_pages.end())
+            throw std::runtime_error("Duplicate error code");
         if (error_code.empty() || !is_digit(error_code) || error_page.empty() ||
             std::atof(error_code.c_str()) < 100 ||
             std::atof(error_code.c_str()) > 599)

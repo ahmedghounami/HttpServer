@@ -20,7 +20,7 @@ struct location
     std::vector<std::string> index;
     std::vector<std::string> allowed_methods;
     bool autoindex;
-    std::string cgi_extension;
+    std::vector<std::string> cgi_extension;
     std::string cgi_path;
     int cgi_timeout;
     std::string redirect;

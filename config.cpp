@@ -4,7 +4,6 @@
 void server::parse_config(std::string config_file)
 {
   int i = 0;
-  int loc = 0;
   std::stack<std::string> stack;
   std::ifstream file(config_file);
   if (!file.good())
@@ -31,6 +30,8 @@ void server::parse_config(std::string config_file)
       ss >> location_index;
       if (location_index.empty())
         throw std::runtime_error("location block not opened");
+      if (servers[i].locations.find(location_index) != servers[i].locations.end())
+        throw std::runtime_error("Duplicate location");
       std::string close;
       ss >> close;
       if (close != "{")
@@ -52,8 +53,6 @@ void server::parse_config(std::string config_file)
       }
       if (stack.top() == "server")
         i++;
-      else
-        loc++;
       stack.pop();
       continue;
     }
