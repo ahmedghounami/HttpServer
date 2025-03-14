@@ -15,7 +15,7 @@
 
 struct location
 {
-    std::string loc;
+    std::string location_index;
     std::string path;
     std::string index;
     std::string allowed_methods;
@@ -40,7 +40,7 @@ struct server_config
     int max_body_size;
     int upload_max_size;
     std::map<std::string, std::string> error_pages;
-    std::map<std::string, location> locations;
+    std::map<int, location> locations;
 };
 
 struct client_info

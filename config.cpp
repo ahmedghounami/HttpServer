@@ -126,6 +126,7 @@ void parse_key(std::istringstream &ss, std::string &key,
 
 void server::parse_config(std::string config_file) {
   int i = 0;
+  int loc = 0;
   std::stack<std::string> stack;
   std::ifstream file(config_file);
   if (!file.good())
@@ -134,25 +135,26 @@ void server::parse_config(std::string config_file) {
   while (std::getline(file, line)) {
     std::istringstream ss(line);
     std::string key;
-    std::string loc;
+    std::string location_index;
     ss >> key;
     if (line.empty())
       continue;
-    if (line == "server {") {
+    else if (line == "server {") {
       if (!stack.empty())
         throw std::runtime_error("cannot create server inside server");
       servers[i].server_index = i;
       stack.push("server");
       continue;
-    }
-    if (key == "location" && stack.top() == "server") {
-      ss >> loc;
-      if (loc.empty())
+    } else if (key == "location" && stack.top() == "server") {
+      ss >> location_index;
+      if (location_index.empty())
         throw std::runtime_error("location block not opened");
-      if (line[line.length() - 1] != '{')
+      std::string close;
+      ss >> close;
+      if (close != "{")
         throw std::runtime_error("location block not opened");
       stack.push("location");
-      servers[i].locations[loc] = location();
+      servers[i].locations[loc].location_index = location_index;
       continue;
     } else if (key == "}" && somthing_after(ss) == 0) {
       if (stack.empty())
@@ -165,10 +167,11 @@ void server::parse_config(std::string config_file) {
       }
       if (stack.top() == "server")
         i++;
+      else
+        loc++;
       stack.pop();
       continue;
-    }
-    if (!stack.empty() && stack.top() == "location")
+    } else if (!stack.empty() && stack.top() == "location")
       parse_location(ss, key, servers[i].locations[loc]);
     else if (!stack.empty() && stack.top() == "server")
       parse_key(ss, key, servers[i]);
@@ -176,27 +179,31 @@ void server::parse_config(std::string config_file) {
       throw std::runtime_error("syntax error");
   }
   if (!stack.empty())
-	throw std::runtime_error("server block not closed");
-  //   for (unsigned int i = 0; i < servers.size(); i++) {
-  //     std::cout << "host: " << servers[i].host << std::endl;
-  //     for (unsigned int j = 0; j < servers[i].server_names.size(); j++)
-  //       std::cout << "server_name: " << servers[i].server_names[j] <<
-  //       std::endl;
-  //     for (unsigned int j = 0; j < servers[i].ports.size(); j++)
-  //       std::cout << "port: " << servers[i].ports[j] << std::endl;
-  //     std::cout << "path: " << servers[i].path << std::endl;
-  //     std::cout << "upload_path: " << servers[i].upload_path << std::endl;
-  //     for (unsigned int j = 0; j < servers[i].index.size(); j++)
-  //       std::cout << "index: " << servers[i].index[j] << std::endl;
-  //     std::cout << "autoindex: " << servers[i].autoindex << std::endl;
-  //     std::cout << "max_body_size: " << servers[i].max_body_size <<
-  //     std::endl; std::cout << "upload_max_size: " <<
-  //     servers[i].upload_max_size << std::endl; for (std::map<std::string,
-  //     std::string>::iterator it =
-  //              servers[i].error_pages.begin();
-  //          it != servers[i].error_pages.end(); it++)
-  //       std::cout << "error_page: " << it->first << " " << it->second
-  //                 << std::endl;
-  //     std::cout << "-------------------" << std::endl;
-  //   }
+    throw std::runtime_error("server block not closed");
+  for (unsigned int i = 0; i < servers.size(); i++) {
+    //     std::cout << "host: " << servers[i].host << std::endl;
+    //     for (unsigned int j = 0; j < servers[i].server_names.size(); j++)
+    //       std::cout << "server_name: " << servers[i].server_names[j] <<
+    //       std::endl;
+    //     for (unsigned int j = 0; j < servers[i].ports.size(); j++)
+    //       std::cout << "port: " << servers[i].ports[j] << std::endl;
+    //     std::cout << "path: " << servers[i].path << std::endl;
+    //     std::cout << "upload_path: " << servers[i].upload_path << std::endl;
+    //     for (unsigned int j = 0; j < servers[i].index.size(); j++)
+    //       std::cout << "index: " << servers[i].index[j] << std::endl;
+    //     std::cout << "autoindex: " << servers[i].autoindex << std::endl;
+    //     std::cout << "max_body_size: " << servers[i].max_body_size <<
+    //     std::endl; std::cout << "upload_max_size: " <<
+    //     servers[i].upload_max_size << std::endl; for (std::map<std::string,
+    //     std::string>::iterator it =
+    //              servers[i].error_pages.begin();
+    //          it != servers[i].error_pages.end(); it++)
+    //       std::cout << "error_page: " << it->first << " " << it->second
+    //                 << std::endl;
+    for (std::map<int, location>::iterator it = servers[i].locations.begin();
+         it != servers[i].locations.end(); it++) {
+      std::cout << "location: " << it->second.location_index << std::endl;
+    }
+    std::cout << "-------------------" << std::endl;
+  }
 }
