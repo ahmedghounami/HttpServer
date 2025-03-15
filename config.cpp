@@ -45,9 +45,8 @@ void server::parse_config(std::string config_file)
       if (stack.empty())
         throw std::runtime_error("server block not opened");
       else if (stack.top() == "server" &&
-               (servers[i].server_names.empty() || servers[i].host.empty() ||
-                servers[i].ports.empty() || servers[i].path.empty() ||
-                servers[i].index.empty() || servers[i].max_body_size == 0))
+               (servers[i].host.empty() || servers[i].ports.empty() \
+                || servers[i].path.empty()))
       {
         throw std::runtime_error("key missing in server block");
       }

@@ -32,23 +32,33 @@ void path_checker(std::string path)
 
 void parse_location(std::istringstream &ss, std::string &key, location &loc)
 {
+
     if (key == "path")
     {
         std::string path;
         ss >> path;
         if (loc.path != "")
-            throw std::runtime_error("Duplicate path");
+            throw std::runtime_error("location: Duplicate path ");
+        else if (path.empty())
+            throw std::runtime_error("location: emtpy path");
         path_checker(path);
         somthing_after(ss);
         loc.path = path;
     }
     else if (key == "index")
     {
+        if (loc.index.size() != 0)
+            throw std::runtime_error("location: Duplicate index");
         for (std::string index; ss >> index;)
             loc.index.push_back(index);
+        if (loc.index.size() == 0)
+            throw std::runtime_error("location: Empty index");
     }
     else if (key == "autoindex")
     {
+        static int i = 0;
+        if (i != 0)
+            throw std::runtime_error("location: Duplicate autoindex");
         std::string autoindex;
         ss >> autoindex;
         if (autoindex == "on" || autoindex == "on")
@@ -56,18 +66,26 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
         else if (autoindex == "off" || autoindex == "off")
             loc.autoindex = false;
         else
-            throw std::runtime_error("Invalid config file1");
+            throw std::runtime_error("location: Invalid autoindex");
         somthing_after(ss);
     }
     else if (key == "allowed_methods")
     {
+        if (loc.allowed_methods.size() != 0)
+            throw std::runtime_error("location: Duplicate allowed_methods");
         for (std::string method; ss >> method;)
             loc.allowed_methods.push_back(method);
+        if (loc.allowed_methods.size() == 0)
+            throw std::runtime_error("location: Empty allowed_methods");
     }
     else if (key == "cgi_extension")
     {
+        if (loc.cgi_extension.size() != 0)
+            throw std::runtime_error("location: Duplicate cgi_extension");
         for (std::string cgi_extension; ss >> cgi_extension;)
             loc.cgi_extension.push_back(cgi_extension);
+        if (loc.cgi_extension.size() == 0)
+            throw std::runtime_error("location: Empty cgi_extension");
     }
     else if (key == "cgi_path")
     {
@@ -81,26 +99,32 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
     }
     else if (key == "cgi_timeout")
     {
+        if (loc.cgi_timeout != 0)
+            throw std::runtime_error("location: Duplicate timeout");
         std::string cgi_timeout;
         ss >> cgi_timeout;
         if (atof(cgi_timeout.c_str()) <= 0 || !is_digit(cgi_timeout))
-            throw std::runtime_error("Invalid timeout");
+            throw std::runtime_error("location: Invalid timeout");
         somthing_after(ss);
         loc.cgi_timeout = std::atof(cgi_timeout.c_str());
     }
     else if (key == "redirect")
     {
+        if (loc.redirect != "")
+            throw std::runtime_error("location: Duplicate redirect");
         std::string redirect;
         ss >> redirect;
+        if (redirect.empty())
+            throw std::runtime_error("location: emtpy redirect");
         somthing_after(ss);
         loc.redirect = redirect;
     }
     else if (key == "upload_path")
     {
+        if (loc.upload_path != "")
+            throw std::runtime_error("location: Duplicate path");
         std::string upload_path;
         ss >> upload_path;
-        if (loc.upload_path != "")
-            throw std::runtime_error("Duplicate path");
         path_checker(upload_path);
         somthing_after(ss);
         loc.upload_path = upload_path;
@@ -122,6 +146,8 @@ void parse_key(std::istringstream &ss, std::string &key,
             throw std::runtime_error("Duplicate server name");
         for (std::string server_name; ss >> server_name;)
             config.server_names.push_back(server_name);
+        if (config.server_names.size() == 0)
+            throw std::runtime_error("Empty server name");
     }
     else if (key == "host")
     {
@@ -178,6 +204,8 @@ void parse_key(std::istringstream &ss, std::string &key,
             throw std::runtime_error("Duplicate index");
         for (std::string index; ss >> index;)
             config.index.push_back(index);
+        if (config.index.size() == 0)
+            throw std::runtime_error("Empty index");
     }
     else if (key == "autoindex")
     {
@@ -228,12 +256,12 @@ void parse_key(std::istringstream &ss, std::string &key,
         if (error_code.empty() || !is_digit(error_code) || error_page.empty() ||
             std::atof(error_code.c_str()) < 100 ||
             std::atof(error_code.c_str()) > 599)
-            throw std::runtime_error("Invalid error code");
+            throw std::runtime_error("Invalid error_page");
         somthing_after(ss);
         config.error_pages[error_code] = error_page;
     }
     else if (key.empty())
         return;
     else
-        throw std::runtime_error("Invalid config file2");
+        throw std::runtime_error("sysntax error");
 }
