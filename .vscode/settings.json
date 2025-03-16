@@ -2,6 +2,7 @@
     "files.associations": {
         "stdexcept": "cpp",
         "iosfwd": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "vector": "cpp"
     }
 }
