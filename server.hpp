@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <sys/_types/_ssize_t.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -39,8 +40,8 @@ struct server_config
     std::string upload_path;
     std::vector<std::string> index;
     bool autoindex;
-    int max_body_size;
-    int upload_max_size;
+    size_t max_body_size;
+    size_t upload_max_size;
     std::map<std::string, std::string> error_pages;
     std::map<std::string, location> locations;
 };
