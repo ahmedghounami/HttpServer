@@ -74,11 +74,15 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
         if (loc.allowed_methods.size() != 0)
             throw std::runtime_error("location: Duplicate allowed_methods");
         for (std::string method; ss >> method;)
+        {
+            if (method != "GET" && method != "POST" && method != "DELETE")
+                throw std::runtime_error("location: Invalid method");
             loc.allowed_methods.push_back(method);
+        }
         if (loc.allowed_methods.size() == 0)
             throw std::runtime_error("location: Empty allowed_methods");
     }
-    else if (key == "cgi_extension")
+    else if (key == "cgi_extensions")
     {
         if (loc.cgi_extension.size() != 0)
             throw std::runtime_error("location: Duplicate cgi_extension");
@@ -110,14 +114,17 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
     }
     else if (key == "redirect")
     {
-        if (loc.redirect != "")
+        if (loc.redirect.first != "")
             throw std::runtime_error("location: Duplicate redirect");
-        std::string redirect;
-        ss >> redirect;
-        if (redirect.empty())
-            throw std::runtime_error("location: emtpy redirect");
+        std::string status;
+        std::string redirect_path;
+        ss >> status;
+        ss >> redirect_path;
+        if (redirect_path.empty() || status.empty() || !is_digit(status))
+            throw std::runtime_error("location: Invalid redirect");
         somthing_after(ss);
-        loc.redirect = redirect;
+        loc.redirect.first = status;
+        loc.redirect.second = redirect_path;
     }
     else if (key == "upload_path")
     {

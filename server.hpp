@@ -12,6 +12,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string>
+#include <utility>
+#include <fcntl.h>
 
 struct location
 {
@@ -23,7 +25,7 @@ struct location
     std::vector<std::string> cgi_extension;
     std::string cgi_path;
     int cgi_timeout;
-    std::string redirect;
+    std::pair<std::string, std::string> redirect;
     std::string upload_path;
 };
 

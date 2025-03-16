@@ -30,11 +30,15 @@ server::server(std::string &config_file)
             int opt = 1;
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
-
+            int flags = fcntl(start_connection, F_GETFL, 0);
+            if (flags < 0)
+                throw std::runtime_error("Fcntl failed");
+            if (fcntl(start_connection, F_SETFL, flags | O_NONBLOCK) < 0)
+                throw std::runtime_error("Fcntl failed");
             if (bind(start_connection, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
                 throw std::runtime_error("Bind failed");
 
-            if (listen(start_connection, 128) < 0) 
+            if (listen(start_connection, SOMAXCONN) < 0) 
                 throw std::runtime_error("Listen failed");
 
             struct pollfd server_fd;
@@ -94,6 +98,13 @@ void server::listen_for_connections()
 
                     if (data < 0)
                         continue;
+                    if (data == 0)
+                    {
+                        close(clients_fds[i].fd);
+                        clients_fds.erase(clients_fds.begin() + i);
+                        i--;
+                        continue;
+                    }
 
                     buffer[data] = '\0';
                     clients[clients_fds[i].fd].chunk.append(buffer, data);
@@ -115,7 +126,7 @@ void server::listen_for_connections()
             if (clients_fds[i].revents & POLLOUT)
             {
                 std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>File uploaded successfully</h1></body></html>";
-                ssize_t bytes = send(clients_fds[i].fd, response.c_str(), response.length(), 0);
+                ssize_t bytes = send(clients_fds[i].fd, response.c_str(), response.length(), MSG_NOSIGNAL);
                 if (bytes < 0)
                     continue;
                 close(clients_fds[i].fd);
