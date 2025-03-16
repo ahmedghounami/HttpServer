@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/16 04:28:25 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/16 18:30:52 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,11 @@
 bool request_line(client_info &client) {
   if (client.method.empty() == false)
     return true;
-  std::cerr << "request line[start]" << std::endl;
+
   size_t pos = client.chunk.find("\r\n");
   if (pos == std::string::npos)
     return true;
+  std::cerr << "request line[start]" << std::endl;
 
   std::string requestLine = client.chunk.substr(0, pos);
   client.chunk.erase(0, pos + 2);
@@ -29,9 +30,9 @@ bool request_line(client_info &client) {
 
   if (firstSP == std::string::npos || secondSP == std::string::npos ||
       thirdSP != std::string::npos) {
-    // std::cerr << "Error: Malformed request line (Incorrect spaces)"
-    //           << std::endl;
-    // respond then clear client;
+    std::cerr << "Error: Malformed request line (Incorrect spaces)"
+              << std::endl;
+    //respond and clear client;
     return false;
   }
 
@@ -41,22 +42,22 @@ bool request_line(client_info &client) {
 
   if (client.method != "GET" && client.method != "DELETE" &&
       client.method != "POST") {
-    // std::cerr << "Error: Unsupported HTTP method: " << client.method
-    //           << std::endl;
+    std::cerr << "Error: Unsupported HTTP method: " << client.method
+              << std::endl;
     // respond then clear client;
     return false;
   }
 
   if (client.uri.empty() || client.uri[0] != '/') {
-    // std::cerr << "Error: Invalid request-target (URI must start with '/')"
-    // << std::endl;
+    std::cerr << "Error: Invalid request-target (URI must start with '/')"
+    << std::endl;
     // respond then clear client;
     return false;
   }
 
   if (client.version != "HTTP/1.1") {
-    // std::cerr << "Error: Unsupported HTTP version: " << client.version
-    //           << std::endl;
+    std::cerr << "Error: Unsupported HTTP version: " << client.version
+              << std::endl;
     // respond then clear client;
     return false;
   }
@@ -71,7 +72,7 @@ bool headers(client_info &client) {
   if (client.headers.empty() == false)
     return true;
 
-  std::cerr << "headers[start]" << std::endl;
+  // std::cerr << "headers[start]" << std::endl;
   size_t pos = client.chunk.find("\r\n\r\n");
   if (pos == std::string::npos)
     return true;
@@ -99,8 +100,8 @@ bool headers(client_info &client) {
 
     size_t delimiterPos = line.find(":");
     if (delimiterPos == std::string::npos) {
-      std::cerr << "Error: Malformed header (missing ':'): " << line
-                << std::endl;
+      // std::cerr << "Error: Malformed header (missing ':'): " << line
+      //           << std::endl;
       // respond and clear client;
       return false;
     }
@@ -152,7 +153,7 @@ bool headers(client_info &client) {
   // }
   client.file.isChunked = false;
   client.file.contentLength = 0;
-  std::cerr << "headers[end]\n" << std::endl;
+  // std::cerr << "headers[end]\n" << std::endl;
   return true;
 }
 
@@ -163,7 +164,7 @@ bool bodyType(client_info& client) {
     // || client.file.contentLength != 0
     return true;
 
-  std::cerr << "the body type[start]" << std::endl;
+  // std::cerr << "the body type[start]" << std::endl;
   std::map<std::string, std::string>::iterator it = client.headers.find("transfer-encoding");
   if (it != client.headers.end() && it->second == "chunked") {
       client.file.isChunked = true;
@@ -178,14 +179,14 @@ bool bodyType(client_info& client) {
             client.boundary.clear();
             return false;
           }
-          std::cerr << "the body type[end]\n" << std::endl;
+          // std::cerr << "the body type[end]\n" << std::endl;
           return true;
         }
       }
       //other types
   }
 
-  std::cerr << "the body type[end]\n" << std::endl;
+  // std::cerr << "the body type[end]\n" << std::endl;
   return true;
 }
 
@@ -196,7 +197,6 @@ bool multiPartFormData(client_info &client) {
         && client.file.contentType.empty() == false))
     return true;
 
-  std::cerr << "multi part data[start]" << std::endl;
   std::string boundaryMarker = client.boundary;
   size_t pos = client.chunk.find(boundaryMarker);
   if (pos == std::string::npos) {
@@ -234,74 +234,28 @@ bool multiPartFormData(client_info &client) {
   client.file.contentType = contentType;
   client.file.bodyReached = true;
   client.file.bodyTaken = false;
-  // std::cout << "multipartformdata-> filename: '" << filename << "'" << std::endl;
-  // std::cout << "multipartformdata-> contentType: '" << contentType << "'" << std::endl;
 
   client.chunk.erase(0, pos + 2);
-  std::cerr << "multi part data[end]\n" << std::endl;
   return true;  
 }
 
-bool takeBody(client_info &client) {
+bool takeBody_ChunkedFormData(client_info &client) {
   if (client.file.bodyReached == false || client.chunk.empty() == true)
     return false;
-
   std::cerr << "taking body[start]" << std::endl;
 
-  while (client.chunk.empty() == false) {
-    size_t pos = client.chunk.find("\r\n");
-    if (pos == std::string::npos) {
-      std::cerr << "ERROR: Invalid chunked format (no CRLF after size)" << std::endl;
-      return false;
-    }
-
-    std::string chunkSizeStr = client.chunk.substr(0, pos);
-    client.chunk.erase(0, pos + 2);
-    
-    size_t chunkSize;
-    std::istringstream(chunkSizeStr) >> std::hex >> chunkSize;
-    
-    if (chunkSize == 0) {
-      client.chunk.clear();
-      
-      std::string endBoundary = "--" + client.boundary + "--\r\n";
-      size_t pos = client.file.body.find(endBoundary);
-      if (pos != std::string::npos)
-          client.file.body.erase(pos);
-      client.file.bodyTaken = true;
-      return true;
-    }
-    
-    if (client.chunk.size() < static_cast<size_t>(chunkSize + 2)) {
-      std::cerr << "ERROR: Incomplete chunk data received" << std::endl;
-      return false;
-    }
-  
-    
-    client.file.body.append(client.chunk.substr(0, chunkSize));
-    client.chunk.erase(0, chunkSize + 2);
-  }
+  std::ofstream file(client.file.filename, std::ios::binary | std::ios::app);
+  file << client.chunk;
+  client.chunk.clear();
+  file.close();
 
   std::cerr << "taking body[end]\n" << std::endl;
   return true;
 }
 
-void pars_chunk(client_info &client, int index) {
+void pars_chunk(client_info &client) {
   if (!request_line(client) || !headers(client)
        || !bodyType(client) || !multiPartFormData(client)
-       || !takeBody(client))
+       || !takeBody_ChunkedFormData(client))
     return;
-
-    if (client.file.bodyTaken == true) {
-      std::cout << "[" << client.file.body << "]" << std::endl;
-      exit(0);
-    }
-    // respond if all data is taken
-
-  // if (!client.chunk.empty()) {
-  //   std::cout << client.chunk << std::endl;
-  //   client.chunk.clear();
-  // }
-
-  (void)index;
 }

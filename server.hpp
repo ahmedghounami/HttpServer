@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:59 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/16 03:02:57 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/16 18:08:21 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,10 +33,10 @@ struct FormInfo {
   bool isChunked;
   bool bodyReached;
   bool bodyTaken;
-  std::string body;
+  // std::string body; //re edit
   int contentLength;
-  std::string filename;
-  std::string contentType;
+  std::string filename;//re edit
+  std::string contentType; // re edidt
 };
 
 struct client_info {
@@ -69,12 +69,12 @@ void accept_connection(int start_connection, std::vector<pollfd> &clients_fds,
                        std::map<int, client_info> &clients);
 
 // parsing request
-void pars_chunk(client_info &client, int index);
+void pars_chunk(client_info &client);
 bool request_line(client_info &client);
 bool headers(client_info &client);
 bool bodyType(client_info& client);
 bool multiPartFormData(client_info &client);//for chunked form-data
-bool takeBody(client_info &client);
+bool takeBody_ChunkedFormData(client_info &client);
 
 // utils
 std::string trim(const std::string &str);

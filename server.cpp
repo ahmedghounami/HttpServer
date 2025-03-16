@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:55 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/16 03:11:18 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/16 17:59:29 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,9 +65,10 @@ void server::listen_for_connections() {
         }
 
         buffer[data] = '\0';
-        std::cerr << "dataRed [" << data << "]" << std::endl;
+        // std::cerr << "dataRed [" << data << "]" << std::endl;
         clients[clients_fds[i].fd].chunk.append(buffer, data);
-        pars_chunk(clients[clients_fds[i].fd], i);
+        // std::cout << clients[clients_fds[i].fd].chunk << std::endl;
+        pars_chunk(clients[clients_fds[i].fd]);
         clients[clients_fds[i].fd].chunk.clear();
       }
       if (clients_fds[i].revents & POLLOUT) {
