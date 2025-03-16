@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 17:23:29 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/15 18:19:55 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/16 04:17:45 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,7 @@ std::string toLower(const std::string& str) {
 std::string getBoundary(const std::string &contentType) {
   size_t pos = contentType.find("boundary=");
   if (pos != std::string::npos)
-    return "--" + contentType.substr(pos + 9);
+    return contentType.substr(pos + 9);
   return "";
 }
 
@@ -112,4 +112,20 @@ bool isValidContentLength(const std::string &lengthStr) {
     return false;
   }
  }
+*/
+
+
+/*
+  if (client.boundary.empty() &&
+      client.chunk.find("\r\n\r\n") != std::string::npos)
+    get_boundary(clients_fds[index].fd, clients);
+  std::string boundary_end = clients[clients_fds[index].fd].boundary +
+  "--"; size_t pos =
+  clients[clients_fds[index].fd].chunk.find(boundary_end); if (pos !=
+  std::string::npos) {
+    client.chunk = client.chunk.substr(0, pos - 4);
+    file << client.chunk;
+    file.close();
+  } else
+    file << client.chunk;
 */

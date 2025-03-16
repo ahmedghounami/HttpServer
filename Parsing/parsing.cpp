@@ -6,16 +6,16 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/15 18:21:44 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/16 04:28:25 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../server.hpp"
 
 bool request_line(client_info &client) {
-  if (!client.method.empty())
+  if (client.method.empty() == false)
     return true;
-  std::cout << "request line[start]" << std::endl;
+  std::cerr << "request line[start]" << std::endl;
   size_t pos = client.chunk.find("\r\n");
   if (pos == std::string::npos)
     return true;
@@ -63,15 +63,15 @@ bool request_line(client_info &client) {
   // std::cout << "method ->" << client.method << " uri ->"
   //           << client.uri << " version->" << client.version << std::endl;
 
-  std::cout << "request line[end]" << std::endl;
+  std::cerr << "request line[end]\n" << std::endl;
   return true;
 }
 
 bool headers(client_info &client) {
-  if (!client.headers.empty())
+  if (client.headers.empty() == false)
     return true;
 
-  std::cout << "headers[start]" << std::endl;
+  std::cerr << "headers[start]" << std::endl;
   size_t pos = client.chunk.find("\r\n\r\n");
   if (pos == std::string::npos)
     return true;
@@ -150,22 +150,23 @@ bool headers(client_info &client) {
   //      itMulti != client.multiheaders.end(); ++itMulti) {
   //   std::cout << "multiheader-> " << itMulti->first << ": '" << itMulti->second << "'" << std::endl;
   // }
-  client.isChunked = false;
-  client.contentLength = 0;
-  std::cout << "headers[end]" << std::endl;
+  client.file.isChunked = false;
+  client.file.contentLength = 0;
+  std::cerr << "headers[end]\n" << std::endl;
   return true;
 }
 
 
 bool bodyType(client_info& client) {
-  if (!client.file.contentType.empty() || client.isChunked == true || client.contentLength != 0) {
+  if (client.file.contentType.empty() == false
+    || client.file.isChunked == true)
+    // || client.file.contentLength != 0
     return true;
-  }
 
-  std::cout << "the body type[start]" << std::endl;
+  std::cerr << "the body type[start]" << std::endl;
   std::map<std::string, std::string>::iterator it = client.headers.find("transfer-encoding");
   if (it != client.headers.end() && it->second == "chunked") {
-      client.isChunked = true;
+      client.file.isChunked = true;
       it = client.headers.find("content-type");
       if (it != client.headers.end()) {
         client.file.contentType = it->second;
@@ -177,22 +178,25 @@ bool bodyType(client_info& client) {
             client.boundary.clear();
             return false;
           }
-          std::cout << "the body type[end]" << std::endl;
+          std::cerr << "the body type[end]\n" << std::endl;
           return true;
         }
       }
       //other types
   }
 
-  std::cout << "the body type[end]" << std::endl;
+  std::cerr << "the body type[end]\n" << std::endl;
   return true;
 }
 
 bool multiPartFormData(client_info &client) {
-  if (client.boundary.empty() || (!client.file.filename.empty() && !client.file.contentType.empty()))
-    return false;
+  if (client.file.isChunked == false
+    || client.boundary.empty() == true
+    || (client.file.filename.empty() == false
+        && client.file.contentType.empty() == false))
+    return true;
 
-  std::cout << "multi part data[start]" << std::endl;
+  std::cerr << "multi part data[start]" << std::endl;
   std::string boundaryMarker = client.boundary;
   size_t pos = client.chunk.find(boundaryMarker);
   if (pos == std::string::npos) {
@@ -228,21 +232,76 @@ bool multiPartFormData(client_info &client) {
   }
   client.file.filename = filename;
   client.file.contentType = contentType;
-  client.file.takeBody = 1;
+  client.file.bodyReached = true;
+  client.file.bodyTaken = false;
   // std::cout << "multipartformdata-> filename: '" << filename << "'" << std::endl;
   // std::cout << "multipartformdata-> contentType: '" << contentType << "'" << std::endl;
 
   client.chunk.erase(0, pos + 2);
-  std::cout << "multi part data[end]" << std::endl;
+  std::cerr << "multi part data[end]\n" << std::endl;
   return true;  
 }
 
 bool takeBody(client_info &client) {
-  if (client.file.takeBody == 0)
+  if (client.file.bodyReached == false || client.chunk.empty() == true)
     return false;
-  
-  std::cout << "[" << client.chunk << "]" << std::endl;
-  client.chunk.clear();
 
+  std::cerr << "taking body[start]" << std::endl;
+
+  while (client.chunk.empty() == false) {
+    size_t pos = client.chunk.find("\r\n");
+    if (pos == std::string::npos) {
+      std::cerr << "ERROR: Invalid chunked format (no CRLF after size)" << std::endl;
+      return false;
+    }
+
+    std::string chunkSizeStr = client.chunk.substr(0, pos);
+    client.chunk.erase(0, pos + 2);
+    
+    size_t chunkSize;
+    std::istringstream(chunkSizeStr) >> std::hex >> chunkSize;
+    
+    if (chunkSize == 0) {
+      client.chunk.clear();
+      
+      std::string endBoundary = "--" + client.boundary + "--\r\n";
+      size_t pos = client.file.body.find(endBoundary);
+      if (pos != std::string::npos)
+          client.file.body.erase(pos);
+      client.file.bodyTaken = true;
+      return true;
+    }
+    
+    if (client.chunk.size() < static_cast<size_t>(chunkSize + 2)) {
+      std::cerr << "ERROR: Incomplete chunk data received" << std::endl;
+      return false;
+    }
+  
+    
+    client.file.body.append(client.chunk.substr(0, chunkSize));
+    client.chunk.erase(0, chunkSize + 2);
+  }
+
+  std::cerr << "taking body[end]\n" << std::endl;
   return true;
+}
+
+void pars_chunk(client_info &client, int index) {
+  if (!request_line(client) || !headers(client)
+       || !bodyType(client) || !multiPartFormData(client)
+       || !takeBody(client))
+    return;
+
+    if (client.file.bodyTaken == true) {
+      std::cout << "[" << client.file.body << "]" << std::endl;
+      exit(0);
+    }
+    // respond if all data is taken
+
+  // if (!client.chunk.empty()) {
+  //   std::cout << client.chunk << std::endl;
+  //   client.chunk.clear();
+  // }
+
+  (void)index;
 }

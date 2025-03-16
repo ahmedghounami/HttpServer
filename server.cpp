@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:55 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/15 18:12:36 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/16 03:11:18 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ void server::listen_for_connections() {
 
     for (unsigned int i = 1; i < clients_fds.size(); i++) {
       if (clients_fds[i].revents & POLLIN) {
-        char buffer[40000];
+        char buffer[60000];
         int data = recv(clients_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
 
         if (data < 0) {
@@ -89,32 +89,3 @@ server::~server() {
   for (unsigned int i = 0; i < clients_fds.size(); i++)
     close(clients_fds[i].fd);
 }
-
-//-------------------------------------
-
-void server::pars_chunk(client_info &client, int index) {
-  if (
-    request_line(client) == false
-    || headers(client) == false
-    || bodyType(client) == false
-    || multiPartFormData(client) == false
-    || takeBody(client) == false)
-    return;
-  (void)index;
-}
-
-
-/*
-  if (client.boundary.empty() &&
-      client.chunk.find("\r\n\r\n") != std::string::npos)
-    get_boundary(clients_fds[index].fd, clients);
-  std::string boundary_end = clients[clients_fds[index].fd].boundary +
-  "--"; size_t pos =
-  clients[clients_fds[index].fd].chunk.find(boundary_end); if (pos !=
-  std::string::npos) {
-    client.chunk = client.chunk.substr(0, pos - 4);
-    file << client.chunk;
-    file.close();
-  } else
-    file << client.chunk;
-*/

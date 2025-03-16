@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:59 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/15 17:33:16 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/16 03:02:57 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,16 +30,16 @@
 #define PORT 8080
 
 struct FormInfo {
+  bool isChunked;
+  bool bodyReached;
+  bool bodyTaken;
+  std::string body;
+  int contentLength;
   std::string filename;
   std::string contentType;
-  int takeBody;
-  std::string data;
 };
 
 struct client_info {
-  int length;//unused
-  int contentLength;//unused
-  bool isChunked;
   std::string chunk;
   std::string boundary;
   std::string method, uri, version;
@@ -62,7 +62,6 @@ private:
 public:
   server();
   void listen_for_connections();
-  void pars_chunk(client_info &client, int index);
   ~server();
 };
 
@@ -70,10 +69,11 @@ void accept_connection(int start_connection, std::vector<pollfd> &clients_fds,
                        std::map<int, client_info> &clients);
 
 // parsing request
+void pars_chunk(client_info &client, int index);
 bool request_line(client_info &client);
 bool headers(client_info &client);
 bool bodyType(client_info& client);
-bool multiPartFormData(client_info &client);
+bool multiPartFormData(client_info &client);//for chunked form-data
 bool takeBody(client_info &client);
 
 // utils
