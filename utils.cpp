@@ -30,6 +30,7 @@ void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, st
 
     clients_fds.push_back(newfd);
     clients[client_sock] = client_info();
+    clients[client_sock].last_time = time(NULL);
 }
 
 void get_chunk(client_info &client, std::ofstream &file, size_t pos, int flag)

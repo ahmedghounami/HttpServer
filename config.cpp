@@ -64,6 +64,8 @@ void server::parse_config(std::string config_file)
   }
   if (!stack.empty())
     throw std::runtime_error("server block not closed");
+  else if (servers.empty())
+    throw std::runtime_error("no server block found");
   for (unsigned int i = 0; i < servers.size(); i++)
   {
     //     std::cout << "host: " << servers[i].host << std::endl;

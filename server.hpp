@@ -15,6 +15,10 @@
 #include <string>
 #include <utility>
 #include <fcntl.h>
+#include <stack>
+#include <signal.h>
+#include <algorithm>
+
 
 struct location
 {
@@ -51,6 +55,7 @@ struct client_info
     std::string chunk;
     std::string boundary;
     std::string header;
+    time_t last_time;
 };
 
 struct port_used
@@ -73,6 +78,7 @@ class server
         server(std::string &config_file);
         void parse_config(std::string config_file);
         void listen_for_connections();
+        void check_timeout(std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);
         ~server();
 
 };
