@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:59 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/13 18:13:42 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/15 17:33:16 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,16 +32,16 @@
 struct FormInfo {
   std::string filename;
   std::string contentType;
+  int takeBody;
   std::string data;
 };
 
 struct client_info {
-  int length;
+  int length;//unused
+  int contentLength;//unused
   bool isChunked;
-  int contentLength;
   std::string chunk;
   std::string boundary;
-  std::string contentType;
   std::string method, uri, version;
   FormInfo file;
   std::map<std::string, std::string> headers;
@@ -74,6 +74,7 @@ bool request_line(client_info &client);
 bool headers(client_info &client);
 bool bodyType(client_info& client);
 bool multiPartFormData(client_info &client);
+bool takeBody(client_info &client);
 
 // utils
 std::string trim(const std::string &str);

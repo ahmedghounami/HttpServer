@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:55 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/13 15:12:19 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/15 18:12:36 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,9 +46,6 @@ void server::listen_for_connections() {
     if (ret < 0) {
       std::cerr << "Poll failed\n";
       continue;
-    } else if (ret == 0) {
-      std::cerr << "No data, timeout\n";
-      continue;
     }
 
     if (clients_fds[0].revents & POLLIN)
@@ -56,13 +53,19 @@ void server::listen_for_connections() {
 
     for (unsigned int i = 1; i < clients_fds.size(); i++) {
       if (clients_fds[i].revents & POLLIN) {
-        char buffer[1024];
+        char buffer[40000];
         int data = recv(clients_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
 
-        if (data < 0)
+        if (data < 0) {
+          std::cerr << "recv failed" << std::endl;
           continue;
+        } else if (data == 0) {
+          std::cerr << "client disconnected" << std::endl;
+          clients_fds[i].events = POLLOUT;
+        }
 
         buffer[data] = '\0';
+        std::cerr << "dataRed [" << data << "]" << std::endl;
         clients[clients_fds[i].fd].chunk.append(buffer, data);
         pars_chunk(clients[clients_fds[i].fd], i);
         clients[clients_fds[i].fd].chunk.clear();
@@ -90,15 +93,13 @@ server::~server() {
 //-------------------------------------
 
 void server::pars_chunk(client_info &client, int index) {
-  if (request_line(client) == false
+  if (
+    request_line(client) == false
     || headers(client) == false
     || bodyType(client) == false
-    || multiPartFormData(client) == false)
+    || multiPartFormData(client) == false
+    || takeBody(client) == false)
     return;
-    // if (!client.chunk.empty()) {
-    //   std::cout << client.chunk << std::endl;
-    //   client.chunk.clear();
-    // }
   (void)index;
 }
 

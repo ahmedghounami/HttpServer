@@ -1,6 +1,7 @@
 NAME	= webserv
 
-src		=	main.cpp server.cpp parsing.cpp utils.cpp
+src		=	main.cpp server.cpp utils.cpp \
+			Parsing/parsing.cpp Parsing/parsingUtils.cpp
 OBJ		=	$(src:.cpp=.o)
 HEADER	=	server.hpp
 
