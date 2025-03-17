@@ -274,7 +274,7 @@ bool takeBody_ChunkedFormData(client_info &client) {
 //   return true;
 // }
 
-void pars_chunk(client_info &client) {
+void parse_chunk(client_info &client) {
   //if GET : call lmossiba function
   //else if Post continue;
   if (!request_line(client) || !headers(client))
