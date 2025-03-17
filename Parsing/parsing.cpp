@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parsing.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ahmed <ahmed@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/17 17:28:51 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/17 17:41:50 by ahmed            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ bool request_line(client_info &client) {
   return true;
 }
 
-bool headers(client_info &client, std::map<int, server_config> server) {
+bool headers(client_info &client, std::map<int, server_config> &server) {
   if (client.headers.empty() == false)
     return true;
 
@@ -146,7 +146,7 @@ bool headers(client_info &client, std::map<int, server_config> server) {
   client.isChunked = false;
   client.contentLength = 0;
   if (client.method == "GET") {
-    handleGetMethod(client, server);
+    handleGetRequest(client, server);
     return false;
   }
 
@@ -268,7 +268,7 @@ bool takeBody_ChunkedFormData(client_info &client) {
 //   return true;
 // }
 
-void parse_chunk(client_info &client, std::map<int, server_config> server) {
+void parse_chunk(client_info &client, std::map<int, server_config> &server) {
   if (!request_line(client) || !headers(client, server) || !bodyType(client))
     return ;
   if (client.isChunked == true) { //chunked funcions;

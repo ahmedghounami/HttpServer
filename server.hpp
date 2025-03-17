@@ -97,7 +97,8 @@ class server
 // server
 void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);
 
-
+// GET request
+void handleGetRequest(client_info &client, std::map<int, server_config> &server);
 
 // config
 void parse_key(std::istringstream &ss, std::string &key, server_config &config);
@@ -107,9 +108,9 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 
 // parsing request
-void parse_chunk(client_info &client, std::map<int, server_config> server);
+void parse_chunk(client_info &client, std::map<int, server_config> &server);
 bool request_line(client_info &client);
-bool headers(client_info &client, std::map<int, server_config> server);
+bool headers(client_info &client, std::map<int, server_config> &server);
 bool bodyType(client_info& client);
 bool multiPartFormData(client_info &client);//for chunked form-data
 bool takeBody_ChunkedFormData(client_info &client);
