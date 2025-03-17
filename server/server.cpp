@@ -130,7 +130,7 @@ void server::listen_for_connections()
                     clients[clients_fds[i].fd].last_time = time(NULL);
                     buffer[data] = '\0';
                     clients[clients_fds[i].fd].chunk.append(buffer, data);
-                    // get_chunk(clients[clients_fds[i].fd], file, 0, 0);
+                    parse_chunk(clients[clients_fds[i].fd]);
                 }
             }
             if (clients_fds[i].revents & POLLOUT)
