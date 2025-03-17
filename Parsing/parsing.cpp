@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/16 18:30:52 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/17 15:31:17 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -180,21 +180,22 @@ bool bodyType(client_info& client) {
             return false;
           }
           // std::cerr << "the body type[end]\n" << std::endl;
-          return true;
+          // return true;
         }
       }
       //other types
   }
 
   // std::cerr << "the body type[end]\n" << std::endl;
+  
   return true;
 }
 
 bool multiPartFormData(client_info &client) {
   if (client.file.isChunked == false
-    || client.boundary.empty() == true
-    || (client.file.filename.empty() == false
-        && client.file.contentType.empty() == false))
+      || client.boundary.empty() == true
+      || (client.file.filename.empty() == false
+          && client.file.contentType.empty() == false))
     return true;
 
   std::string boundaryMarker = client.boundary;
@@ -244,18 +245,46 @@ bool takeBody_ChunkedFormData(client_info &client) {
     return false;
   std::cerr << "taking body[start]" << std::endl;
 
-  std::ofstream file(client.file.filename, std::ios::binary | std::ios::app);
-  file << client.chunk;
-  client.chunk.clear();
-  file.close();
+  // std::ofstream file(client.file.filename, std::ios::binary | std::ios::app);
+  // file << client.chunk;
+  // client.chunk.clear();
+  // file.close();
 
-  std::cerr << "taking body[end]\n" << std::endl;
-  return true;
+  while (!client.chunk.empty()) {
+    //step 1: read chunk size
+    size_t pos = client.chunk.find("\r\n");
+    if (pos == std::string::npos) {
+      std::cerr << "ERROR: Invalid chunked format (no CRLF after size)" << std::endl;
+      //respond and clear client;
+      return false;
+    }
+
+    std::string chunkSizeStr = client.chunk.substr(0, pos);
+    client.chunk.erase(0, pos + 2);
+
+    size_t chunkSize;
+    // std::istringstream(chunkSizeStr) >> std::hex >> chunkSize;
+
+    //step 2: check for final chunk
+    }
+  return true;   
 }
 
+//   std::cerr << "taking body[end]\n" << std::endl;
+//   return true;
+// }
+
 void pars_chunk(client_info &client) {
-  if (!request_line(client) || !headers(client)
-       || !bodyType(client) || !multiPartFormData(client)
+  //if GET : call lmossiba function
+  //else if Post continue;
+  if (!request_line(client) || !headers(client))
+    return ;
+  if (client.method == "GET")
+    //call ahmed function;.
+  
+  if (!bodyType(client) || !multiPartFormData(client)
        || !takeBody_ChunkedFormData(client))
     return;
+
+  (void)client;
 }

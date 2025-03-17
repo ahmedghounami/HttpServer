@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 20:30:55 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/16 17:59:29 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/17 15:07:02 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,13 +63,13 @@ void server::listen_for_connections() {
           std::cerr << "client disconnected" << std::endl;
           clients_fds[i].events = POLLOUT;
         }
-
         buffer[data] = '\0';
         // std::cerr << "dataRed [" << data << "]" << std::endl;
         clients[clients_fds[i].fd].chunk.append(buffer, data);
-        // std::cout << clients[clients_fds[i].fd].chunk << std::endl;
+        std::cout << clients[clients_fds[i].fd].chunk << std::endl;
         pars_chunk(clients[clients_fds[i].fd]);
         clients[clients_fds[i].fd].chunk.clear();
+       clients_fds[i].events = POLLOUT;
       }
       if (clients_fds[i].revents & POLLOUT) {
         std::string response = "HTTP/1.1 200 OK\r\nContent-Type: "
