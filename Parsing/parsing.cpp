@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/17 15:31:17 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/17 15:49:04 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -262,7 +262,7 @@ bool takeBody_ChunkedFormData(client_info &client) {
     std::string chunkSizeStr = client.chunk.substr(0, pos);
     client.chunk.erase(0, pos + 2);
 
-    size_t chunkSize;
+    // size_t chunkSize;
     // std::istringstream(chunkSizeStr) >> std::hex >> chunkSize;
 
     //step 2: check for final chunk
