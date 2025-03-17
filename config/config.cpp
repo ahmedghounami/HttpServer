@@ -1,4 +1,4 @@
-#include "server.hpp"
+#include "../server.hpp"
 
 
 void server::parse_config(std::string config_file)

@@ -1,4 +1,4 @@
-#include "server.hpp"
+#include "../server.hpp"
 
 void check_ports(int port, std::string server_name, std::vector<port_used> &ports_used)
 {
@@ -130,19 +130,7 @@ void server::listen_for_connections()
                     clients[clients_fds[i].fd].last_time = time(NULL);
                     buffer[data] = '\0';
                     clients[clients_fds[i].fd].chunk.append(buffer, data);
-
-                    if (clients[clients_fds[i].fd].chunk.find("\r\n\r\n") != std::string::npos)
-                        get_boundary(clients_fds[i].fd, clients);
-                    std::string boundary_end = clients[clients_fds[i].fd].boundary + "--";
-                    size_t pos = clients[clients_fds[i].fd].chunk.find(boundary_end);
-                    if (pos != std::string::npos)
-                    {
-                        get_chunk(clients[clients_fds[i].fd], file, pos, 1);
-                        clients_fds[i].events = POLLOUT;
-                    }
-                    else
-                        get_chunk(clients[clients_fds[i].fd], file, 0, 0);
-                    clients[clients_fds[i].fd].chunk.clear();
+                    // get_chunk(clients[clients_fds[i].fd], file, 0, 0);
                 }
             }
             if (clients_fds[i].revents & POLLOUT)

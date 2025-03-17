@@ -72,7 +72,6 @@ class server
         std::vector<pollfd> clients_fds;
         std::vector<int> listners;
         std::map<int, server_config> servers;
-        std::vector<port_used> ports_used;
 
     public:
         server(std::string &config_file);
@@ -83,11 +82,14 @@ class server
 
 };
 
-void get_boundary(int _client_fd, std::map<int, client_info> &clients);
+
+// server
 void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);
-void get_chunk(client_info &client, std::ofstream &file, size_t pos, int flag);
-void parse_key(std::istringstream &ss, std::string &key,
-               server_config &config);
+
+
+
+// config
+void parse_key(std::istringstream &ss, std::string &key, server_config &config);
 int is_digit(std::string str);
 int somthing_after(std::istringstream &ss);
 void parse_location(std::istringstream &ss, std::string &key, location &loc);

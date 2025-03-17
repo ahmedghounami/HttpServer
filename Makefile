@@ -1,6 +1,6 @@
 NAME = webserv
 
-src = main.cpp server.cpp utils.cpp config.cpp config_utils.cpp
+src = main.cpp server/server.cpp server/utils.cpp config/config.cpp config/config_utils.cpp
 
 OBJ = $(src:.cpp=.o)
 
