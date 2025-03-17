@@ -50,21 +50,19 @@ struct server_config
     std::map<std::string, location> locations;
 };
 
-struct FormInfo {
-  bool isChunked;
-  bool bodyReached;
-  bool bodyTaken;
-  int contentLength;
-  std::string filename;//re edit
-  std::string contentType; // re edidt
-};
+class server;
 
 struct client_info
 {
+  bool isChunked;
+  bool bodyTaken;
+  bool bodyReached;
+  int contentLength;
   std::string chunk;
   std::string boundary;
+  std::string filename;//re edit
+  std::string contentType; // re edidt
   std::string method, uri, version;
-  FormInfo file;
   std::map<std::string, std::string> headers;
   std::multimap<std::string, std::string> multiheaders;
 
@@ -109,9 +107,9 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 
 // parsing request
-void parse_chunk(client_info &client);
+void parse_chunk(client_info &client, std::map<int, server_config> server);
 bool request_line(client_info &client);
-bool headers(client_info &client);
+bool headers(client_info &client, std::map<int, server_config> server);
 bool bodyType(client_info& client);
 bool multiPartFormData(client_info &client);//for chunked form-data
 bool takeBody_ChunkedFormData(client_info &client);
