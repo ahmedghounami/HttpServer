@@ -34,16 +34,6 @@ struct location
     std::string upload_path;
 };
 
-struct FormInfo {
-  bool isChunked;
-  bool bodyReached;
-  bool bodyTaken;
-  int contentLength;
-  std::string filename;//re edit
-  std::string contentType; // re edidt
-};
-
-
 struct server_config
 {
     int  server_index;
@@ -60,6 +50,15 @@ struct server_config
     std::map<std::string, location> locations;
 };
 
+struct FormInfo {
+  bool isChunked;
+  bool bodyReached;
+  bool bodyTaken;
+  int contentLength;
+  std::string filename;//re edit
+  std::string contentType; // re edidt
+};
+
 struct client_info
 {
   std::string chunk;
@@ -68,7 +67,6 @@ struct client_info
   FormInfo file;
   std::map<std::string, std::string> headers;
   std::multimap<std::string, std::string> multiheaders;
-  std::map<std::string, std::string> dataInfo;
 
   time_t last_time;
 };
