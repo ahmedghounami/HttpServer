@@ -1,4 +1,4 @@
-#include "server.hpp"
+#include "../server.hpp"
 
 void check_ports(int port, std::string server_name, std::vector<port_used> &ports_used)
 {
@@ -11,6 +11,7 @@ void check_ports(int port, std::string server_name, std::vector<port_used> &port
 
 server::server(std::string &config_file)
 {
+    // signal(SIGPIPE, SIG_IGN);
     parse_config(config_file);
     for (unsigned int i = 0; i < servers.size(); i++)
     {
@@ -30,11 +31,15 @@ server::server(std::string &config_file)
             int opt = 1;
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+
+            // non blocking mode
             int flags = fcntl(start_connection, F_GETFL, 0);
             if (flags < 0)
                 throw std::runtime_error("Fcntl failed");
             if (fcntl(start_connection, F_SETFL, flags | O_NONBLOCK) < 0)
                 throw std::runtime_error("Fcntl failed");
+            // -------------------------------------
+
             if (bind(start_connection, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
                 throw std::runtime_error("Bind failed");
 
@@ -52,6 +57,22 @@ server::server(std::string &config_file)
             // ports_used.push_back(port);
 
             std::cout << "Server started on port " << servers[i].ports[j] << std::endl;
+        }
+    }
+}
+
+void server::check_timeout(std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients)
+{
+    time_t current_time = time(NULL);
+    for (unsigned int i = 0; i < clients_fds.size(); i++)
+    {
+        if (std::find(listners.begin(), listners.end(), clients_fds[i].fd) == listners.end() && \
+             current_time - clients[clients_fds[i].fd].last_time > 15)
+        {
+            std::cerr << "Client timeout " << clients_fds[i].fd << std::endl;
+            close(clients_fds[i].fd);
+            clients_fds.erase(clients_fds.begin() + i);
+            i--;
         }
     }
 }
@@ -78,7 +99,8 @@ void server::listen_for_connections()
             std::cerr << "Poll failed\n";
             continue;
         }
-        else if (ret == 0)
+        check_timeout(clients_fds, clients);
+        if (ret == 0)
         {
             std::cerr << "No data, timeout\n";
             continue;
@@ -105,28 +127,16 @@ void server::listen_for_connections()
                         i--;
                         continue;
                     }
-
+                    clients[clients_fds[i].fd].last_time = time(NULL);
                     buffer[data] = '\0';
                     clients[clients_fds[i].fd].chunk.append(buffer, data);
-
-                    if (clients[clients_fds[i].fd].chunk.find("\r\n\r\n") != std::string::npos)
-                        get_boundary(clients_fds[i].fd, clients);
-                    std::string boundary_end = clients[clients_fds[i].fd].boundary + "--";
-                    size_t pos = clients[clients_fds[i].fd].chunk.find(boundary_end);
-                    if (pos != std::string::npos)
-                    {
-                        get_chunk(clients[clients_fds[i].fd], file, pos, 1);
-                        clients_fds[i].events = POLLOUT;
-                    }
-                    else
-                        get_chunk(clients[clients_fds[i].fd], file, 0, 0);
-                    clients[clients_fds[i].fd].chunk.clear();
+                    parse_chunk(clients[clients_fds[i].fd]);
                 }
             }
             if (clients_fds[i].revents & POLLOUT)
             {
                 std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>File uploaded successfully</h1></body></html>";
-                ssize_t bytes = send(clients_fds[i].fd, response.c_str(), response.length(), MSG_NOSIGNAL);
+                ssize_t bytes = send(clients_fds[i].fd, response.c_str(), response.length(), 0);
                 if (bytes < 0)
                     continue;
                 close(clients_fds[i].fd);

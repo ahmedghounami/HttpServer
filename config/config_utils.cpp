@@ -1,4 +1,5 @@
-#include "server.hpp"
+#include "../server.hpp"
+
 
 int is_digit(std::string str)
 {
@@ -236,7 +237,7 @@ void parse_key(std::istringstream &ss, std::string &key,
             throw std::runtime_error("Duplicate body size");
         std::string max_body_size;
         ss >> max_body_size;
-        if (atof(max_body_size.c_str()) <= 0 || !is_digit(max_body_size))
+        if (atof(max_body_size.c_str()) <= 0 || !is_digit(max_body_size) || std::numeric_limits<size_t>::max() < std::atof(max_body_size.c_str()))
             throw std::runtime_error("Invalid body size");
         somthing_after(ss);
         config.max_body_size = std::atof(max_body_size.c_str());
