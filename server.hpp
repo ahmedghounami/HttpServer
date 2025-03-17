@@ -111,7 +111,7 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 
 // parsing request
-void pars_chunk(client_info &client);
+void parse_chunk(client_info &client);
 bool request_line(client_info &client);
 bool headers(client_info &client);
 bool bodyType(client_info& client);

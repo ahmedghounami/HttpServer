@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/17 15:49:04 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/03/17 15:52:27 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -274,7 +274,7 @@ bool takeBody_ChunkedFormData(client_info &client) {
 //   return true;
 // }
 
-void pars_chunk(client_info &client) {
+void parse_chunk(client_info &client) {
   //if GET : call lmossiba function
   //else if Post continue;
   if (!request_line(client) || !headers(client))
