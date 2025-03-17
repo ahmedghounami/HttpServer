@@ -6,7 +6,7 @@
 /*   By: ahmed <ahmed@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/17 17:41:50 by ahmed            ###   ########.fr       */
+/*   Updated: 2025/03/17 21:49:02 by ahmed            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -135,14 +135,14 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
   }
 
   std::map<std::string, std::string>::iterator it;
-  for (it = client.headers.begin(); it != client.headers.end(); ++it) {
-    std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
-  }
-  std::multimap<std::string, std::string>::iterator itMulti;
-  for (itMulti = client.multiheaders.begin();
-       itMulti != client.multiheaders.end(); ++itMulti) {
-    std::cout << "multiheader-> " << itMulti->first << ": '" << itMulti->second << "'" << std::endl;
-  }
+  // for (it = client.headers.begin(); it != client.headers.end(); ++it) {
+  //   std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
+  // }
+  // std::multimap<std::string, std::string>::iterator itMulti;
+  // for (itMulti = client.multiheaders.begin();
+  //      itMulti != client.multiheaders.end(); ++itMulti) {
+  //   std::cout << "multiheader-> " << itMulti->first << ": '" << itMulti->second << "'" << std::endl;
+  // }
   client.isChunked = false;
   client.contentLength = 0;
   if (client.method == "GET") {

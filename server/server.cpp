@@ -81,15 +81,15 @@ void server::listen_for_connections()
 {
 
     ///////////////////////////////////////////////
-    std::string filename = "data";
-    std::ofstream file(filename);
-    if (file.good())
-        std::cerr << "File opened successfully\n";
-    else
-    {
-        std::cerr << "File open failed\n";
-        throw std::runtime_error("File open failed");
-    }
+    // std::string filename = "data";
+    // std::ofstream file(filename);
+    // if (file.good())
+    //     std::cerr << "File opened successfully\n";
+    // else
+    // {
+    //     std::cerr << "File open failed\n";
+    //     throw std::runtime_error("File open failed");
+    // }
     ///////////////////////////////////////////////
     while (true)
     {
