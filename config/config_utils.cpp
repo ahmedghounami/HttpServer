@@ -242,17 +242,6 @@ void parse_key(std::istringstream &ss, std::string &key,
         somthing_after(ss);
         config.max_body_size = std::atof(max_body_size.c_str());
     }
-    else if (key == "upload_max_size")
-    {
-        if (config.upload_max_size != 0)
-            throw std::runtime_error("Duplicate upload size");
-        std::string upload_max_size;
-        ss >> upload_max_size;
-        if (atof(upload_max_size.c_str()) <= 0 || !is_digit(upload_max_size))
-            throw std::runtime_error("Invalid upload size");
-        somthing_after(ss);
-        config.upload_max_size = std::atof(upload_max_size.c_str());
-    }
     else if (key == "error_page")
     {
         std::string error_code;
@@ -271,5 +260,5 @@ void parse_key(std::istringstream &ss, std::string &key,
     else if (key.empty())
         return;
     else
-        throw std::runtime_error("sysntax error");
+        throw std::runtime_error("Invalid key in config : " + key);
 }
