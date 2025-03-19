@@ -45,7 +45,6 @@ struct server_config
     std::vector<std::string> index;
     bool autoindex;
     size_t max_body_size;
-    size_t upload_max_size;
     std::map<std::string, std::string> error_pages;
     std::map<std::string, location> locations;
 };
