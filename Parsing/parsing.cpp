@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parsing.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ahmed <ahmed@student.42.fr>                +#+  +:+       +#+        */
+/*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/17 21:49:02 by ahmed            ###   ########.fr       */
+/*   Updated: 2025/03/18 04:12:37 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,54 +134,23 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
     return false; // respond and clear client;
   }
 
-  std::map<std::string, std::string>::iterator it;
+  // std::map<std::string, std::string>::iterator it;
   // for (it = client.headers.begin(); it != client.headers.end(); ++it) {
   //   std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
   // }
-  // std::multimap<std::string, std::string>::iterator itMulti;
-  // for (itMulti = client.multiheaders.begin();
-  //      itMulti != client.multiheaders.end(); ++itMulti) {
-  //   std::cout << "multiheader-> " << itMulti->first << ": '" << itMulti->second << "'" << std::endl;
-  // }
+  std::multimap<std::string, std::string>::iterator itMulti;
+  for (itMulti = client.multiheaders.begin();
+       itMulti != client.multiheaders.end(); ++itMulti) {
+    std::cout << "multiheader-> " << itMulti->first << ": '" << itMulti->second << "'" << std::endl;
+  }
   client.isChunked = false;
   client.contentLength = 0;
-  if (client.method == "GET") {
-    handleGetRequest(client, server);
+  if (client.method == "DELETE") {
+    handleDeleteRequest(client, server);
     return false;
   }
 
   std::cerr << "headers[end]\n" << std::endl;
-  return true;
-}
-
-bool bodyType(client_info& client) {
-  if (client.contentType.empty() == false
-    || client.isChunked == true)
-    return true;
-
-  std::cerr << "the body type[start]" << std::endl;
-  std::map<std::string, std::string>::iterator it = client.headers.find("transfer-encoding");
-  if (it != client.headers.end() && it->second == "chunked") {
-    client.isChunked = true;
-    it = client.headers.find("content-type");
-    if (it != client.headers.end()) {
-      client.contentType = it->second;
-      if (client.contentType.find("multipart/form-data") != std::string::npos) {
-        client.boundary = getBoundary(client.contentType);
-        if (client.boundary.empty()) {
-          std::cerr << "Error: Invalid multipart boundary" << std::endl;
-          client.boundary.clear();
-          return false; //respond and clear client;
-        }
-      } else {
-        // binary and raw
-      }
-    }
-  } else {
-    // normal data;
-  }
-
-  std::cerr << "the body type[end]\n" << std::endl;
   return true;
 }
 
@@ -234,6 +203,37 @@ bool multiPartFormData(client_info &client) {
   return true;  
 }
 
+bool bodyType(client_info& client) {
+  if (client.contentType.empty() == false || client.isChunked == true)
+    return true;
+
+  std::cerr << "the body type[start]" << std::endl;
+  std::map<std::string, std::string>::iterator it = client.headers.find("transfer-encoding");
+  if (it != client.headers.end() && it->second == "chunked") {
+    client.isChunked = true;
+    it = client.headers.find("content-type");
+    if (it != client.headers.end()) {
+      client.contentType = it->second;
+      if (client.contentType.find("multipart/form-data") != std::string::npos) {
+        client.boundary = getBoundary(client.contentType);
+        if (client.boundary.empty()) {
+          std::cerr << "Error: Invalid multipart boundary" << std::endl;
+          client.boundary.clear();
+          return false; //respond and clear client;
+        }
+        multiPartFormData(client);
+      } else {
+        // binary and raw
+      }
+    }
+  } else {
+    // normal data;
+  }
+
+  std::cerr << "the body type[end]\n" << std::endl;
+  return true;
+}
+
 bool takeBody_ChunkedFormData(client_info &client) {
   if (client.bodyReached == false || client.chunk.empty() == true)
     return false;
@@ -260,20 +260,23 @@ bool takeBody_ChunkedFormData(client_info &client) {
     // std::istringstream(chunkSizeStr) >> std::hex >> chunkSize;
 
     //step 2: check for final chunk
-    }
-  return true;   
+    }   
+
+  std::cerr << "taking body[end]\n" << std::endl;
+  return true;
 }
 
-//   std::cerr << "taking body[end]\n" << std::endl;
-//   return true;
-// }
-
 void parse_chunk(client_info &client, std::map<int, server_config> &server) {
-  if (!request_line(client) || !headers(client, server) || !bodyType(client))
+  if (!request_line(client) || !headers(client, server))
     return ;
-  if (client.isChunked == true) { //chunked funcions;
-  } else { //normal functions;
-  }
-  if (!multiPartFormData(client) || !takeBody_ChunkedFormData(client))
-    return;
+  if (client.method == "GET") {
+    handleGetRequest(client, server);
+    return ;
+  } else if (client.method == "DELETE") {
+    handleDeleteRequest(client, server);
+    return ;
+  } else if (!bodyType(client))
+    return ;
+  if (client.isChunked == true && client.contentType == "multipart/form-data" && client.bodyTaken == false)
+    takeBodyChunkedFormData(client);
 }
