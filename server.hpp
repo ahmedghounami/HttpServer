@@ -53,6 +53,8 @@ class server;
 
 struct client_info
 {
+    int poll_status;
+    std::string response;
   bool isChunked;
   bool bodyTaken;
   bool bodyReached;
@@ -92,6 +94,9 @@ class server
 
 };
 
+// response
+void not_allowed_method(client_info &client);
+void not_implemented_method(client_info &client);
 
 // server
 void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);

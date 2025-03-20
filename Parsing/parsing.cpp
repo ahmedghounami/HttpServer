@@ -6,7 +6,7 @@
 /*   By: ahmed <ahmed@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/17 21:49:02 by ahmed            ###   ########.fr       */
+/*   Updated: 2025/03/20 04:34:05 by ahmed            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,9 +40,23 @@ bool request_line(client_info &client) {
   client.version = requestLine.substr(secondSP + 1);
 
   if (client.method != "GET" && client.method != "DELETE" &&
-      client.method != "POST") {
-    std::cerr << "Error: Unsupported HTTP method: " << client.method
-              << std::endl;
+      client.method != "POST" && client.method != "PUT"
+      && client.method != "HEAD" && client.method != "CONNECT"
+      && client.method != "OPTIONS" && client.method != "TRACE") {
+    not_allowed_method(client);
+    return false; // respond then clear client;
+  }
+  else if (client.method != "GET" && client.method != "POST" && client.method != "DELETE")
+  {
+    not_implemented_method(client);
+    return false; // respond then clear client;
+  }
+  else
+  {
+    client.poll_status = 1;
+    client.response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ";
+    std::string body = "<html><body>200 OK</body></html>";
+    client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
     return false; // respond then clear client;
   }
 
@@ -271,7 +285,7 @@ bool takeBody_ChunkedFormData(client_info &client) {
 void parse_chunk(client_info &client, std::map<int, server_config> &server) {
   if (!request_line(client) || !headers(client, server) || !bodyType(client))
     return ;
-  if (client.isChunked == true) { //chunked funcions;
+  if (client.isChunked == true) {
   } else { //normal functions;
   }
   if (!multiPartFormData(client) || !takeBody_ChunkedFormData(client))
