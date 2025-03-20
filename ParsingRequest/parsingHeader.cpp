@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   parsingHeader.cpp                                  :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/20 00:19:48 by hboudar          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../server.hpp"
 
 bool request_line(client_info &client) {
@@ -24,12 +12,21 @@ bool request_line(client_info &client) {
   std::string requestLine = client.chunk.substr(0, pos);
   client.chunk.erase(0, pos + 2);
 
+  size_t start = requestLine.find_first_not_of(" ");
+  size_t end = requestLine.find_last_not_of(" ");
+  if (start == std::string::npos) {
+    std::cerr << "ERROR: Empty reuest line" << std::endl;
+    return false;
+  }
+
+  requestLine = requestLine.substr(start, end - start + 1);
+
   size_t firstSP = requestLine.find(' ');
   size_t secondSP = requestLine.find(' ', firstSP + 1);
   size_t thirdSP = requestLine.find(' ', secondSP + 1);
 
-  if (firstSP == std::string::npos || secondSP == std::string::npos ||
-      thirdSP != std::string::npos) {
+  if (firstSP == 0 || firstSP == std::string::npos ||
+      secondSP == std::string::npos || thirdSP != std::string::npos) {
     std::cerr << "Error: Malformed request line (Incorrect spaces)"
               << std::endl;
     return false; //respond and clear client;
@@ -40,9 +37,23 @@ bool request_line(client_info &client) {
   client.version = requestLine.substr(secondSP + 1);
 
   if (client.method != "GET" && client.method != "DELETE" &&
-      client.method != "POST") {
-    std::cerr << "Error: Unsupported HTTP method: " << client.method
-              << std::endl;
+      client.method != "POST" && client.method != "PUT"
+      && client.method != "HEAD" && client.method != "CONNECT"
+      && client.method != "OPTIONS" && client.method != "TRACE") {
+    not_allowed_method(client);
+    return false; // respond then clear client;
+  }
+  else if (client.method != "GET" && client.method != "POST" && client.method != "DELETE")
+  {
+    not_implemented_method(client);
+    return false; // respond then clear client;
+  }
+  else
+  {
+    client.poll_status = 1;
+    client.response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ";
+    std::string body = "<html><body>200 OK</body></html>";
+    client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
     return false; // respond then clear client;
   }
 
@@ -237,9 +248,9 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server) {
     return ;
   } else if (!bodyType(client))
     return ;
-  // std::cout << client.chunk << std::endl;
-  // client.chunk.clear();
-  // if (client.isChunked == true && client.contentType == "multipart/form-data" && client.bodyTaken == false)
-  //   takeBodyChunkedFormData(client);
-  (void)server;
+  if (client.isChunked == true) {
+  } else { //normal functions;
+  }
+  if (!multiPartFormData(client) || !takeBody_ChunkedFormData(client))
+    return;
 }
