@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   parsingHeader.cpp                                  :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
+/*   Updated: 2025/03/20 18:17:52 by hboudar          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../server.hpp"
 
 bool request_line(client_info &client) {
@@ -25,10 +37,9 @@ bool request_line(client_info &client) {
   size_t secondSP = requestLine.find(' ', firstSP + 1);
   size_t thirdSP = requestLine.find(' ', secondSP + 1);
 
-  if (firstSP == 0 || firstSP == std::string::npos ||
-      secondSP == std::string::npos || thirdSP != std::string::npos) {
-    std::cerr << "Error: Malformed request line (Incorrect spaces)"
-              << std::endl;
+  if (firstSP == std::string::npos || secondSP == std::string::npos ||
+      thirdSP != std::string::npos) {
+    malformed_request(client);
     return false; //respond and clear client;
   }
 
