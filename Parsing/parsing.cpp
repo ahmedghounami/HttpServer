@@ -6,7 +6,7 @@
 /*   By: ahmed <ahmed@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:02 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/20 04:34:05 by ahmed            ###   ########.fr       */
+/*   Updated: 2025/03/20 04:57:56 by ahmed            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,8 +30,7 @@ bool request_line(client_info &client) {
 
   if (firstSP == std::string::npos || secondSP == std::string::npos ||
       thirdSP != std::string::npos) {
-    std::cerr << "Error: Malformed request line (Incorrect spaces)"
-              << std::endl;
+    malformed_request(client);
     return false; //respond and clear client;
   }
 

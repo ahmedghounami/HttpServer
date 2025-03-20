@@ -97,6 +97,8 @@ class server
 // response
 void not_allowed_method(client_info &client);
 void not_implemented_method(client_info &client);
+void malformed_request(client_info &client);
+
 
 // server
 void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);
