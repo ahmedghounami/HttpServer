@@ -98,6 +98,7 @@ class server
 void not_allowed_method(client_info &client);
 void not_implemented_method(client_info &client);
 void malformed_request(client_info &client);
+void http_version_not_supported(client_info &client);
 
 
 // server
