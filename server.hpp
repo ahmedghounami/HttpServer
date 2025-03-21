@@ -65,7 +65,6 @@ struct client_info
   std::string contentType; // re edidt
   std::string method, uri, version;
   std::map<std::string, std::string> headers;
-  std::multimap<std::string, std::string> multiheaders;
 
   time_t last_time;
 };
@@ -104,9 +103,6 @@ void http_version_not_supported(client_info &client);
 // server
 void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);
 
-// GET request
-void handleGetRequest(client_info &client, std::map<int, server_config> &server);
-
 // config
 void parse_key(std::istringstream &ss, std::string &key, server_config &config);
 int is_digit(std::string str);
@@ -117,10 +113,15 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 // parsing request
 void parse_chunk(client_info &client, std::map<int, server_config> &server);
 bool request_line(client_info &client);
-bool headers(client_info &client, std::map<int, server_config> &server);
+bool headers(client_info &client);
 bool bodyType(client_info& client);
 bool multiPartFormData(client_info &client);//for chunked form-data
 bool takeBody_ChunkedFormData(client_info &client);
+
+//handling methods
+// void handleGetRequest(client_info &client, std::map<int, server_config> &server);
+// void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
+// void handlePostRequest(client_info &client, std::map<int, server_config> &server);
 
 // parsing utils
 std::string trim(const std::string &str);
