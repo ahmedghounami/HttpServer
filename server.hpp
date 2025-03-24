@@ -34,16 +34,6 @@ struct location
     std::string upload_path;
 };
 
-struct FormInfo {
-  bool isChunked;
-  bool bodyReached;
-  bool bodyTaken;
-  int contentLength;
-  std::string filename;//re edit
-  std::string contentType; // re edidt
-};
-
-
 struct server_config
 {
     int  server_index;
@@ -55,20 +45,26 @@ struct server_config
     std::vector<std::string> index;
     bool autoindex;
     size_t max_body_size;
-    size_t upload_max_size;
     std::map<std::string, std::string> error_pages;
     std::map<std::string, location> locations;
 };
 
+class server;
+
 struct client_info
 {
+    int poll_status;
+    std::string response;
+  bool isChunked;
+  bool bodyTaken;
+  bool bodyReached;
+  int contentLength;
   std::string chunk;
   std::string boundary;
+  std::string filename;//re edit
+  std::string contentType; // re edidt
   std::string method, uri, version;
-  FormInfo file;
   std::map<std::string, std::string> headers;
-  std::multimap<std::string, std::string> multiheaders;
-  std::map<std::string, std::string> dataInfo;
 
   time_t last_time;
 };
@@ -97,11 +93,15 @@ class server
 
 };
 
+// response
+void not_allowed_method(client_info &client);
+void not_implemented_method(client_info &client);
+void malformed_request(client_info &client);
+void http_version_not_supported(client_info &client);
+
 
 // server
 void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);
-
-
 
 // config
 void parse_key(std::istringstream &ss, std::string &key, server_config &config);
@@ -111,12 +111,17 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 
 // parsing request
-void parse_chunk(client_info &client);
+void parse_chunk(client_info &client, std::map<int, server_config> &server);
 bool request_line(client_info &client);
 bool headers(client_info &client);
 bool bodyType(client_info& client);
 bool multiPartFormData(client_info &client);//for chunked form-data
 bool takeBody_ChunkedFormData(client_info &client);
+
+//handling methods
+// void handleGetRequest(client_info &client, std::map<int, server_config> &server);
+// void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
+// void handlePostRequest(client_info &client, std::map<int, server_config> &server);
 
 // parsing utils
 std::string trim(const std::string &str);
