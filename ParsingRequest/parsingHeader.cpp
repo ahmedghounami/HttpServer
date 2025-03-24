@@ -12,8 +12,18 @@ bool request_line(client_info &client) {
   std::string requestLine = client.chunk.substr(0, pos);
   client.chunk.erase(0, pos + 2);
 
+  if (requestLine.empty() || requestLine[0] == ' ') {
+    std::cerr << "ERROR: Request line start with a space" << std::endl;
+    return false;
+  }
+
   size_t start = requestLine.find_first_not_of(" ");
   size_t end = requestLine.find_last_not_of(" ");
+  if (end != requestLine.size() - 1) {
+    std::cerr << "ERROR: Request line ends with extra space" << std::endl;
+    return false;
+  }
+ 
   if (start == std::string::npos) {
     std::cerr << "ERROR: Empty reuest line" << std::endl;
     return false;
@@ -42,14 +52,10 @@ bool request_line(client_info &client) {
       && client.method != "OPTIONS" && client.method != "TRACE") {
     not_allowed_method(client);
     return false; // respond then clear client;
-  }
-  else if (client.method != "GET" && client.method != "POST" && client.method != "DELETE")
-  {
+  } else if (client.method != "GET" && client.method != "POST" && client.method != "DELETE") {
     not_implemented_method(client);
     return false; // respond then clear client;
-  }
-  else
-  {
+  } else {
     client.poll_status = 1;
     client.response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ";
     std::string body = "<html><body>200 OK</body></html>";
@@ -63,9 +69,8 @@ bool request_line(client_info &client) {
     return false; // respond then clear client;
   }
 
-  if (client.version != "HTTP/1.1") {
-    std::cerr << "Error: Unsupported HTTP version: " << client.version
-              << std::endl;
+  if (client.version != "HTTP/1.1" || client.version.find(' ') != std::string::npos) {
+     std::cerr << "Error: Invalid or malformed HTTP version: " << client.version << std::endl;
     return false; // respond then clear client;
   }
   std::cerr << "method ->" << client.method << " uri ->"
@@ -241,14 +246,18 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server) {
   (void)server;
   if (!request_line(client) || !headers(client))
     return ;
-  if (client.method == "GET") {
-    // handleGetRequest(client, server);
+
+
+  if (client.method == "GET") { // handleGetRequest(client, server);
     return ;
-  } else if (client.method == "DELETE") {
-    // handleDeleteRequest(client, server);
+  } else if (client.method == "DELETE") { // handleDeleteRequest(client, server);
     return ;
   } else if (!bodyType(client))
     return ;
+
+
+
+
   if (client.isChunked == true) {
   } else { //normal functions;
   }
