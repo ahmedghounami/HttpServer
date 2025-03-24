@@ -97,6 +97,7 @@ class server
 void not_allowed_method(client_info &client);
 void not_implemented_method(client_info &client);
 void malformed_request(client_info &client);
+void http_version_not_supported(client_info &client);
 
 
 // server
@@ -118,9 +119,9 @@ bool multiPartFormData(client_info &client);//for chunked form-data
 bool takeBody_ChunkedFormData(client_info &client);
 
 //handling methods
-void handleGetRequest(client_info &client, std::map<int, server_config> &server);
-void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
-void handlePostRequest(client_info &client, std::map<int, server_config> &server);
+// void handleGetRequest(client_info &client, std::map<int, server_config> &server);
+// void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
+// void handlePostRequest(client_info &client, std::map<int, server_config> &server);
 
 // parsing utils
 std::string trim(const std::string &str);

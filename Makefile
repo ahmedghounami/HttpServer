@@ -2,7 +2,7 @@ NAME	=	webserv
 
 src		=	main.cpp server/server.cpp server/utils.cpp config/config.cpp config/config_utils.cpp \
 			ParsingRequest/parsingHeader.cpp ParsingRequest/parsingBody.cpp ParsingRequest/parsingUtils.cpp \
-			HandlingRequest/handleRequest.cpp response/get_response.cpp
+			HandlingRequest/handleRequest.cpp response/response.cpp
 
 OBJ = $(src:.cpp=.o)
 
@@ -10,9 +10,9 @@ CC = c++ -std=c++98
 
 CFLAGS = -Wall -Wextra -Werror
 
-all: $(NAME)
+all: $(NAME) clean
 
-$(NAME): $(OBJ)
+$(NAME): $(OBJ) 
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
 
 %.o: %.cpp server.hpp
