@@ -14,19 +14,19 @@ bool request_line(client_info &client) {
 
   if (requestLine.empty() || requestLine[0] == ' ') {
     std::cerr << "ERROR: Request line start with a space" << std::endl;
-    return false;
+    return false; //respond and clear;
   }
 
   size_t start = requestLine.find_first_not_of(" ");
   size_t end = requestLine.find_last_not_of(" ");
   if (end != requestLine.size() - 1) {
     std::cerr << "ERROR: Request line ends with extra space" << std::endl;
-    return false;
+    return false;//respond and clear;
   }
  
   if (start == std::string::npos) {
-    std::cerr << "ERROR: Empty reuest line" << std::endl;
-    return false;
+    std::cerr << "ERROR: Empty request line" << std::endl;
+    return false;//respond and clear;
   }
 
   requestLine = requestLine.substr(start, end - start + 1);
