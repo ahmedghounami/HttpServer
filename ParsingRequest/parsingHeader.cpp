@@ -15,7 +15,7 @@ bool request_line(client_info &client)
   if (requestLine.empty() || requestLine[0] == ' ')
   {
     std::cerr << "ERROR: Request line start with a space" << std::endl;
-    malformed_request(client);
+    bad_request(client);
   }
 
   size_t start = requestLine.find_first_not_of(" ");
@@ -23,13 +23,13 @@ bool request_line(client_info &client)
   if (end != requestLine.size() - 1)
   {
     std::cerr << "ERROR: Request line ends with extra space" << std::endl;
-    malformed_request(client);
+    bad_request(client);
   }
 
   if (start == std::string::npos)
   {
     std::cerr << "ERROR: Empty request line" << std::endl;
-    malformed_request(client);
+    bad_request(client);
   }
 
   requestLine = requestLine.substr(start, end - start + 1);
@@ -43,7 +43,7 @@ bool request_line(client_info &client)
   {
     std::cerr << "Error: Malformed request line (Incorrect spaces)"
               << std::endl;
-    malformed_request(client);
+    bad_request(client);
   }
 
   client.method = requestLine.substr(0, firstSP);
@@ -66,13 +66,13 @@ bool request_line(client_info &client)
   {
     std::cerr << "Error: Invalid request-target (URI must start with '/')"
               << std::endl;
-    return false; // respond then clear client;
+    not_found(client);
   }
 
   if (client.version != "HTTP/1.1" || client.version.find(' ') != std::string::npos)
   {
     std::cerr << "Error: Invalid or malformed HTTP version: " << client.version << std::endl;
-    return false; // respond then clear client;
+    bad_request(client);
   }
   else
   {

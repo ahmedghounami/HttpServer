@@ -98,6 +98,9 @@ void not_allowed_method(client_info &client);
 void not_implemented_method(client_info &client);
 void malformed_request(client_info &client);
 void http_version_not_supported(client_info &client);
+void invalid_uri(client_info &client); // example: uri must start with '/'
+void bad_request(client_info &client); // example: invalid or malformed HTTP version
+void not_found(client_info &client); // example: file not found
 
 
 // server
