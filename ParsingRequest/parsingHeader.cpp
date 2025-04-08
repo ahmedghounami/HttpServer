@@ -7,7 +7,7 @@ bool request_line(client_info &client) {
   client.headersTaken = 0;
   size_t pos = client.chunk.find("\r\n");
   if (pos == std::string::npos)
-    return true;
+    return false;
 
   std::string requestLine = client.chunk.substr(0, pos);
   client.chunk.erase(0, pos + 2);
@@ -73,10 +73,10 @@ bool request_line(client_info &client) {
 }
 
 bool headers(client_info &client) {
-  if (client.method.empty() == false ||  client.headersTaken)
-    return true;
 
-  std::cerr << "headers[start]" << std::endl;
+  if (client.method.empty() ||  client.headersTaken) {
+    return true;
+  }
 
   size_t pos = client.chunk.find("\r\n\r\n");
   if (pos == std::string::npos)
@@ -155,23 +155,16 @@ bool headers(client_info &client) {
   client.contentLength = 0;
   client.isChunked = false;
 
-
-  std::cerr << "headers[end]\n" << std::endl;
   return true;
 }
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server) {
-  std::ofstream of("test");
-  of << client.chunk;
-  of.close();
-  return ;
-  
   if (request_line(client) == false || headers(client) == false)
     return ;
   if (client.method == "GET" || client.method == "DELETE") {
     //respond and clear client;
     return ;
-  } else if (client.method == "POST" && !bodyType(client))
+  } else if (!bodyType(client))
     return ;
 
   // if (client.isChunked == true) {

@@ -51,6 +51,13 @@ struct server_config
 
 class server;
 
+struct FormPart {
+    std::string name;
+    std::string filename;
+    std::string contentType;
+    std::string body;
+};
+
 struct client_info
 {
     bool isChunked;
@@ -64,8 +71,8 @@ struct client_info
     std::string chunk;
     std::string response;
     std::string boundary;
-    std::string filename;//re edit
-    std::string contentType; // re edit
+    std::vector<FormPart> formParts;
+    std::string ContentType;
     std::string method, uri, version;
     std::map<std::string, std::string> headers;
 
@@ -118,8 +125,7 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server);
 bool request_line(client_info &client);
 bool headers(client_info &client);
 bool bodyType(client_info& client);
-bool multiPartFormData(client_info &client);//for chunked form-data
-bool takeBody_ChunkedFormData(client_info &client);
+void formDataChunked(client_info &client);
 
 //handling methods
 // void handleGetRequest(client_info &client, std::map<int, server_config> &server);
