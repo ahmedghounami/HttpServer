@@ -164,14 +164,9 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server) {
   if (client.method == "GET" || client.method == "DELETE") {
     //respond and clear client;
     return ;
-  } else if (!bodyType(client))
+  } else if (!takeBody(client))
     return ;
 
-  // if (client.isChunked == true) {
-  // } else { //normal functions;
-  // }
-  // if (!multiPartFormData(client) || !takeBody_ChunkedFormData(client))
-  //   return;
   (void)server;
   (void)client;
 }

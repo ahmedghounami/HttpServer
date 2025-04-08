@@ -124,7 +124,7 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 void parse_chunk(client_info &client, std::map<int, server_config> &server);
 bool request_line(client_info &client);
 bool headers(client_info &client);
-bool bodyType(client_info& client);
+bool takeBody(client_info& client);
 void formDataChunked(client_info &client);
 
 //handling methods

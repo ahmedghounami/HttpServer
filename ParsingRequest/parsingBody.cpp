@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/20 00:16:24 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/08 12:34:53 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/08 12:36:41 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ void otherData(client_info& client) {
 }
 
 
-bool bodyType(client_info& client) {
+bool takeBody(client_info& client) {
   if (client.method.empty() || !client.headersTaken || client.bodyTypeTaken)
     return true;
 
