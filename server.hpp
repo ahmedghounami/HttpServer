@@ -53,18 +53,21 @@ class server;
 
 struct client_info
 {
+    bool isChunked;
+    bool bodyTaken;
+    bool bodyReached;
+    int headersTaken;//flag
+    int bodyTypeTaken;//flag
+
     int poll_status;
+    int contentLength;
+    std::string chunk;
     std::string response;
-  bool isChunked;
-  bool bodyTaken;
-  bool bodyReached;
-  int contentLength;
-  std::string chunk;
-  std::string boundary;
-  std::string filename;//re edit
-  std::string contentType; // re edidt
-  std::string method, uri, version;
-  std::map<std::string, std::string> headers;
+    std::string boundary;
+    std::string filename;//re edit
+    std::string contentType; // re edit
+    std::string method, uri, version;
+    std::map<std::string, std::string> headers;
 
   time_t last_time;
 };
