@@ -6,13 +6,14 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/20 00:16:24 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/08 12:36:41 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/11 20:05:39 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../server.hpp"
 
 void formDataChunked(client_info& client) {
+  //raw and binary
   (void)client;
 }
 
@@ -22,6 +23,7 @@ void otherDataChunked(client_info& client) {
 }
 
 void formData(client_info& client) {
+  //raw and binary
   (void)client;
 }
 
@@ -29,7 +31,6 @@ void otherData(client_info& client) {
   //raw and binary
   (void)client;
 }
-
 
 bool takeBody(client_info& client) {
   if (client.method.empty() || !client.headersTaken || client.bodyTypeTaken)
@@ -49,10 +50,10 @@ bool takeBody(client_info& client) {
           return false; //respond and clear client;
         }
         formDataChunked(client);
-        std::cerr << "Form data chunked" << std::endl;
+        // std::cerr << "Form data chunked" << std::endl;
       } else {
         otherDataChunked(client);
-        std::cerr << "Other data chunked" << std::endl;
+        // std::cerr << "Other data chunked" << std::endl;
       }
     } else { // No content-type header
       std::cerr << "Error: Missing 'Content-Type' header" << std::endl;
@@ -71,10 +72,10 @@ bool takeBody(client_info& client) {
           return false; //respond and clear client;
         }
         formData(client);
-        std::cerr << "Form data" << std::endl;
+        // std::cerr << "Form data" << std::endl;
       } else {
         otherData(client);
-        std::cerr << "Other data" << std::endl;
+        // std::cerr << "Other data" << std::endl;
       }
     } else { // No content-type header
       std::cerr << "Error: Missing 'Content-Type' header" << std::endl;

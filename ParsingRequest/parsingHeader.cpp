@@ -14,19 +14,19 @@ bool request_line(client_info &client) {
 
   if (requestLine.empty() || requestLine[0] == ' ') {
     std::cerr << "ERROR: Request line start with a space" << std::endl;
-    return false; //respond and clear;
+    exit(1);
   }
 
   size_t start = requestLine.find_first_not_of(" ");
   size_t end = requestLine.find_last_not_of(" ");
   if (end != requestLine.size() - 1) {
     std::cerr << "ERROR: Request line ends with extra character(s)" << std::endl;
-    return false;//respond and clear;
+    exit(1);
   }
  
   if (start == std::string::npos) {
     std::cerr << "ERROR: Empty request line" << std::endl;
-    return false;//respond and clear;
+    exit(1);
   }
 
   requestLine = requestLine.substr(start, end - start + 1);
@@ -37,7 +37,7 @@ bool request_line(client_info &client) {
 
   if (firstSP == 0 || firstSP == std::string::npos || secondSP == std::string::npos || thirdSP != std::string::npos) {
     std::cerr << "Error: Malformed request line (Incorrect spaces)" << std::endl;
-    return false; //respond and clear client;
+    exit(1);
   }
 
   client.method = requestLine.substr(0, firstSP);
@@ -47,33 +47,26 @@ bool request_line(client_info &client) {
   if (client.method != "GET" && client.method != "DELETE" && client.method != "POST" && client.method != "PUT"
       && client.method != "HEAD" && client.method != "CONNECT" && client.method != "OPTIONS" && client.method != "TRACE") {
     not_allowed_method(client);
-    return false; // respond then clear client;
+    exit (1);
   } else if (client.method != "GET" && client.method != "POST" && client.method != "DELETE") {
     not_implemented_method(client);
-    return false; // respond then clear client;
-  } else {
-    // client.poll_status = 1;
-    // client.response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ";
-    // std::string body = "<html><body>200 OK</body></html>";
-    // client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
-    // return false; // respond then clear client;
+    exit (1);
   }
 
-  if (client.uri.empty() || client.uri[0] != '/') {
+  if (client.uri.empty() || client.uri[0] != '/' || parseRequestPath(client) == false) {
     std::cerr << "Error: Invalid request-target (URI must start with '/')" << std::endl;
-    return false; // respond then clear client;
+    exit (1);
   }
 
   if (client.version != "HTTP/1.1" || client.version.find(' ') != std::string::npos) {
      std::cerr << "Error: Invalid or malformed HTTP version: " << client.version << std::endl;
-    return false; // respond then clear client;
+    exit (1);
   }
   std::cerr << "method '" << client.method << "'\nuri '" << client.uri << "'\nversion '" << client.version << "'\n" << std::endl;
   return true;
 }
 
 bool headers(client_info &client) {
-
   if (client.method.empty() ||  client.headersTaken) {
     return true;
   }
@@ -161,12 +154,14 @@ bool headers(client_info &client) {
 void parse_chunk(client_info &client, std::map<int, server_config> &server) {
   if (request_line(client) == false || headers(client) == false)
     return ;
+  // std::ofstream file("file");
+  // file << client.chunk;
+  // return;
   if (client.method == "GET" || client.method == "DELETE") {
     //respond and clear client;
     return ;
-  } else if (!takeBody(client))
+  } else if (client.method == "POST" && !takeBody(client))
     return ;
 
   (void)server;
-  (void)client;
 }

@@ -55,7 +55,6 @@ struct FormPart {
     std::string name;
     std::string filename;
     std::string contentType;
-    std::string body;
 };
 
 struct client_info
@@ -74,6 +73,7 @@ struct client_info
     std::vector<FormPart> formParts;
     std::string ContentType;
     std::string method, uri, version;
+    std::string query;
     std::map<std::string, std::string> headers;
 
   time_t last_time;
@@ -133,6 +133,7 @@ void formDataChunked(client_info &client);
 // void handlePostRequest(client_info &client, std::map<int, server_config> &server);
 
 // parsing utils
+bool parseRequestPath(client_info& client);
 std::string trim(const std::string &str);
 bool isMultiValueHeader(const std::string &header);
 bool isValidHeaderKey(const std::string &key);
