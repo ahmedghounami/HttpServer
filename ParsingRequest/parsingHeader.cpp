@@ -5,12 +5,12 @@ bool request_line(client_info &client) {
     return true;
 
   client.headersTaken = 0;
-  size_t pos = client.chunk.find("\r\n");
-  if (pos == std::string::npos)
+  size_t pos = client.data.find("\r\n");
+  if (pos == std::string::npos) // not enough data
     return false;
 
-  std::string requestLine = client.chunk.substr(0, pos);
-  client.chunk.erase(0, pos + 2);
+  std::string requestLine = client.data.substr(0, pos);
+  client.data.erase(0, pos + 2);
 
   if (requestLine.empty() || requestLine[0] == ' ') {
     std::cerr << "ERROR: Request line start with a space" << std::endl;
@@ -67,16 +67,15 @@ bool request_line(client_info &client) {
 }
 
 bool headers(client_info &client) {
-  if (client.method.empty() ||  client.headersTaken) {
-    return true;
-  }
-
-  size_t pos = client.chunk.find("\r\n\r\n");
-  if (pos == std::string::npos)
+  if (client.headersTaken)
     return true;
 
-  std::string headers = client.chunk.substr(0, pos);
-  client.chunk.erase(0, pos + 4);
+  size_t pos = client.data.find("\r\n\r\n");
+  if (pos == std::string::npos) // not enough data
+    return false;
+
+  std::string headers = client.data.substr(0, pos);
+  client.data.erase(0, pos + 4);
 
   size_t startPos = 0;
   std::string lastKey;
@@ -101,7 +100,6 @@ bool headers(client_info &client) {
       std::cerr << "Error: Malformed header (missing ':'): " << line
                 << std::endl;
       exit (1);
-      return false; // respond and clear client;
     }
 
     std::string key = trim(line.substr(0, delimiterPos));
@@ -110,19 +108,16 @@ bool headers(client_info &client) {
     if (key.empty() || value.empty()) {
       std::cerr << "Error: Empty header name or value" << std::endl;
       exit (1);
-      return false; // respond and clear client;
     }
 
     std::transform(key.begin(), key.end(), key.begin(), ::tolower);
     if (!isValidHeaderKey(key)) {
       std::cerr << "Error: Invalid header name: " << key << std::endl;
       exit (1);
-      return false; // respond and clear client;
     }
     if (!isValidHeaderValue(value)) {
       std::cerr << "Error: Invalid header value: " << value << std::endl;
       exit (1);
-      return false; // respond and clear client;
     }
     if (client.headers.find(key) != client.headers.end())
       client.headers[key] += ", " + value;
@@ -135,7 +130,6 @@ bool headers(client_info &client) {
   if (client.headers.find("host") == client.headers.end()) {
     std::cerr << "Error: Missing 'Host' header" << std::endl;
     exit (1);
-    return false; // respond and clear client;
   }
 
   std::map<std::string, std::string>::iterator it;
@@ -145,23 +139,28 @@ bool headers(client_info &client) {
 
   client.headersTaken = 1;
   client.bodyTypeTaken = 0;
-  client.contentLength = 0;
   client.isChunked = false;
 
   return true;
 }
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server) {
+  // std::ofstream file("file");
+  // if (!file.is_open()) {
+  //   std::cerr << "Error: Failed to open file" << std::endl;
+  //   exit (1);
+  // }
+  // file << client.data;
+  // file.close();
+  // return ;
   if (request_line(client) == false || headers(client) == false)
     return ;
-  // std::ofstream file("file");
-  // file << client.chunk;
-  // return;
   if (client.method == "GET" || client.method == "DELETE") {
-    //respond and clear client;
-    return ;
+    exit (1);
   } else if (client.method == "POST" && !takeBody(client))
     return ;
+  
+  formDataChunked(client);
 
   (void)server;
 }

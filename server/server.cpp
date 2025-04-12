@@ -128,7 +128,7 @@ void server::listen_for_connections()
                     }
                     clients[clients_fds[i].fd].last_time = time(NULL);
                     buffer[data] = '\0';
-                    clients[clients_fds[i].fd].chunk.append(buffer, data);
+                    clients[clients_fds[i].fd].data.append(buffer, data);
                     // clients_fds[i].events = POLLOUT;
                     parse_chunk(clients[clients_fds[i].fd], servers);
                 }

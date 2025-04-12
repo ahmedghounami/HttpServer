@@ -55,21 +55,25 @@ struct FormPart {
     std::string name;
     std::string filename;
     std::string contentType;
+    std::string data;
 };
 
 struct client_info
 {
+    int file_fd;
     bool isChunked;
     bool bodyTaken;
     bool bodyReached;
+    bool bodyTypeTaken;//flag
     int headersTaken;//flag
-    int bodyTypeTaken;//flag
 
     int poll_status;
-    int contentLength;
-    std::string chunk;
+    std::string data;
     std::string response;
     std::string boundary;
+    size_t currentPos;
+    int bytesLeft;
+    std::string chunkData;
     std::vector<FormPart> formParts;
     std::string ContentType;
     std::string method, uri, version;
