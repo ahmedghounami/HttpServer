@@ -66,7 +66,7 @@ bool request_line(client_info &client) {
   return true;
 }
 
-bool headers(client_info &client) {
+bool headers(client_info &client, std::map<int, server_config> &server) {
   if (client.headersTaken)
     return true;
 
@@ -120,8 +120,9 @@ bool headers(client_info &client) {
       std::cerr << "Error: Invalid header value: " << value << std::endl;
       exit (1);
     }
-    if (client.headers.find(key) != client.headers.end())
+    if (client.headers.find(key) != client.headers.end()) {
       client.headers[key] += ", " + value;
+    }
     else
       client.headers[key] = value;
       
@@ -132,12 +133,13 @@ bool headers(client_info &client) {
     std::cerr << "Error: Missing 'Host' header" << std::endl;
     exit (1);
   }
-  //check which server to use 
+  //else
+  //  check which server to use 
 
-  // std::map<std::string, std::string>::iterator it;
-  // for (it = client.headers.begin(); it != client.headers.end(); ++it) {
-  //   std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
-  // }
+  std::map<std::string, std::string>::iterator it;
+  for (it = client.headers.begin(); it != client.headers.end(); ++it) {
+    std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
+  }
 
   client.headersTaken = 1;
   client.bodyTypeTaken = 0;
@@ -147,12 +149,13 @@ bool headers(client_info &client) {
 }
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server) {
-  // std::ofstream file("data");
-  // file << client.data;
-  // file.close();
-  // return ;
-  if (request_line(client) == false || headers(client) == false)
+  std::ofstream file("data");
+  file << client.data;
+  file.close();
+  return ;
+  if (request_line(client) == false || headers(client, server) == false)
     return ;
+    exit (0);
   if (client.method == "GET")
     handleGetRequest(client, server);
   else if (client.method == "DELETE")
