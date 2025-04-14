@@ -6,26 +6,20 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/24 00:27:12 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/14 15:20:29 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-// #include "../server.hpp"
+#include "../server.hpp"
 
-// void handleGetRequest(client_info &client, std::map<int, server_config> &server) {
-//     std::cout << "in get funciton" << std::endl;
-//     (void)client;
-//     (void)server;
-// }
+void handleGetRequest(client_info &client, std::map<int, server_config> &server) {
+    std::cout << "in get funciton" << std::endl;
+    (void)client;
+    (void)server;
+}
 
-// void handleDeleteRequest(client_info &client, std::map<int, server_config> &server) {
-//     std::cout << "in delete funciton" << std::endl;
-//     (void)client;
-//     (void)server;
-// }
-
-// void handlePostRequest(client_info &client, std::map<int, server_config> &server) {
-//     std::cout << "in post funciton" << std::endl;
-//     (void)client;
-//     (void)server;
-// }
+void handleDeleteRequest(client_info &client, std::map<int, server_config> &server) {
+    std::cout << "in delete funciton" << std::endl;
+    (void)client;
+    (void)server;
+}

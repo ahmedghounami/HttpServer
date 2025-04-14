@@ -1,16 +1,6 @@
 #include "../server.hpp"
 #include <fstream>
 
-void handleGetRequest(client_info &client, std::map<int, server_config> &server)
-{
-    (void)server;
-    (void)client;
-    // std::cout << client.boundary << std::endl;
-    // std::cout << client.method << std::endl;
-    // std::cout << client.uri << std::endl;
-    // std::cout << client.version << std::endl;
-}
-
 void not_allowed_method(client_info &client)
 {
     client.poll_status = 1;

@@ -3,7 +3,7 @@
 bool request_line(client_info &client) {
   if (client.method.empty() == false)
     return true;
-
+  std::cerr << "Parsing request line" << std::endl;
   client.headersTaken = 0;
   size_t pos = client.data.find("\r\n");
   if (pos == std::string::npos) // not enough data
@@ -62,7 +62,7 @@ bool request_line(client_info &client) {
      std::cerr << "Error: Invalid or malformed HTTP version: " << client.version << std::endl;
     exit (1);
   }
-  std::cerr << "method '" << client.method << "'\nuri '" << client.uri << "'\nversion '" << client.version << "'\n" << std::endl;
+  // std::cerr << "method '" << client.method << "'\nuri '" << client.uri << "'\nversion '" << client.version << "'\n" << std::endl;
   return true;
 }
 
@@ -70,6 +70,7 @@ bool headers(client_info &client) {
   if (client.headersTaken)
     return true;
 
+  std::cerr << "Parsing headers" << std::endl;
   size_t pos = client.data.find("\r\n\r\n");
   if (pos == std::string::npos) // not enough data
     return false;
@@ -132,10 +133,10 @@ bool headers(client_info &client) {
     exit (1);
   }
 
-  std::map<std::string, std::string>::iterator it;
-  for (it = client.headers.begin(); it != client.headers.end(); ++it) {
-    std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
-  }
+  // std::map<std::string, std::string>::iterator it;
+  // for (it = client.headers.begin(); it != client.headers.end(); ++it) {
+  //   std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
+  // }
 
   client.headersTaken = 1;
   client.bodyTypeTaken = 0;
@@ -145,60 +146,20 @@ bool headers(client_info &client) {
 }
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server) {
-  // std::ofstream file("file");
-  // if (!file.is_open()) {
-  //   std::cerr << "Error: Failed to open file" << std::endl;
-  //   exit (1);
-  // }
+  // std::ofstream file("data");
   // file << client.data;
   // file.close();
   // return ;
   if (request_line(client) == false || headers(client) == false)
     return ;
-  if (client.method == "GET" || client.method == "DELETE") {
-    exit (1);
-  } else if (client.method == "POST" && !takeBody(client))
+  if (client.method == "GET")
+    handleGetRequest(client, server);
+  else if (client.method == "DELETE")
+    handleDeleteRequest(client, server);
+  else if (client.method == "POST" && takeBody(client) == false)
     return ;
-  
+
   formDataChunked(client);
 
   (void)server;
-}
-
-void formDataChunked(client_info& client) {
-  while (client.isChunked && !client.bodyTaken) {
-      // Check for the end of chunked transfer encoding
-      size_t pos = client.data.find("0\r\n\r\n");
-      if (pos != std::string::npos) {
-          // Write any remaining data before the zero-length chunk
-          if (pos != 0) {
-              std::string chunkData = client.data.substr(0, pos);
-              if (!chunkData.empty()) {
-                  write(client.file_fd, chunkData.c_str(), chunkData.size());
-              }
-          }
-
-          // Advance past the zero-length chunk
-          client.data = client.data.substr(pos + 5); // "0\r\n\r\n" is 5 characters
-
-          // Detect the final boundary
-          std::string finalBoundary = client.boundary + "--";
-          size_t boundaryPos = client.data.find(finalBoundary);
-          if (boundaryPos != std::string::npos) {
-              // Advance past the final boundary and any following CRLF
-              size_t afterBoundary = boundaryPos + finalBoundary.length();
-              if (client.data.substr(afterBoundary, 2) == "\r\n") {
-                  afterBoundary += 2;
-              }
-              client.data = client.data.substr(afterBoundary);
-          }
-
-          // Mark the body as fully taken
-          client.bodyTaken = true;
-          return;
-      }
-
-      // Proceed with processing other chunks...
-      // (Your existing logic for handling other chunks goes here)
-  }
 }

@@ -66,14 +66,12 @@ struct client_info
     bool bodyReached;
     bool bodyTypeTaken;//flag
     int headersTaken;//flag
+    size_t bytesLeft;
 
     int poll_status;
     std::string data;
     std::string response;
     std::string boundary;
-    size_t currentPos;
-    int bytesLeft;
-    std::string chunkData;
     std::vector<FormPart> formParts;
     std::string ContentType;
     std::string method, uri, version;
@@ -132,8 +130,8 @@ bool takeBody(client_info& client);
 void formDataChunked(client_info &client);
 
 //handling methods
-// void handleGetRequest(client_info &client, std::map<int, server_config> &server);
-// void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
+void handleGetRequest(client_info &client, std::map<int, server_config> &server);
+void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
 // void handlePostRequest(client_info &client, std::map<int, server_config> &server);
 
 // parsing utils

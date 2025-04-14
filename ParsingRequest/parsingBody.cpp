@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/20 00:16:24 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/13 20:30:28 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/14 15:11:23 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,9 +15,12 @@
 void formDataChunked(client_info& client) {
   FormPart part;
   size_t pos, chunkSize;
-  std::string ChunkSizeString, chunkData;
+  std::string ChunkSizeString, chunkData = "";
 
   while (client.isChunked && !client.bodyTaken) {
+    if (client.data.size() == 2 && client.data == "\r\n")
+      break;
+      
     if (client.bytesLeft > 0 && client.data.size() >= client.bytesLeft) {
       chunkData = client.data.substr(0, client.bytesLeft);
       if (!chunkData.empty())
@@ -32,7 +35,7 @@ void formDataChunked(client_info& client) {
       client.data.clear();
     }
     if (client.bodyTypeTaken == 1) {
-      size_t pos = client.data.find("\r\n\r\n");
+      pos = client.data.find("\r\n\r\n");
       if (pos != std::string::npos) {
         std::istringstream iss(client.data.substr(0, pos));
         std::string line;
@@ -71,16 +74,18 @@ void formDataChunked(client_info& client) {
     std::istringstream iss(ChunkSizeString);
     chunkSize = 0;
     iss >> std::hex >> chunkSize;
-    if (pos + 2 + chunkSize > client.data.length())
+    std::cerr << "Chunk size: " << chunkSize << std::endl;
+    if (pos + 2 + chunkSize + 2 > client.data.length())
     {
         client.bytesLeft = chunkSize - (client.data.length() - pos - 2);
         chunkData = client.data.substr(pos + 2);
         client.data.clear();
+        continue;
     }
     else
     {
       chunkData = client.data.substr(pos + 2, chunkSize);
-      client.data = client.data.substr(pos + 2 + chunkSize);
+      client.data = client.data.substr(pos + 2 + chunkSize + 2);// for \r\n
       client.bytesLeft = 0;
     }
 
@@ -96,11 +101,10 @@ bool takeBody(client_info& client) {
   if (client.method.empty() || !client.headersTaken || client.bodyTypeTaken)
     return true;
 
+  std::cerr << "Parsing body" << std::endl;
   client.isChunked = false;
   client.bodyTaken = false;
   client.bytesLeft = 0;
-  chunkData = "";
-  client.currentPos = 0;
 
 
   client.file_fd = open("file", O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -108,9 +112,7 @@ bool takeBody(client_info& client) {
     std::cerr << "Error: Failed to open file" << std::endl;
     exit (1);
   }
-  write(client.file_fd, "start here\n", 11);
 
-  
   std::map<std::string, std::string>::iterator it = client.headers.find("transfer-encoding");
   if (it != client.headers.end() && it->second == "chunked") {
     client.isChunked = true;
@@ -124,7 +126,7 @@ bool takeBody(client_info& client) {
           client.boundary.clear();
           return false; //respond and clear client;
         }
-        formDataChunked(client);
+        // formDataChunked(client);
         client.bodyTypeTaken = 1;
       } else {
         // otherDataChunked(client);
@@ -159,4 +161,3 @@ bool takeBody(client_info& client) {
   }
   return true;
 }
-
