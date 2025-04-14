@@ -132,6 +132,7 @@ bool headers(client_info &client) {
     std::cerr << "Error: Missing 'Host' header" << std::endl;
     exit (1);
   }
+  //check which server to use 
 
   // std::map<std::string, std::string>::iterator it;
   // for (it = client.headers.begin(); it != client.headers.end(); ++it) {
@@ -159,7 +160,6 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server) {
   else if (client.method == "POST" && takeBody(client) == false)
     return ;
 
-  formDataChunked(client);
-
-  (void)server;
+  if (client.bodyTypeTaken == 1)
+    ChunkedData(client);
 }
