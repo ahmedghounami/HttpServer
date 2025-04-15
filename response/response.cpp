@@ -46,4 +46,3 @@ void not_found(client_info &client)
     std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
 }
-
