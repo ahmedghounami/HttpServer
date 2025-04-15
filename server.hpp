@@ -144,3 +144,5 @@ std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 bool isValidContentLength(const std::string &lengthStr);
 
+//find which server config to use returns the server index
+int findMatchingServer(client_info &client, std::map<int, server_config> &server);

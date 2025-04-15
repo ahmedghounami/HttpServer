@@ -102,7 +102,7 @@ void server::listen_for_connections()
         check_timeout(clients_fds, clients);
         if (ret == 0)
         {
-            std::cerr << "No data, timeout\n";
+            // std::cerr << "No data, timeout\n";
             continue;
         }
         for (unsigned int i = 0; i < clients_fds.size(); i++)
