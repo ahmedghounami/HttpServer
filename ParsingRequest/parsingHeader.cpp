@@ -3,7 +3,6 @@
 bool request_line(client_info &client) {
   if (client.method.empty() == false)
     return true;
-  std::cerr << "Parsing request line" << std::endl;
   client.headersTaken = 0;
   size_t pos = client.data.find("\r\n");
   if (pos == std::string::npos) // not enough data
@@ -67,10 +66,10 @@ bool request_line(client_info &client) {
 }
 
 bool headers(client_info &client, std::map<int, server_config> &server) {
+  (void)server;
   if (client.headersTaken)
     return true;
 
-  std::cerr << "Parsing headers" << std::endl;
   size_t pos = client.data.find("\r\n\r\n");
   if (pos == std::string::npos) // not enough data
     return false;
@@ -133,13 +132,11 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
     std::cerr << "Error: Missing 'Host' header" << std::endl;
     exit (1);
   }
-  //else
-  //  check which server to use 
 
-  std::map<std::string, std::string>::iterator it;
-  for (it = client.headers.begin(); it != client.headers.end(); ++it) {
-    std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
-  }
+  // std::map<std::string, std::string>::iterator it;
+  // for (it = client.headers.begin(); it != client.headers.end(); ++it) {
+  //   std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
+  // }
 
   client.headersTaken = 1;
   client.bodyTypeTaken = 0;
@@ -149,20 +146,28 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 }
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server) {
-  std::ofstream file("data");
-  file << client.data;
-  file.close();
-  return ;
+  // std::string copychunk = client.data;
+  // int fd = open("data", O_WRONLY | O_APPEND);
+  // write(fd, copychunk.c_str(), copychunk.size());
+  // copychunk.clear();
+
+
+  // std::ofstream file("file");
+  // file << client.data;
+  // file.close();
+  // return ;
+
   if (request_line(client) == false || headers(client, server) == false)
     return ;
-    exit (0);
   if (client.method == "GET")
     handleGetRequest(client, server);
   else if (client.method == "DELETE")
     handleDeleteRequest(client, server);
-  else if (client.method == "POST" && takeBody(client) == false)
-    return ;
-
-  if (client.bodyTypeTaken == 1)
-    ChunkedData(client);
+  else if (client.method == "POST")
+  {
+    if (takeBody(client) == false)
+      return ;
+    if (client.bodyTypeTaken == 1)
+      ChunkedData(client);
+  }
 }

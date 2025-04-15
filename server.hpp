@@ -129,6 +129,8 @@ bool request_line(client_info &client);
 bool headers(client_info &client);
 bool takeBody(client_info& client);
 void ChunkedData(client_info &client);
+void ParseContentDisposition(client_info& client);
+void ParseContentType(client_info& client);
 
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);
@@ -145,3 +147,4 @@ std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 bool isValidContentLength(const std::string &lengthStr);
 void writeToFile(std::string &body, int fd);
+std::string nameGenerator();
