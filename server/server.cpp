@@ -27,7 +27,8 @@ server::server(std::string &config_file)
             server_addr.sin_family = AF_INET;
             server_addr.sin_port = htons(servers[i].ports[j]);
             server_addr.sin_addr.s_addr = INADDR_ANY;
-
+            inet_pton(AF_INET, servers[i].host.c_str(), &server_addr.sin_addr);
+            
             int opt = 1;
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
@@ -137,9 +138,11 @@ void server::listen_for_connections()
                 clients_fds[i].events = POLLOUT;
             if (clients_fds[i].revents & POLLOUT)
             {
+                std::cerr << "Sending response to client " << clients_fds[i].fd << std::endl;
                 ssize_t bytes = send(clients_fds[i].fd, clients[clients_fds[i].fd].response.c_str(), clients[clients_fds[i].fd].response.size(), 0);
                 if (bytes < 0)
                     continue;
+                usleep(1000);
                 close(clients_fds[i].fd);
                 clients_fds.erase(clients_fds.begin() + i);
                 i--;

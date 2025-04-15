@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 17:23:29 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/11 16:41:03 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/14 15:41:08 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,4 +142,12 @@ bool parseRequestPath(client_info& client) {
 
     client.uri = cleanPath.str();
     return true;
+}
+
+void writeToFile(std::string &body, int fd) {
+  if (fd > 0) {
+    if (body.empty() || (body.size() == 2 && body == "\r\n"))
+      return ;
+    write(fd, body.c_str(), body.size());
+  }
 }
