@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 17:23:29 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/16 04:17:45 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/14 15:41:08 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,56 +76,78 @@ bool isValidContentLength(const std::string &lengthStr) {
   return true;
 }
 
-
-/*
-  it = client.headers.find("content-type");
-  if (it != client.headers.end()) {
-    client.contentType = it->second;
-    if (client.contentType.find("multipart/form-data") != std::string::npos) {
-        std::string boundary = getBoundary(client.contentType);
-        if (boundary.empty()) {
-          //respond and clear client;
-          return false;
+static std::string decodeURIComponent(const std::string& encoded) {
+    std::ostringstream decoded;
+    for (size_t i = 0; i < encoded.length(); ++i) {
+        if (encoded[i] == '%' && i + 2 < encoded.length()) {
+            char hex[3] = { encoded[i + 1], encoded[i + 2], '\0' };
+            if (isxdigit(hex[0]) && isxdigit(hex[1])) {
+                decoded << static_cast<char>(std::strtol(hex, nullptr, 16));
+                i += 2;
+            } else {
+                decoded << '%';
+            }
+        } else if (encoded[i] == '+') {
+            decoded << ' ';  // Optional: '+' as space (for query, not path)
+        } else {
+            decoded << encoded[i];
         }
-        client.boundary = boundary;
-        std::cout << "-> form-data: " << client.boundary << " <-" << std::endl;
-        return true;
-    } else if (client.contentType == "text/html" || client.contentType == "text/plain"
-                || client.contentType == "text/javascript" || client.contentType == "application/json"
-                || client.contentType == "application/xml") {
-      std::cout << "-> raw: " << client.contentType << " <-" << std::endl;
-      return true;
     }
- }
-  it = client.headers.find("content-length");
-  if (it != client.headers.end()) {
-  std::string lengthStr = it->second;
-  if (isValidContentLength(lengthStr)) { // Convert to long and store
-      std::istringstream iss(lengthStr);
-      long length;
-      iss >> length;
-      client.contentLength = length;
-      std::cout << "Content-Length: " << client.contentLength << std::endl;
-      return true;
-  } else {
-    // respond and clear client;
-    return false;
+    return decoded.str();
+}
+
+bool parseRequestPath(client_info& client) {
+    // Step 0: Decode URI
+    client.uri = decodeURIComponent(client.uri);
+    // Check if decoding was successful
+    if (client.uri.empty()) {
+        std::cerr << "❌ Failed to decode URI.\n";
+        return false; // response.error = 400;
+    }
+
+    // Step 1: Remove query and fragment
+    size_t fragPos = client.uri.find('#');
+    if (fragPos != std::string::npos)
+        client.uri = client.uri.substr(0, fragPos);
+
+    size_t qpos = client.uri.find('?');
+    if (qpos != std::string::npos) {
+      client.uri = client.uri.substr(0, qpos);
+      client.query = client.uri.substr(qpos + 1);
+    }
+
+    // Step 2: Split client.uri and validate components
+    std::istringstream ss(client.uri);
+    std::string segment;
+    std::vector<std::string> segments;
+
+    while (std::getline(ss, segment, '/')) {
+        if (segment.empty() || segment == ".")
+            continue;
+        if (segment == "..") {
+          std::cerr << "❌ Path contains '..' which is not allowed.\n";
+          return false;//response.error = 400;
+        }
+        segments.push_back(segment);
+    }
+
+    // Step 3: Reconstruct cleaned path
+    std::ostringstream cleanPath;
+    cleanPath << "/";
+    for (size_t i = 0; i < segments.size(); ++i) {
+        cleanPath << segments[i];
+        if (i != segments.size() - 1)
+            cleanPath << "/";
+    }
+
+    client.uri = cleanPath.str();
+    return true;
+}
+
+void writeToFile(std::string &body, int fd) {
+  if (fd > 0) {
+    if (body.empty() || (body.size() == 2 && body == "\r\n"))
+      return ;
+    write(fd, body.c_str(), body.size());
   }
- }
-*/
-
-
-/*
-  if (client.boundary.empty() &&
-      client.chunk.find("\r\n\r\n") != std::string::npos)
-    get_boundary(clients_fds[index].fd, clients);
-  std::string boundary_end = clients[clients_fds[index].fd].boundary +
-  "--"; size_t pos =
-  clients[clients_fds[index].fd].chunk.find(boundary_end); if (pos !=
-  std::string::npos) {
-    client.chunk = client.chunk.substr(0, pos - 4);
-    file << client.chunk;
-    file.close();
-  } else
-    file << client.chunk;
-*/
+}

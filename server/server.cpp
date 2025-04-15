@@ -27,7 +27,8 @@ server::server(std::string &config_file)
             server_addr.sin_family = AF_INET;
             server_addr.sin_port = htons(servers[i].ports[j]);
             server_addr.sin_addr.s_addr = INADDR_ANY;
-
+            inet_pton(AF_INET, servers[i].host.c_str(), &server_addr.sin_addr);
+            
             int opt = 1;
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
@@ -81,15 +82,15 @@ void server::listen_for_connections()
 {
 
     ///////////////////////////////////////////////
-    std::string filename = "data";
-    std::ofstream file(filename);
-    if (file.good())
-        std::cerr << "File opened successfully\n";
-    else
-    {
-        std::cerr << "File open failed\n";
-        throw std::runtime_error("File open failed");
-    }
+    // std::string filename = "data";
+    // std::ofstream file(filename);
+    // if (file.good())
+    //     std::cerr << "File opened successfully\n";
+    // else
+    // {
+    //     std::cerr << "File open failed\n";
+    //     throw std::runtime_error("File open failed");
+    // }
     ///////////////////////////////////////////////
     while (true)
     {
@@ -108,7 +109,6 @@ void server::listen_for_connections()
         for (unsigned int i = 0; i < clients_fds.size(); i++)
         {
 
-            // std::vector<pollfd>::iterator it = find(clients_fds.begin(), clients_fds.end(), clients_fds[i]);
             if (clients_fds[i].revents & POLLIN)
             {
                 if (std::find(listners.begin(), listners.end(), clients_fds[i].fd) != listners.end())
@@ -129,16 +129,20 @@ void server::listen_for_connections()
                     }
                     clients[clients_fds[i].fd].last_time = time(NULL);
                     buffer[data] = '\0';
-                    clients[clients_fds[i].fd].chunk.append(buffer, data);
-                    parse_chunk(clients[clients_fds[i].fd]);
+                    clients[clients_fds[i].fd].data.append(buffer, data);
+                    // clients_fds[i].events = POLLOUT;
+                    parse_chunk(clients[clients_fds[i].fd], servers);
                 }
             }
+            if (clients[clients_fds[i].fd].poll_status == 1)
+                clients_fds[i].events = POLLOUT;
             if (clients_fds[i].revents & POLLOUT)
             {
-                std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>File uploaded successfully</h1></body></html>";
-                ssize_t bytes = send(clients_fds[i].fd, response.c_str(), response.length(), 0);
+                std::cerr << "Sending response to client " << clients_fds[i].fd << std::endl;
+                ssize_t bytes = send(clients_fds[i].fd, clients[clients_fds[i].fd].response.c_str(), clients[clients_fds[i].fd].response.size(), 0);
                 if (bytes < 0)
                     continue;
+                usleep(1000);
                 close(clients_fds[i].fd);
                 clients_fds.erase(clients_fds.begin() + i);
                 i--;

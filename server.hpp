@@ -18,7 +18,7 @@
 #include <stack>
 #include <signal.h>
 #include <algorithm>
-
+#include <arpa/inet.h>
 
 struct location
 {
@@ -32,17 +32,8 @@ struct location
     int cgi_timeout;
     std::pair<std::string, std::string> redirect;
     std::string upload_path;
+     int cout_index;
 };
-
-struct FormInfo {
-  bool isChunked;
-  bool bodyReached;
-  bool bodyTaken;
-  int contentLength;
-  std::string filename;//re edit
-  std::string contentType; // re edidt
-};
-
 
 struct server_config
 {
@@ -55,21 +46,42 @@ struct server_config
     std::vector<std::string> index;
     bool autoindex;
     size_t max_body_size;
-    size_t upload_max_size;
     std::map<std::string, std::string> error_pages;
     std::map<std::string, location> locations;
+     int cout_index;
+};
+
+class server;
+
+struct FormPart {
+    std::string name;
+    std::string filename;
+    std::string contentType;
+    std::string data;
 };
 
 struct client_info
 {
-  std::string chunk;
-  std::string boundary;
-  std::string method, uri, version;
-  FormInfo file;
-  std::map<std::string, std::string> headers;
-  std::multimap<std::string, std::string> multiheaders;
-  std::map<std::string, std::string> dataInfo;
+    int file_fd;
+    bool isChunked;
+    bool bodyTaken;
+    bool bodyReached;
+    bool bodyTypeTaken;//flag
+    int headersTaken;//flag
+    size_t bytesLeft, chunkSize, pos;
 
+    std::string name, filename, contentTypeform;
+    int poll_status;
+    std::string data;
+    std::string boundary;
+    std::string chunkData;
+    std::vector<FormPart> formParts;
+    std::string ContentType;
+    std::string method, uri, version;
+    std::string query;
+    std::map<std::string, std::string> headers;
+
+    std::string response;
   time_t last_time;
 };
 
@@ -97,11 +109,18 @@ class server
 
 };
 
+// response
+void not_allowed_method(client_info &client);
+void not_implemented_method(client_info &client);
+void malformed_request(client_info &client);
+void http_version_not_supported(client_info &client);
+void invalid_uri(client_info &client); // example: uri must start with '/'
+void bad_request(client_info &client); // example: invalid or malformed HTTP version
+void not_found(client_info &client); // example: file not found
+
 
 // server
 void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, std::map<int, client_info> &clients);
-
-
 
 // config
 void parse_key(std::istringstream &ss, std::string &key, server_config &config);
@@ -111,14 +130,19 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 
 // parsing request
-void parse_chunk(client_info &client);
+void parse_chunk(client_info &client, std::map<int, server_config> &server);
 bool request_line(client_info &client);
 bool headers(client_info &client);
-bool bodyType(client_info& client);
-bool multiPartFormData(client_info &client);//for chunked form-data
-bool takeBody_ChunkedFormData(client_info &client);
+bool takeBody(client_info& client);
+void ChunkedData(client_info &client);
+
+//handling methods
+void handleGetRequest(client_info &client, std::map<int, server_config> &server);
+void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
+// void handlePostRequest(client_info &client, std::map<int, server_config> &server);
 
 // parsing utils
+bool parseRequestPath(client_info& client);
 std::string trim(const std::string &str);
 bool isMultiValueHeader(const std::string &header);
 bool isValidHeaderKey(const std::string &key);
@@ -126,4 +150,4 @@ bool isValidHeaderValue(const std::string &value);
 std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 bool isValidContentLength(const std::string &lengthStr);
-
+void writeToFile(std::string &body, int fd);

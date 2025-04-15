@@ -57,8 +57,7 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
     }
     else if (key == "autoindex")
     {
-        static int i = 0;
-        if (i != 0)
+        if (loc.cout_index != 0)
             throw std::runtime_error("location: Duplicate autoindex");
         std::string autoindex;
         ss >> autoindex;
@@ -69,6 +68,7 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
         else
             throw std::runtime_error("location: Invalid autoindex");
         somthing_after(ss);
+        loc.cout_index = 1;
     }
     else if (key == "allowed_methods")
     {
@@ -217,8 +217,7 @@ void parse_key(std::istringstream &ss, std::string &key,
     }
     else if (key == "autoindex")
     {
-        static int i = 0;
-        if (i != 0)
+        if (config.cout_index != 0)
             throw std::runtime_error("Duplicate autoindex");
         std::string autoindex;
         ss >> autoindex;
@@ -229,7 +228,7 @@ void parse_key(std::istringstream &ss, std::string &key,
         else
             throw std::runtime_error("Invalid config file1");
         somthing_after(ss);
-        i++;
+        config.cout_index = 1;
     }
     else if (key == "client_max_body_size")
     {
@@ -241,17 +240,6 @@ void parse_key(std::istringstream &ss, std::string &key,
             throw std::runtime_error("Invalid body size");
         somthing_after(ss);
         config.max_body_size = std::atof(max_body_size.c_str());
-    }
-    else if (key == "upload_max_size")
-    {
-        if (config.upload_max_size != 0)
-            throw std::runtime_error("Duplicate upload size");
-        std::string upload_max_size;
-        ss >> upload_max_size;
-        if (atof(upload_max_size.c_str()) <= 0 || !is_digit(upload_max_size))
-            throw std::runtime_error("Invalid upload size");
-        somthing_after(ss);
-        config.upload_max_size = std::atof(upload_max_size.c_str());
     }
     else if (key == "error_page")
     {
@@ -271,5 +259,5 @@ void parse_key(std::istringstream &ss, std::string &key,
     else if (key.empty())
         return;
     else
-        throw std::runtime_error("sysntax error");
+        throw std::runtime_error("Invalid key in config : " + key);
 }

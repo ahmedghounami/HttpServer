@@ -46,12 +46,20 @@ void server::parse_config(std::string config_file)
         throw std::runtime_error("server block not opened");
       else if (stack.top() == "server" &&
                (servers[i].host.empty() || servers[i].ports.empty() \
-                || servers[i].path.empty()))
+                || servers[i].path.empty() || servers[i].max_body_size == 0))
       {
         throw std::runtime_error("key missing in server block");
       }
       if (stack.top() == "server")
         i++;
+      else if (stack.top() == "location" && servers[i].locations[location_index].path.empty())
+        servers[i].locations[location_index].path = servers[i].path;
+      if (stack.top() == "location" && servers[i].locations[location_index].upload_path.empty())
+      {
+        servers[i].locations[location_index].upload_path = servers[i].upload_path;
+        if (servers[i].locations[location_index].upload_path.empty() && find(servers[i].locations[location_index].allowed_methods.begin(), servers[i].locations[location_index].allowed_methods.end(), "POST") != servers[i].locations[location_index].allowed_methods.end())
+          throw std::runtime_error("upload path missing in location block");
+      }
       stack.pop();
       continue;
     }
@@ -90,8 +98,8 @@ void server::parse_config(std::string config_file)
     for (std::map<std::string, location>::iterator it = servers[i].locations.begin();
          it != servers[i].locations.end(); it++)
     {
-      std::cout << "location: " << it->second.path << std::endl;
+      // std::cout << "location: " << it->second.path << std::endl;
     }
-    std::cout << "-------------------" << std::endl;
+    // std::cout << "-------------------" << std::endl;
   }
 }
