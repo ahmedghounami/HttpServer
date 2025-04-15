@@ -57,8 +57,7 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
     }
     else if (key == "autoindex")
     {
-        static int i = 0;
-        if (i != 0)
+        if (loc.cout_index != 0)
             throw std::runtime_error("location: Duplicate autoindex");
         std::string autoindex;
         ss >> autoindex;
@@ -69,6 +68,7 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
         else
             throw std::runtime_error("location: Invalid autoindex");
         somthing_after(ss);
+        loc.cout_index = 1;
     }
     else if (key == "allowed_methods")
     {
@@ -217,8 +217,7 @@ void parse_key(std::istringstream &ss, std::string &key,
     }
     else if (key == "autoindex")
     {
-        static int i = 0;
-        if (i != 0)
+        if (config.cout_index != 0)
             throw std::runtime_error("Duplicate autoindex");
         std::string autoindex;
         ss >> autoindex;
@@ -229,7 +228,7 @@ void parse_key(std::istringstream &ss, std::string &key,
         else
             throw std::runtime_error("Invalid config file1");
         somthing_after(ss);
-        i++;
+        config.cout_index = 1;
     }
     else if (key == "client_max_body_size")
     {

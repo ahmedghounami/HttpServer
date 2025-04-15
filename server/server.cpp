@@ -129,7 +129,7 @@ void server::listen_for_connections()
                     }
                     clients[clients_fds[i].fd].last_time = time(NULL);
                     buffer[data] = '\0';
-                    clients[clients_fds[i].fd].chunk.append(buffer, data);
+                    clients[clients_fds[i].fd].data.append(buffer, data);
                     // clients_fds[i].events = POLLOUT;
                     parse_chunk(clients[clients_fds[i].fd], servers);
                 }
@@ -138,9 +138,11 @@ void server::listen_for_connections()
                 clients_fds[i].events = POLLOUT;
             if (clients_fds[i].revents & POLLOUT)
             {
+                std::cerr << "Sending response to client " << clients_fds[i].fd << std::endl;
                 ssize_t bytes = send(clients_fds[i].fd, clients[clients_fds[i].fd].response.c_str(), clients[clients_fds[i].fd].response.size(), 0);
                 if (bytes < 0)
                     continue;
+                usleep(1000);
                 close(clients_fds[i].fd);
                 clients_fds.erase(clients_fds.begin() + i);
                 i--;

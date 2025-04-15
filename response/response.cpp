@@ -1,16 +1,6 @@
 #include "../server.hpp"
 #include <fstream>
 
-void handleGetRequest(client_info &client, std::map<int, server_config> &server)
-{
-    (void)server;
-    (void)client;
-    // std::cout << client.boundary << std::endl;
-    // std::cout << client.method << std::endl;
-    // std::cout << client.uri << std::endl;
-    // std::cout << client.version << std::endl;
-}
-
 void not_allowed_method(client_info &client)
 {
     client.poll_status = 1;
@@ -45,6 +35,7 @@ void bad_request(client_info &client)
     std::ifstream file("errors/400.html");
     std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
+    
 }
 
 void not_found(client_info &client)

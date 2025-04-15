@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <arpa/inet.h>
 
-
 struct location
 {
     std::string location_index;
@@ -33,6 +32,7 @@ struct location
     int cgi_timeout;
     std::pair<std::string, std::string> redirect;
     std::string upload_path;
+     int cout_index;
 };
 
 struct server_config
@@ -48,6 +48,7 @@ struct server_config
     size_t max_body_size;
     std::map<std::string, std::string> error_pages;
     std::map<std::string, location> locations;
+     int cout_index;
 };
 
 class server;
@@ -56,27 +57,31 @@ struct FormPart {
     std::string name;
     std::string filename;
     std::string contentType;
+    std::string data;
 };
 
 struct client_info
 {
+    int file_fd;
     bool isChunked;
     bool bodyTaken;
     bool bodyReached;
+    bool bodyTypeTaken;//flag
     int headersTaken;//flag
-    int bodyTypeTaken;//flag
+    size_t bytesLeft, chunkSize, pos;
 
+    std::string name, filename, contentTypeform;
     int poll_status;
-    int contentLength;
-    std::string chunk;
-    std::string response;
+    std::string data;
     std::string boundary;
+    std::string chunkData;
     std::vector<FormPart> formParts;
     std::string ContentType;
     std::string method, uri, version;
     std::string query;
     std::map<std::string, std::string> headers;
 
+    std::string response;
   time_t last_time;
 };
 
@@ -129,11 +134,11 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server);
 bool request_line(client_info &client);
 bool headers(client_info &client);
 bool takeBody(client_info& client);
-void formDataChunked(client_info &client);
+void ChunkedData(client_info &client);
 
 //handling methods
-// void handleGetRequest(client_info &client, std::map<int, server_config> &server);
-// void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
+void handleGetRequest(client_info &client, std::map<int, server_config> &server);
+void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
 // void handlePostRequest(client_info &client, std::map<int, server_config> &server);
 
 // parsing utils
@@ -145,4 +150,4 @@ bool isValidHeaderValue(const std::string &value);
 std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 bool isValidContentLength(const std::string &lengthStr);
-
+void writeToFile(std::string &body, int fd);
