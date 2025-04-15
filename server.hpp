@@ -18,6 +18,7 @@
 #include <stack>
 #include <signal.h>
 #include <algorithm>
+#include <arpa/inet.h>
 
 
 struct location
@@ -51,20 +52,30 @@ struct server_config
 
 class server;
 
+struct FormPart {
+    std::string name;
+    std::string filename;
+    std::string contentType;
+};
+
 struct client_info
 {
+    bool isChunked;
+    bool bodyTaken;
+    bool bodyReached;
+    int headersTaken;//flag
+    int bodyTypeTaken;//flag
+
     int poll_status;
+    int contentLength;
+    std::string chunk;
     std::string response;
-  bool isChunked;
-  bool bodyTaken;
-  bool bodyReached;
-  int contentLength;
-  std::string chunk;
-  std::string boundary;
-  std::string filename;//re edit
-  std::string contentType; // re edidt
-  std::string method, uri, version;
-  std::map<std::string, std::string> headers;
+    std::string boundary;
+    std::vector<FormPart> formParts;
+    std::string ContentType;
+    std::string method, uri, version;
+    std::string query;
+    std::map<std::string, std::string> headers;
 
   time_t last_time;
 };
@@ -117,9 +128,8 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 void parse_chunk(client_info &client, std::map<int, server_config> &server);
 bool request_line(client_info &client);
 bool headers(client_info &client);
-bool bodyType(client_info& client);
-bool multiPartFormData(client_info &client);//for chunked form-data
-bool takeBody_ChunkedFormData(client_info &client);
+bool takeBody(client_info& client);
+void formDataChunked(client_info &client);
 
 //handling methods
 // void handleGetRequest(client_info &client, std::map<int, server_config> &server);
@@ -127,6 +137,7 @@ bool takeBody_ChunkedFormData(client_info &client);
 // void handlePostRequest(client_info &client, std::map<int, server_config> &server);
 
 // parsing utils
+bool parseRequestPath(client_info& client);
 std::string trim(const std::string &str);
 bool isMultiValueHeader(const std::string &header);
 bool isValidHeaderKey(const std::string &key);

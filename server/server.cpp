@@ -27,7 +27,8 @@ server::server(std::string &config_file)
             server_addr.sin_family = AF_INET;
             server_addr.sin_port = htons(servers[i].ports[j]);
             server_addr.sin_addr.s_addr = INADDR_ANY;
-
+            inet_pton(AF_INET, servers[i].host.c_str(), &server_addr.sin_addr);
+            
             int opt = 1;
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));

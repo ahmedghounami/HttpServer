@@ -6,40 +6,81 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/20 00:16:24 by hboudar           #+#    #+#             */
-/*   Updated: 2025/03/20 00:18:04 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/11 20:05:39 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../server.hpp"
 
-bool takeBody_ChunkedFormData(client_info &client) {
-  if (client.bodyReached == false || client.chunk.empty() == true)
-    return false;
-  std::cerr << "taking body[start]" << std::endl;
+void formDataChunked(client_info& client) {
+  //raw and binary
+  (void)client;
+}
 
-  // std::ofstream file(client.filename, std::ios::binary | std::ios::app);
-  // file << client.chunk;
-  // client.chunk.clear();
-  // close();
+void otherDataChunked(client_info& client) {
+  //raw and binary
+  (void)client;
+}
 
-  while (!client.chunk.empty()) {
-    //step 1: read chunk size
-    size_t pos = client.chunk.find("\r\n");
-    if (pos == std::string::npos) {
-      std::cerr << "ERROR: Invalid chunked format (no CRLF after size)" << std::endl;
-      //respond and clear client;
-      return false;
+void formData(client_info& client) {
+  //raw and binary
+  (void)client;
+}
+
+void otherData(client_info& client) {
+  //raw and binary
+  (void)client;
+}
+
+bool takeBody(client_info& client) {
+  if (client.method.empty() || !client.headersTaken || client.bodyTypeTaken)
+    return true;
+
+  client.isChunked = false;
+  std::map<std::string, std::string>::iterator it = client.headers.find("transfer-encoding");
+  if (it != client.headers.end() && it->second == "chunked") {
+    it = client.headers.find("content-type");
+    if (it != client.headers.end()) {
+      client.ContentType = it->second;
+      if (client.ContentType.find("multipart/form-data") != std::string::npos) {
+        client.boundary = getBoundary(client.ContentType);
+        if (client.boundary.empty()) {
+          std::cerr << "Error: Invalid multipart boundary" << std::endl;
+          client.boundary.clear();
+          return false; //respond and clear client;
+        }
+        formDataChunked(client);
+        // std::cerr << "Form data chunked" << std::endl;
+      } else {
+        otherDataChunked(client);
+        // std::cerr << "Other data chunked" << std::endl;
+      }
+    } else { // No content-type header
+      std::cerr << "Error: Missing 'Content-Type' header" << std::endl;
+      return false; //respond and clear client;
     }
-
-    std::string chunkSizeStr = client.chunk.substr(0, pos);
-    client.chunk.erase(0, pos + 2);
-
-    // size_t chunkSize;
-    // std::istringstream(chunkSizeStr) >> std::hex >> chunkSize;
-
-    //step 2: check for final chunk
-    }   
-
-  std::cerr << "taking body[end]\n" << std::endl;
+    client.isChunked = true;
+  } else {
+    it = client.headers.find("content-type");
+    if (it != client.headers.end()) {
+      client.ContentType = it->second;
+      if (client.ContentType.find("multipart/form-data") != std::string::npos) {
+        client.boundary = getBoundary(client.ContentType);
+        if (client.boundary.empty()) {
+          std::cerr << "Error: Invalid multipart boundary" << std::endl;
+          client.boundary.clear();
+          return false; //respond and clear client;
+        }
+        formData(client);
+        // std::cerr << "Form data" << std::endl;
+      } else {
+        otherData(client);
+        // std::cerr << "Other data" << std::endl;
+      }
+    } else { // No content-type header
+      std::cerr << "Error: Missing 'Content-Type' header" << std::endl;
+      return false; //respond and clear client;
+    }
+  }
   return true;
 }
