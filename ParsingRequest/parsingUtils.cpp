@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 17:23:29 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/15 15:21:33 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/15 20:08:35 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,6 +153,7 @@ void writeToFile(std::string &body, int fd) {
 }
 
 std::string nameGenerator() {
+  srand(time(0));
   std::string name;
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const int length = sizeof(charset) - 1;
@@ -163,7 +164,7 @@ std::string nameGenerator() {
 }
 
 void ParseContentDisposition(client_info& client) {
-  std::cerr << "ParseContentDisposition" << std::endl;
+  std::cerr << "-------------ParseContentDisposition------------" << std::endl;
   client.data = client.data.substr(client.pos + 32, client.data.size());
   client.pos = client.data.find("name=\"");
   client.data = client.data.substr(client.pos + 6, client.data.size());
@@ -174,38 +175,26 @@ void ParseContentDisposition(client_info& client) {
   client.pos = client.data.find("filename=\"");
   if (client.pos == std::string::npos)
   {
-    client.filename = "";
-  
-    //generate a random name
-    client.file_fd = open(nameGenerator().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);//
-    if (client.file_fd == -1) {//
-      std::cerr << "Error: Failed to open file" << std::endl;//
-      exit (1);//
-    }//
+    close(client.file_fd);
+    client.filename = nameGenerator();
+    client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);//check if file_fd is valid
   
     client.data = client.data.substr(2, client.data.size());
   } else if (client.pos != std::string::npos) {
-    // filename found : open file
-    client.data = client.data.substr(client.pos + 11, client.data.size());
+    // close(client.file_fd);
+    client.data = client.data.substr(client.pos + 10, client.data.size());
     sub = client.data.substr(0, client.data.find("\""));
     client.data = client.data.substr(client.data.find("\"") + 3 , client.data.size());
     client.filename = sub;
-    
-    client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);//
-    if (client.file_fd == -1) {//
-      std::cerr << "Error: Failed to open file" << std::endl;//
-      exit (1);//
-    }//
-    
-    if (client.filename.empty())
-      client.filename = "default_file";
+    client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);//check if file_fd is valid
   }
   std::cerr << "name: |" << client.name << "|" << std::endl;
   std::cerr << "filename: |" << client.filename << "|" << std::endl;
+  std::cerr << "-------------End ParseContentDisposition--------" << std::endl;
 }
 
 void ParseContentType(client_info& client) {
-  std::cerr << "ParseContentType" << std::endl;
+  std::cerr << "--------------ParseContentType----------------" << std::endl;
   client.data = client.data.substr(client.pos + 14, client.data.size());
   client.pos = client.data.find("/");
   client.data = client.data.substr(client.pos + 1, client.data.size());
@@ -220,4 +209,5 @@ void ParseContentType(client_info& client) {
     */
   }
   std::cerr << "Content-Type: |" << client.contentTypeform << "|" << std::endl;
+  std::cerr << "--------------End ParseContentType-------------" << std::endl;
 }

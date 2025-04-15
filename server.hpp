@@ -18,6 +18,7 @@
 #include <stack>
 #include <signal.h>
 #include <algorithm>
+#include <arpa/inet.h>
 
 struct location
 {
@@ -31,6 +32,7 @@ struct location
     int cgi_timeout;
     std::pair<std::string, std::string> redirect;
     std::string upload_path;
+     int cout_index;
 };
 
 struct server_config
@@ -46,6 +48,7 @@ struct server_config
     size_t max_body_size;
     std::map<std::string, std::string> error_pages;
     std::map<std::string, location> locations;
+     int cout_index;
 };
 
 class server;
@@ -111,6 +114,9 @@ void not_allowed_method(client_info &client);
 void not_implemented_method(client_info &client);
 void malformed_request(client_info &client);
 void http_version_not_supported(client_info &client);
+void invalid_uri(client_info &client); // example: uri must start with '/'
+void bad_request(client_info &client); // example: invalid or malformed HTTP version
+void not_found(client_info &client); // example: file not found
 
 
 // server
@@ -127,7 +133,7 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 void parse_chunk(client_info &client, std::map<int, server_config> &server);
 bool request_line(client_info &client);
 bool headers(client_info &client);
-bool takeBody(client_info& client);
+bool takeBodyType(client_info& client);
 void ChunkedData(client_info &client);
 void ParseContentDisposition(client_info& client);
 void ParseContentType(client_info& client);

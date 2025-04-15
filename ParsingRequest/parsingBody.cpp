@@ -6,49 +6,19 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/20 00:16:24 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/15 15:25:45 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/15 22:53:09 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../server.hpp"
 
-void ChunkedData(client_info& client) {
-  if (client.data.find(client.boundary + "--") != std::string::npos) {
-    // edge case : if the end boundary is not at the beginning of the data : which means there data bofre the end boundary that we need to write
-    
-    std::ofstream file("xyata");
-    file << client.data;
-    file.close();
-    exit(1);
-    std::cerr << "The body is complete" << std::endl;
-    client.bodyTaken = true;
-    return ;  
-  }
-  if (client.bodyTaken || client.data.empty())
-    return ;
-  client.pos = client.data.find(client.boundary);
-  if (client.pos == 0) {
-    //client.openFile = false;
-    close(client.file_fd);
-    client.chunkData = "";
-    client.bytesLeft = 0;
-    client.chunkSize = 0;
-    client.pos = client.data.find("Content-Disposition: form-data;");
-    if (client.pos != std::string::npos)
-      ParseContentDisposition(client);
-    client.pos = client.data.find("Content-Type:");
-    if (client.pos != std::string::npos) {
-      //open file = true
-      ParseContentType(client);
-    }
-    
-  }
-    
+void ReadTheData(client_info& client) {
   while (client.isChunked && !client.bodyTaken)
   {
+    // std::cerr << "ChunkedData" << std::endl;
     if (client.data.size() == 2 && client.data == "\r\n")
       break;
-      
+
     if (client.bytesLeft > 0 && client.data.size() >= client.bytesLeft)
     {
       client.chunkData = client.data.substr(0, client.bytesLeft);
@@ -81,6 +51,7 @@ void ChunkedData(client_info& client) {
           writeToFile(client.chunkData, client.file_fd);
       } 
       client.bodyTaken = true;
+      close(client.file_fd);
       return ;
     }
 
@@ -97,6 +68,7 @@ void ChunkedData(client_info& client) {
     std::istringstream iss(ChunkSizeString);
     client.chunkSize = 0;
     iss >> std::hex >> client.chunkSize;
+    // std::cerr << "ChunkSize: " << client.chunkSize << std::endl;
   
     if (client.pos + 2 + client.chunkSize > client.data.length())
     {
@@ -119,7 +91,43 @@ void ChunkedData(client_info& client) {
   }
 }
 
-bool takeBody(client_info& client) {
+void ChunkedData(client_info& client) {
+  client.pos = client.data.find(client.boundary);
+  if (client.pos != std::string::npos) {
+    if (client.pos == 0) {
+      std::cerr << "Found boundary : at the beginning" << std::endl;
+      client.chunkData = "";
+      client.bytesLeft = 0;
+      client.chunkSize = 0;
+      // close(client.file_fd);
+    } else {
+      std::cerr << "Found boundary : not at the beginning" << std::endl;
+      client.chunkData = client.data.substr(0, client.pos);
+      if (!client.chunkData.empty())
+        writeToFile(client.chunkData, client.file_fd);
+      client.data = client.data.substr(client.pos);
+    }
+    client.pos = client.data.find("Content-Disposition: form-data;");
+    if (client.pos != std::string::npos)
+      ParseContentDisposition(client);
+    client.pos = client.data.find("Content-Type:");
+    if (client.pos != std::string::npos)
+      ParseContentType(client);
+  }
+
+
+  size_t pos = client.data.find(client.boundary + "--");
+  if (pos != std::string::npos && pos == 0) {
+    std::cerr << "Found end boundary and set bodyTaken" << std::endl;
+    client.bodyTaken = true;
+    return ;
+  }
+  if (client.bodyTaken || client.data.empty())
+    return ;
+  ReadTheData(client);
+}
+
+bool takeBodyType(client_info& client) {
   if (client.method.empty() || !client.headersTaken || client.bodyTypeTaken)
     return true;
 
@@ -186,3 +194,19 @@ bool takeBody(client_info& client) {
   }
   return true;
 }
+
+
+/*client.pos = client.data.find(client.boundary);
+  if (client.pos == 0) {
+    std::cerr << "Found boundary at the beginning" << std::endl;
+    // close(client.file_fd);
+    client.chunkData = "";
+    client.bytesLeft = 0;
+    client.chunkSize = 0;
+    client.pos = client.data.find("Content-Disposition: form-data;");
+    if (client.pos != std::string::npos)
+      ParseContentDisposition(client);
+    client.pos = client.data.find("Content-Type:");
+    if (client.pos != std::string::npos)
+      ParseContentType(client);
+  }*/
