@@ -68,9 +68,9 @@ struct client_info
     int headersTaken;//flag
     size_t bytesLeft;
 
-    int poll_status;
+    int poll_status; // set to 1 to send back response
     std::string data;
-    std::string response;
+    std::string response; //store response
     std::string boundary;
     std::vector<FormPart> formParts;
     std::string ContentType;

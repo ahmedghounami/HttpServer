@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/15 14:22:38 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/15 16:10:31 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,6 @@
 //  in related RFCs (e.g., RFC 7234). This means that responses to GET
 //  requests can be stored and reused under the right conditions.
 
-//finding which server config to use
 int findMatchingServer(client_info &client, std::map<int, server_config> &server){
     std::string host;
     int port;
@@ -49,24 +48,43 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
 void handleGetRequest(client_info &client, std::map<int, server_config> &server) {
     std::cout << "in get funciton" << std::endl;
 
-    //print request line
-    // std::cout << "Request Line: " << client.method << " " << client.uri << " " << client.version << std::endl;
-    //print query
-    // if (!client.query.empty())
-    //     std::cout << "Query: " << client.query << std::endl;
-    //print headers whitout for each
-    // print client info
-    // std::cout << "Client Info: " << std::endl;
-    // std::cout << "last_time: " << client.last_time << std::endl;
-    // std::cout << "method: " << client.method << std::endl;
-    // std::cout << "uri: " << client.uri << std::endl;
-    // std::cout << "version: " << client.version << std::endl;
-    // std::cout << "query: " << client.query << std::endl;
-    // std::cout << "Headers: " << std::endl;
-    //fine the server config
-    findMatchingServer(client, server);
-    (void)client;
-    (void)server;
+    
+    int server_index = findMatchingServer(client, server);
+    
+    // std::cout << "server path: " << server[server_index].path << std::endl;
+    // std::cout << "client path: " << client.uri << std::endl;
+    
+    std::string path = server[server_index].path + client.uri;
+    
+    
+    std::cout << "content type: " << client.ContentType << std::endl;
+    
+    //try to open the file
+    std::ifstream file(path.c_str());
+    int status_code = 200;
+    if(!file.is_open()) {
+        switch(errno) {
+            case ENOENT:
+                status_code = 404;
+                break;
+            case EACCES:
+                status_code = 403;
+                break;
+            default:
+                status_code = 500;
+                break;
+        }
+    }
+    std::string notFoundBody = "<h1>404 Not Found</h1>";
+    std::string response = 
+    "HTTP/1.1 404 Not Found\r\n"
+    "Content-Type: text/plain\r\n"
+    "Content-Length: " + std::to_string(notFoundBody.size()) + "\r\n"
+    "\r\n" +
+    notFoundBody;
+    
+    client.response = response;
+    client.poll_status = 1;
 }
 
 void handleDeleteRequest(client_info &client, std::map<int, server_config> &server) {
@@ -74,3 +92,32 @@ void handleDeleteRequest(client_info &client, std::map<int, server_config> &serv
     (void)client;
     (void)server;
 }
+// HTTP/1.1 200 OK
+// Content-Type: text/html
+// Content-Length: 56
+// Connection: close
+
+// HTTP/1.1 404 Not Found
+// Content-Type: text/html
+// Content-Length: 25
+
+// <h1>404 Not Found</h1>
+// 404	Not Found	                        File or resource doesn’t exist
+// 403	Forbidden	                        You’re not allowed to access the file
+// 400	Bad Request	                        The request is malformed (wrong syntax)
+// 405	Method Not Allowed	                GET is not allowed for that route
+// 500	Internal Server Error	            Something broke inside the server
+// 502	Bad Gateway	                        Server acting as a gateway got an invalid response
+// 503	Service Unavailable	                Server is temporarily overloaded or down
+
+
+
+// html, .htm	                    text/html
+// .css	                            text/css
+// .js	                            application/javascript
+// .json	                        application/json
+// .png	                            image/png
+// .jpg, .jpeg	                    image/jpeg
+// .txt	                            text/plain
+// .sh	                            text/x-shellscript or text/plain
+// .pdf	                             application/pdf
