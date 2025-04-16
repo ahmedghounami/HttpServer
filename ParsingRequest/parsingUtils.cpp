@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 17:23:29 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/15 20:08:35 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/16 21:25:58 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -156,16 +156,17 @@ std::string nameGenerator() {
   srand(time(0));
   std::string name;
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const int length = sizeof(charset) - 1;
-  for (int i = 0; i < 10; ++i) {
-    name += charset[rand() % length];
+  name += "default_";
+  for (int i = 0; i < 5; ++i) {
+    int index = rand() % (sizeof(charset) - 1);
+    name += charset[index];
   }
+  name += ".txt";
   return name;
 }
 
 void ParseContentDisposition(client_info& client) {
   std::cerr << "-------------ParseContentDisposition------------" << std::endl;
-  client.data = client.data.substr(client.pos + 32, client.data.size());
   client.pos = client.data.find("name=\"");
   client.data = client.data.substr(client.pos + 6, client.data.size());
   std::string sub = client.data.substr(0, client.data.find("\""));
@@ -173,13 +174,12 @@ void ParseContentDisposition(client_info& client) {
   client.name = sub;
 
   client.pos = client.data.find("filename=\"");
-  if (client.pos == std::string::npos)
+  if (client.pos == std::string::npos || client.pos != 0)
   {
-    close(client.file_fd);
+    // close(client.file_fd);
     client.filename = nameGenerator();
     client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);//check if file_fd is valid
-  
-    client.data = client.data.substr(2, client.data.size());
+    client.data = client.data.substr(2 + (client.pos != 0) * 2, client.data.size());
   } else if (client.pos != std::string::npos) {
     // close(client.file_fd);
     client.data = client.data.substr(client.pos + 10, client.data.size());
@@ -199,15 +199,99 @@ void ParseContentType(client_info& client) {
   client.pos = client.data.find("/");
   client.data = client.data.substr(client.pos + 1, client.data.size());
   client.contentTypeform = client.data.substr(0, client.data.find("\n" - 1));
-  client.data = client.data.substr(client.data.find("\n") + 3, client.data.size());
-  if (client.filename.empty()) {
-    /*
-      if (this->MimeTypeMap.find(this->MimeType) != this->MimeTypeMap.end())
-          this->FileName = generate_random_string(5) + this->MimeTypeMap[this->MimeType];
-      else
-          this->FileName = generate_random_string(5) + ".bin";
-    */
-  }
+  client.data = client.data.substr(client.data.find("\n") + 5, client.data.size());
+
   std::cerr << "Content-Type: |" << client.contentTypeform << "|" << std::endl;
   std::cerr << "--------------End ParseContentType-------------" << std::endl;
+}
+
+
+void NewFile(client_info &client) {
+  client.chunkData = "", client.bytesLeft = 0, client.chunkSize = 0;// close(client.file_fd);
+  client.data = client.data.substr(client.boundary.size() + 2);
+
+  client.pos = client.data.find("Content-Disposition: form-data;");
+  if (client.pos != std::string::npos && client.pos == 0) {
+    client.data = client.data.substr(client.pos + 32, client.data.size());
+    ParseContentDisposition(client);
+  }
+  client.pos = client.data.find("Content-Type:");
+  if (client.pos != std::string::npos && client.pos == 0) {
+    ParseContentType(client);
+  }
+}
+
+void ReadTheData(client_info& client) {
+  bool flag = true;
+  while (flag)
+  {
+    if ((client.data.size() == 2 && client.data == "\r\n")
+      || (client.data.size() == 4 && client.data == "\r\n\r\n"))
+      break;
+
+    if (client.bytesLeft > 0 && client.data.size() >= client.bytesLeft)
+    {
+      client.chunkData = client.data.substr(0, client.bytesLeft);
+
+      if (!client.chunkData.empty())
+        writeToFile(client.chunkData, client.file_fd);
+
+      client.data = client.data.substr(client.bytesLeft);
+      client.bytesLeft = 0;
+    }
+    else if (client.bytesLeft > 0)
+    {
+      client.chunkData = client.data;
+
+      if (!client.chunkData.empty())
+        writeToFile(client.chunkData, client.file_fd);
+
+      client.bytesLeft -= client.chunkData.size();
+      client.data.clear();
+      return ;
+    }
+
+    client.pos = client.data.find("\r\n");
+    std::string ChunkSizeString = client.data.substr(0, client.pos);
+    client.data = client.data.substr(client.pos + 2);
+    std::istringstream iss(ChunkSizeString);
+    client.chunkSize = 0;
+    iss >> std::hex >> client.chunkSize;
+    if (client.chunkSize + 2 > client.data.size()) {
+      client.bytesLeft = client.chunkSize - (client.data.size() - 2);
+      client.chunkData = client.data.substr(0, client.data.size() - 2);
+      client.data.clear();
+    }
+    else
+    {
+      client.chunkData = client.data.substr(0, client.chunkSize);
+      client.data = client.data.substr(client.chunkSize + 2);
+      client.bytesLeft = 0;
+    }
+    if (!client.chunkData.empty())
+      writeToFile(client.chunkData, client.file_fd);
+
+
+    client.pos = client.data.find(client.boundary);
+    if (client.pos != std::string::npos && client.bytesLeft == 0)//working in here
+      NewFile(client);
+
+    client.pos = client.data.find(client.boundary + "--\r\n\r\n0\r\n\r\n");
+    if (client.pos != std::string::npos)
+    {
+      std::cerr << "End boundary found" << std::endl;
+      client.bodyTaken = true;
+      return ;
+    }
+
+    client.pos = client.data.find("\r\n");
+    if (client.pos == 0)
+    {
+      client.data = client.data.substr(2);
+      continue;
+    }
+    if (client.pos == std::string::npos)
+      break;
+
+  }
 }

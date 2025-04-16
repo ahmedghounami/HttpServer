@@ -210,13 +210,10 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server)
 {
-	// std::ofstream file("data");
-	// file << client.data;
-	// file.close();
-	// return ;
-
-  int fd = open("data", O_WRONLY | O_APPEND);//append
-  write(fd, client.data.c_str(), client.data.size());
+  	// int fd = open("data1", O_WRONLY | O_APPEND);//append
+  	// write(fd, client.data.c_str(), client.data.size());
+	// client.data.clear();
+  	// return ;
 
 	if (request_line(client) == false || headers(client, server) == false)
 		return;
