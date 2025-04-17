@@ -6,15 +6,58 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/20 00:16:24 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/17 23:04:50 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/17 23:32:46 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../server.hpp"
 
-void ChunkedData(client_info& client) {
-  while (!client.data.empty() && client.isChunked && !client.bodyTaken) {
+void ChunkedOtherData(client_info &client) {
 
+  while (!client.data.empty() && client.isChunked && !client.bodyTaken) {
+    
+    //here we look for the end of the chunked data
+    client.pos = client.data.find("0\r\n\r\n");
+    if (client.pos != std::string::npos && client.pos == 0) {
+      client.bodyTaken = true;
+      std::cerr << "end of chunked data" << std::endl;
+      return ;
+    }
+
+    //here we read size {if we don't have it yet}
+    if (client.ReadSize ==  true) {
+      client.ReadSize = false;
+      client.pos = client.data.find("\r\n");
+      std::string ChunkSizeString = client.data.substr(0, client.pos);
+      client.data = client.data.substr(client.pos + 2);
+      std::istringstream iss(ChunkSizeString);
+      client.chunkSize = 0;
+      iss >> std::hex >> client.chunkSize;
+      std::cerr << "ChunkSize: " << client.chunkSize << std::endl;
+    }
+
+    //here we read data if we have it if not we break
+    if (client.chunkSize > 0) {
+      if (client.chunkSize + 2 > client.data.size()) {
+        client.ReadSize = false;
+        return ;
+      }
+      else {
+        client.chunkData = client.data.substr(0, client.chunkSize);
+        if (!client.chunkData.empty())
+          writeToFile(client.chunkData, client.file_fd);
+        // std::cerr << "|" << client.chunkData << "|" << std::endl;
+        client.data = client.data.substr(client.chunkSize + 2);
+        client.ReadSize = true;
+      }
+    }
+  
+  }
+}
+
+void ChunkedFormData(client_info& client) {
+  
+  while (!client.data.empty() && client.isChunked && !client.bodyTaken) {
 
     //here we read header info {name, filename, content-type}
     client.pos = client.data.find(client.boundary + "\r\n");
@@ -37,7 +80,6 @@ void ChunkedData(client_info& client) {
       iss >> std::hex >> client.chunkSize;
     }
 
-
     //here we read data if we have it if not we break
     if (client.chunkSize > 0) {
       if (client.chunkSize + 2 > client.data.size()) {
@@ -51,7 +93,7 @@ void ChunkedData(client_info& client) {
         client.data = client.data.substr(client.chunkSize + 2);
         client.ReadSize = true;
 
-        client.pos = client.data.find(client.boundary + "--");
+         client.pos = client.data.find(client.boundary + "--");
         if (client.pos != std::string::npos && client.data.find(client.boundary + "\r\n") == std::string::npos) {
           std::cerr << "end boundary found" << std::endl;
           client.bodyTaken = true;
@@ -85,15 +127,9 @@ bool takeBodyType(client_info& client) {
           client.boundary.clear();
           return false; //respond and clear client;
         }
-        // formDataChunked(client);
-        client.bodyTypeTaken = 1;
-        // client.boundary = "--" + client.boundary;
-        // size_t pos = client.data.find("\r\n");
-        // if (pos != std::string::npos)
-        //   client.data = client.data.substr(pos + 2);
+        client.bodyTypeTaken = 1;// formDataChunked(client);
       } else {
-        // otherDataChunked(client);
-        client.bodyTypeTaken = 2;
+        client.bodyTypeTaken = 2;// otherDataChunked(client);
       }
     } else {
       std::cerr << "Error: Missing 'Content-Type' header" << std::endl;
@@ -110,12 +146,10 @@ bool takeBodyType(client_info& client) {
           client.boundary.clear();
           exit (1);
         }
-        // formData(client);
-        client.bodyTypeTaken = 3;
+        client.bodyTypeTaken = 3;// formData(client);
 
       } else {
-        // otherData(client);
-        client.bodyTypeTaken = 4;
+        client.bodyTypeTaken = 4;// otherData(client);
       }
     } else { // No content-type header
       std::cerr << "Error: Missing 'Content-Type' header" << std::endl;

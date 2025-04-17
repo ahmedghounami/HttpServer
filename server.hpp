@@ -63,16 +63,17 @@ struct FormPart {
 struct client_info
 {
     int file_fd;
+    int poll_status;
+    int bodyTypeTaken;//flag
+    size_t chunkSize, pos;
+    
+    bool ReadSize;
     bool isChunked;
     bool bodyTaken;
     bool bodyReached;
-    bool bodyTypeTaken;//flag
-    bool ReadSize;//flag
-    int headersTaken;//flag
-    size_t chunkSize, pos;
+    bool headersTaken;
 
     std::string name, filename, contentTypeform;
-    int poll_status;
     std::string data;
     std::string boundary;
     std::string chunkData;
@@ -135,7 +136,8 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server);
 bool request_line(client_info &client);
 bool headers(client_info &client);
 bool takeBodyType(client_info& client);
-void ChunkedData(client_info &client);
+void ChunkedFormData(client_info &client);//for chunked data / multipart/form-data
+void ChunkedOtherData(client_info &client);//for chunked data / other data
 void NewFile(client_info &client);
 void ParseContentDisposition(client_info& client);
 void ParseContentType(client_info& client);

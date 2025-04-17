@@ -5,7 +5,7 @@ bool request_line(client_info &client) {
 	if (client.method.empty() == false)
 		return true;
 
-	client.headersTaken = 0;
+	client.headersTaken = false;
 	size_t pos = client.data.find("\r\n");
 	if (pos == std::string::npos) // not enough data
 		return false;
@@ -201,7 +201,7 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 	// for (it = client.headers.begin(); it != client.headers.end(); ++it)
 	// 	std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
 
-	client.headersTaken = 1;
+	client.headersTaken = true;
 	client.bodyTypeTaken = 0;
 	client.isChunked = false;
 
@@ -210,7 +210,7 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server)
 {
-  	// int fd = open("data", O_WRONLY | O_APPEND);//append
+  	client.file_fd = open("data", O_WRONLY | O_APPEND);//append
   	// write(fd, client.data.c_str(), client.data.size());
 	// client.data.clear();
   	// return ;
@@ -222,11 +222,11 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 	else if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
 	else if (client.method == "POST") {
-    
-    if (takeBodyType(client) == false)
-      return ;
-
-	  if (client.bodyTypeTaken == 1)
-		  ChunkedData(client);
-  } 
+		if (takeBodyType(client) == false)
+      		return ;
+		if (client.bodyTypeTaken == 1)
+			ChunkedFormData(client);
+		else if (client.bodyTypeTaken == 2) 
+	  		ChunkedOtherData(client);
+	} 
 }
