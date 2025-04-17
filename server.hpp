@@ -19,7 +19,7 @@
 #include <signal.h>
 #include <algorithm>
 #include <arpa/inet.h>
-
+#define READ_BUFFER_SIZE 1024
 struct location
 {
     std::string location_index;
@@ -80,6 +80,7 @@ struct client_info
     std::string method, uri, version;
     std::string query;
     std::map<std::string, std::string> headers;
+    bool datafinished;
 
     std::string response;
   time_t last_time;

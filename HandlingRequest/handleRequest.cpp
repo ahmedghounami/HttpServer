@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/17 15:26:05 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/17 18:51:18 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,35 +71,18 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
     // std::cout << "Server config found for host: " << host << " and port: " << port << "in server config index: " << server_index << std::endl;
     return server_index;
 }
-void success(client_info &client, std::string &body, std::string &path, bool close = true) {
-    //send data to client in multiple chunks
-    // if(body.size() > 1024)
-    // {
-    //     while (body.size() > 1024)
-    //     {
-    //         client.response += body.substr(0, 1024);
-    //         body.erase(0, 1024);
-    //         client.poll_status = 1;
-    //         // send(client.socket, client.response.c_str(), client.response.size(), 0);
-    //         client.response.clear();
-    //     }
-    // } 
+void success(client_info &client, std::string &body, std::string &path, bool whith_header = true) {
+    
     client.poll_status = 1;
-    client.response = "HTTP/1.1 200 OK\r\n";
-    client.response += "Content-Type: " + getContentType(path) + "\r\n";
-    client.response += "Content-Length: " + std::to_string(body.size()) + "\r\n";
-    client.response += "Connection: close\r\n";
-    client.response += "\r\n";
+    if(whith_header)
+    {
+        client.response = "HTTP/1.1 200 OK\r\n";
+        client.response += "Content-Type: " + getContentType(path) + "\r\n";
+        client.response += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+        client.response += "Connection: close\r\n";
+        client.response += "\r\n";
+    }
     client.response += body;
-    (void)close;
-    // put body in file named data.png
-    // std::ofstream file("data.png");
-    // if (file.is_open()) {
-    //     file << body;
-    //     file.close();
-    // } else {
-    //     std::cerr << "Error opening file" << std::endl;
-    // }
 }
 std::string getlocation(client_info &client, server_config &server) {
     std::cout << "in getlocation funciton" << std::endl;
@@ -117,7 +100,7 @@ std::string getlocation(client_info &client, server_config &server) {
         std::map<std::string, location>::iterator it = server.locations.find(uri);
         if(it != server.locations.end())
         {
-            std::cout << "found location: " << it->first << std::endl;
+            // std::cout << "found location: " << it->first << std::endl;
             return it->first;
         }
     }
@@ -149,28 +132,41 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
     
     //try to open the file
     std::ifstream file(path.c_str());
-    if(!file.is_open()) {
-        switch(errno) {
-            case ENOENT:
-                not_found(client);//404
-                break;
-            case EACCES:
-                forbidden(client);//403
-                break;
-            default:
-                unknown_error(client);//500
-                break;
+    if(!file.is_open())
+    {
+        file.open(path.c_str());
+        if(!file.is_open())
+        {
+            switch(errno)
+            {
+                case ENOENT:
+                    not_found(client);//404
+                    break;
+                case EACCES:
+                    forbidden(client);//403
+                    break;
+                default:
+                    unknown_error(client);//500
+                    break;
+            }
+            return;
         }
     }
-    else
-    { // success
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        std::string body = buffer.str();
-        std::cout << "size of body: " << body.size() << std::endl;
-        success(client, body, path);
-        file.close();
-    }
+    char *buffer = new char[READ_BUFFER_SIZE];
+    //read only 1024 bytes
+    file.read(buffer, READ_BUFFER_SIZE);
+    std::string body = std::string(buffer, file.gcount());
+    std::cout << "body size: " << body.size() << std::endl;
+    //check if file end is reached
+    if(file.eof())
+        file.close(), client.datafinished = 1, std::cout << "file end reached" << std::endl;
+    delete[] buffer;
+    //file.seekg(0, std::ios::beg); to go to the beginning
+    //file.seekg(-400, std::ios::cur); to go back 400 bytes
+    //file.seekg(400, std::ios::beg);  // move to byte 400 from the beginning
+    
+    success(client, body, path);
+    // file.close();
 
     std::cout << "get function finished!" << std::endl;
 }
