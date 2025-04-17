@@ -67,6 +67,7 @@ struct client_info
     bool bodyTaken;
     bool bodyReached;
     bool bodyTypeTaken;//flag
+    bool ReadSize;//flag
     int headersTaken;//flag
     size_t bytesLeft, chunkSize, pos;
 

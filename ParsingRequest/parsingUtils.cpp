@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 17:23:29 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/16 21:25:58 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/17 23:01:05 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,7 +153,6 @@ void writeToFile(std::string &body, int fd) {
 }
 
 std::string nameGenerator() {
-  srand(time(0));
   std::string name;
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   name += "default_";
@@ -174,9 +173,10 @@ void ParseContentDisposition(client_info& client) {
   client.name = sub;
 
   client.pos = client.data.find("filename=\"");
-  if (client.pos == std::string::npos || client.pos != 0)
+  if (client.pos == std::string::npos || client.pos != 0)//taha said : return bad request if filename is not found
   {
     // close(client.file_fd);
+    client.filename.clear();
     client.filename = nameGenerator();
     client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);//check if file_fd is valid
     client.data = client.data.substr(2 + (client.pos != 0) * 2, client.data.size());
@@ -199,7 +199,7 @@ void ParseContentType(client_info& client) {
   client.pos = client.data.find("/");
   client.data = client.data.substr(client.pos + 1, client.data.size());
   client.contentTypeform = client.data.substr(0, client.data.find("\n" - 1));
-  client.data = client.data.substr(client.data.find("\n") + 5, client.data.size());
+  client.data = client.data.substr(client.data.find("\r\n") + 6, client.data.size());
 
   std::cerr << "Content-Type: |" << client.contentTypeform << "|" << std::endl;
   std::cerr << "--------------End ParseContentType-------------" << std::endl;
@@ -208,7 +208,7 @@ void ParseContentType(client_info& client) {
 
 void NewFile(client_info &client) {
   client.chunkData = "", client.bytesLeft = 0, client.chunkSize = 0;// close(client.file_fd);
-  client.data = client.data.substr(client.boundary.size() + 2);
+  client.data = client.data.substr(client.boundary.size() + 2);//moving the data by the size of the boundary and 2 for \r\n
 
   client.pos = client.data.find("Content-Disposition: form-data;");
   if (client.pos != std::string::npos && client.pos == 0) {

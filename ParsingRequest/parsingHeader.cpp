@@ -210,7 +210,7 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server)
 {
-  	// int fd = open("data1", O_WRONLY | O_APPEND);//append
+  	// int fd = open("data", O_WRONLY | O_APPEND);//append
   	// write(fd, client.data.c_str(), client.data.size());
 	// client.data.clear();
   	// return ;
