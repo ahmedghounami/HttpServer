@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/16 19:31:55 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/17 15:00:29 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -191,4 +191,4 @@ void handleDeleteRequest(client_info &client, std::map<int, server_config> &serv
 // .jpg, .jpeg	                    image/jpeg
 // .txt	                            text/plain
 // .sh	                            text/x-shellscript or text/plain
-// .pdf	                             application/pdf
+// .pdf	                             application/pdf 
