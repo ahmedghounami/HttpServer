@@ -69,7 +69,7 @@ struct client_info
     bool bodyTypeTaken;//flag
     bool ReadSize;//flag
     int headersTaken;//flag
-    size_t bytesLeft, chunkSize, pos;
+    size_t chunkSize, pos;
 
     std::string name, filename, contentTypeform;
     int poll_status;
@@ -137,7 +137,6 @@ bool headers(client_info &client);
 bool takeBodyType(client_info& client);
 void ChunkedData(client_info &client);
 void NewFile(client_info &client);
-void ReadTheData(client_info& client);
 void ParseContentDisposition(client_info& client);
 void ParseContentType(client_info& client);
 

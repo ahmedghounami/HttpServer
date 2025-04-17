@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/20 00:16:24 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/17 22:37:22 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/17 23:04:50 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,6 @@ void ChunkedData(client_info& client) {
       std::istringstream iss(ChunkSizeString);
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
-      std::cerr << "ChunkSize: " << client.chunkSize  << std::endl;
     }
 
 
@@ -49,7 +48,6 @@ void ChunkedData(client_info& client) {
         client.chunkData = client.data.substr(0, client.chunkSize);
         if (!client.chunkData.empty())
           writeToFile(client.chunkData, client.file_fd);
-        std::cerr << "ChunkData: |" << client.chunkData  << "|" << std::endl;
         client.data = client.data.substr(client.chunkSize + 2);
         client.ReadSize = true;
 
@@ -72,14 +70,7 @@ bool takeBodyType(client_info& client) {
   client.isChunked = false;
   client.bodyTaken = false;
   client.ReadSize = true;
-  client.bytesLeft = 0;
   client.chunkData = "";
-
-  // client.file_fd = open("file", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-  // if (client.file_fd == -1) {
-  //   std::cerr << "Error: Failed to open file" << std::endl;
-  //   exit (1);
-  // }
 
   std::map<std::string, std::string>::iterator it = client.headers.find("transfer-encoding");
   if (it != client.headers.end() && it->second == "chunked") {
@@ -133,61 +124,3 @@ bool takeBodyType(client_info& client) {
   }
   return true;
 }
-
-
-/*//   size_t pos = client.data.find(client.boundary + "--");//end boundary
-
-  //   if (pos != std::string::npos && client.pos == std::string::npos && client.bytesLeft == 0) {
-  //     std::cerr << "end boundary found" << std::endl;
-  //     std::cerr << "Data: |" << client.data << "|" << std::endl;
-  //     client.bodyTaken = true;
-  //     break ;
-  //   }
-  
-  //   else {
-  //     if (client.bytesLeft > 0 && client.data.size() >= client.bytesLeft) {
-
-  //       client.chunkData = client.data.substr(0, client.bytesLeft);
-  //       if (!client.chunkData.empty())
-  //         writeToFile(client.chunkData, client.file_fd);
-  //       client.data = client.data.substr(client.bytesLeft);
-  //       client.bytesLeft = 0;
-
-  //     } else if (client.bytesLeft > 0) {
-
-  //       client.chunkData = client.data.substr(0, client.data.size());
-  //       if (!client.chunkData.empty())
-  //         writeToFile(client.chunkData, client.file_fd);
-  //       client.data.clear();
-  //       client.bytesLeft -= client.chunkData.size();
-
-  //     } else if (client.bytesLeft == 0) {
-
-  //       client.pos = client.data.find("\r\n");
-  //       std::string ChunkSizeString = client.data.substr(0, client.pos);
-  //       client.data = client.data.substr(client.pos + 2);
-  //       std::istringstream iss(ChunkSizeString);
-  //       client.chunkSize = 0;
-  //       iss >> std::hex >> client.chunkSize;
-  //       if (client.chunkSize + 2 > client.data.size()) {
-  //         client.bytesLeft = client.chunkSize - (client.data.size() - 2);
-  //         client.chunkData = client.data.substr(0, client.data.size() - 2);
-  //         client.data.clear();
-  //       } else {
-  //         client.chunkData = client.data.substr(0, client.chunkSize);
-  //         client.data = client.data.substr(client.chunkSize + 2);
-  //         client.bytesLeft = 0;
-  //       }
-  //       if (!client.chunkData.empty())
-  //         writeToFile(client.chunkData, client.file_fd);
-  //       client.pos = client.data.find(client.boundary);
-  //       if (client.pos != std::string::npos && client.bytesLeft == 0) {
-  //         std::cerr << "before :|" << client.data << "|" << std::endl;
-  //         client.data = client.data.substr(client.pos);
-  //         std::cerr << "after :|" << client.data << "|" << std::endl;
-  //       }
-  //     }
-  //   }
-
-  //   if (client.data.empty())
-  //     break ;*/
