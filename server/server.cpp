@@ -100,7 +100,7 @@ void server::listen_for_connections()
             std::cerr << "Poll failed\n";
             continue;
         }
-        check_timeout(clients_fds, clients);
+        // check_timeout(clients_fds, clients);
         if (ret == 0)
         {
             // std::cerr << "No data, timeout\n";
@@ -127,18 +127,21 @@ void server::listen_for_connections()
                         i--;
                         continue;
                     }
-                    clients[clients_fds[i].fd].last_time = time(NULL);
+                    // clients[clients_fds[i].fd].last_time = time(NULL);
                     buffer[data] = '\0';
                     clients[clients_fds[i].fd].data.append(buffer, data);
                     // clients_fds[i].events = POLLOUT;
                     parse_chunk(clients[clients_fds[i].fd], servers);
+                    if (clients[clients_fds[i].fd].isGet == true)
+                        clients_fds[i].events = POLLOUT;
                 }
             }
             if (clients[clients_fds[i].fd].poll_status == 1)
                 clients_fds[i].events = POLLOUT;
             if (clients_fds[i].revents & POLLOUT)
             {
-                std::cerr << "Sending response to client " << clients_fds[i].fd << std::endl;
+                if (clients[clients_fds[i].fd].isGet == true)
+                    handleGetRequest(clients[clients_fds[i].fd], servers);
                 int bytes_sent = send(clients_fds[i].fd, clients[clients_fds[i].fd].response.c_str(), clients[clients_fds[i].fd].response.size(), 0);
                 clients[clients_fds[i].fd].bytes_sent += bytes_sent;
                 if (clients[clients_fds[i].fd].bytes_sent < 0)
@@ -146,6 +149,7 @@ void server::listen_for_connections()
                 usleep(1000);
                 if (clients[clients_fds[i].fd].datafinished == true)
                 {
+                    std::cerr << "Client finished ---------------------------------------------------------------" << clients_fds[i].fd << std::endl;
                     close(clients_fds[i].fd);
                     clients_fds.erase(clients_fds.begin() + i);
                     i--;

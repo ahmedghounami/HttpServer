@@ -199,10 +199,10 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 	}
 
 	std::map<std::string, std::string>::iterator it;
-	for (it = client.headers.begin(); it != client.headers.end(); ++it)
-	{
-		std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
-	}
+	// for (it = client.headers.begin(); it != client.headers.end(); ++it)
+	// {
+	// 	// std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
+	// }
 
 	client.headersTaken = 1;
 	client.bodyTypeTaken = 0;
@@ -222,8 +222,11 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 		return;
 	// exit(0);
 	if (client.method == "GET")
-		handleGetRequest(client, server);
-	else if (client.method == "DELETE")
+		client.isGet = true;
+	else
+		client.isGet = false;
+		// handleGetRequest(client, server);
+	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
 	else if (client.method == "POST" && takeBody(client) == false)
 		return;

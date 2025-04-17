@@ -84,6 +84,7 @@ struct client_info
 
     std::string response;
     double bytes_sent;
+    bool isGet;
   time_t last_time;
 };
 
