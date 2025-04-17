@@ -153,9 +153,6 @@ void server::listen_for_connections()
                 else
                 {
                     clients[clients_fds[i].fd].response.clear();
-                    clients[clients_fds[i].fd].bytes_sent = 0;
-                    clients[clients_fds[i].fd].poll_status = 0;
-                    clients_fds[i].events = POLLIN;
                 }
             }
         }
