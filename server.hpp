@@ -117,6 +117,8 @@ void http_version_not_supported(client_info &client);
 void invalid_uri(client_info &client); // example: uri must start with '/'
 void bad_request(client_info &client); // example: invalid or malformed HTTP version
 void not_found(client_info &client); // example: file not found
+void forbidden(client_info &client); // example: you are not allowed to access the file
+void unknown_error(client_info &client); // example: unknown error
 
 
 // server
@@ -151,5 +153,8 @@ std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 bool isValidContentLength(const std::string &lengthStr);
 void writeToFile(std::string &body, int fd);
+
 //find which server config to use returns the server index
 int findMatchingServer(client_info &client, std::map<int, server_config> &server);
+//this fuction to get the location of the file if she exists in config file if not it return ""
+std::string getlocation(client_info &client, server_config &server); 

@@ -57,3 +57,19 @@ void not_found(client_info &client)
     std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
 }
+void forbidden(client_info &client)
+{
+    client.poll_status = 1;
+    client.response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\nContent-Length: ";
+    std::ifstream file("errors/403.html");
+    std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
+}
+void unknown_error(client_info &client)
+{
+    client.poll_status = 1;
+    client.response = "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\nContent-Length: ";
+    std::ifstream file("errors/500.html");
+    std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
+}
