@@ -83,6 +83,7 @@ struct client_info
     bool datafinished;
 
     std::string response;
+    double bytes_sent;
   time_t last_time;
 };
 
