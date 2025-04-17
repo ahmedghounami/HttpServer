@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/17 18:51:18 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/17 19:00:29 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,6 +154,7 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
     }
     char *buffer = new char[READ_BUFFER_SIZE];
     //read only 1024 bytes
+    file.seekg(client.bytes_sent, std::ios::beg);  // move to byte  from the beginning
     file.read(buffer, READ_BUFFER_SIZE);
     std::string body = std::string(buffer, file.gcount());
     std::cout << "body size: " << body.size() << std::endl;
@@ -163,7 +164,6 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
     delete[] buffer;
     //file.seekg(0, std::ios::beg); to go to the beginning
     //file.seekg(-400, std::ios::cur); to go back 400 bytes
-    //file.seekg(400, std::ios::beg);  // move to byte 400 from the beginning
     
     success(client, body, path);
     // file.close();
