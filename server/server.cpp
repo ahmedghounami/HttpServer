@@ -139,13 +139,24 @@ void server::listen_for_connections()
             if (clients_fds[i].revents & POLLOUT)
             {
                 std::cerr << "Sending response to client " << clients_fds[i].fd << std::endl;
-                clients[clients_fds[i].fd].bytes_sent += send(clients_fds[i].fd, clients[clients_fds[i].fd].response.c_str(), clients[clients_fds[i].fd].response.size(), 0);
+                int bytes_sent = send(clients_fds[i].fd, clients[clients_fds[i].fd].response.c_str(), clients[clients_fds[i].fd].response.size(), 0);
+                clients[clients_fds[i].fd].bytes_sent += bytes_sent;
                 if (clients[clients_fds[i].fd].bytes_sent < 0)
                     continue;
                 usleep(1000);
-                close(clients_fds[i].fd);
-                clients_fds.erase(clients_fds.begin() + i);
-                i--;
+                if (clients[clients_fds[i].fd].datafinished == true)
+                {
+                    close(clients_fds[i].fd);
+                    clients_fds.erase(clients_fds.begin() + i);
+                    i--;
+                }
+                else
+                {
+                    clients[clients_fds[i].fd].response.clear();
+                    clients[clients_fds[i].fd].bytes_sent = 0;
+                    clients[clients_fds[i].fd].poll_status = 0;
+                    clients_fds[i].events = POLLIN;
+                }
             }
         }
     }
