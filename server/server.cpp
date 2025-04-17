@@ -139,8 +139,8 @@ void server::listen_for_connections()
             if (clients_fds[i].revents & POLLOUT)
             {
                 std::cerr << "Sending response to client " << clients_fds[i].fd << std::endl;
-                ssize_t bytes = send(clients_fds[i].fd, clients[clients_fds[i].fd].response.c_str(), clients[clients_fds[i].fd].response.size(), 0);
-                if (bytes < 0)
+                clients[clients_fds[i].fd].bytes_sent += send(clients_fds[i].fd, clients[clients_fds[i].fd].response.c_str(), clients[clients_fds[i].fd].response.size(), 0);
+                if (clients[clients_fds[i].fd].bytes_sent < 0)
                     continue;
                 usleep(1000);
                 close(clients_fds[i].fd);
