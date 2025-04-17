@@ -16,4 +16,5 @@ void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, st
     clients[client_sock] = client_info();
     clients[client_sock].last_time = time(NULL);
     clients[client_sock].poll_status = 0;
+    clients[client_sock].bytes_sent = 0;
 }

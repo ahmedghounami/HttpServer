@@ -82,6 +82,7 @@ struct client_info
     std::map<std::string, std::string> headers;
 
     std::string response;
+    double bytes_sent;
   time_t last_time;
 };
 
