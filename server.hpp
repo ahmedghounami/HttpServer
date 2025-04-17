@@ -158,3 +158,5 @@ void writeToFile(std::string &body, int fd);
 int findMatchingServer(client_info &client, std::map<int, server_config> &server);
 //this fuction to get the location of the file if she exists in config file if not it return ""
 std::string getlocation(client_info &client, server_config &server); 
+//this function to get the path from the config file from location if she exists if not it return the server path
+std::string getcorectserver_path(client_info &client, std::map<int, server_config> &server);

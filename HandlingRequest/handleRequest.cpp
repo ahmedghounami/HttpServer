@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/17 15:04:01 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/17 15:26:05 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,7 +110,7 @@ std::string getlocation(client_info &client, server_config &server) {
         size_t pos = uri.find_last_of("/");
         if(pos == std::string::npos)
             break;
-        if(pos == 0)
+        if(pos == 0 && uri.size() > 1)
             pos++;
         uri = uri.substr(0, pos);
         std::cout << "location: " << uri << std::endl;
@@ -124,21 +124,26 @@ std::string getlocation(client_info &client, server_config &server) {
     
     return "";
 }
+std::string getcorectserver_path(client_info &client, std::map<int, server_config> &server) {
+    std::cout << "in getcorect_path funciton" << std::endl;
+    int server_index = findMatchingServer(client, server);
+    
+    std::string loc = getlocation(client, server[server_index]);
+    if(loc != "" && server[server_index].locations[loc].path != "")
+        return server[server_index].locations[loc].path;
+    return server[server_index].path;
+}
 void handleGetRequest(client_info &client, std::map<int, server_config> &server) {
     std::cout << "in get funciton" << std::endl;
-    std::string serverpath;
 
     
-    int server_index = findMatchingServer(client, server);
+    // int server_index = findMatchingServer(client, server);
     
     // std::cout << "server path: " << server[server_index].path << std::endl;
     // std::cout << "client path: " << client.uri << std::endl;
-    std::string loc = getlocation(client, server[server_index]);
-    if(loc != "" && server[server_index].locations[loc].path != "")
-        serverpath = server[server_index].locations[loc].path;
-    else
-        serverpath = server[server_index].path;
-    std::string path = serverpath + client.uri;
+    // std::string loc = getlocation(client, server[server_index]);
+    
+    std::string path = getcorectserver_path(client, server) + client.uri;
     
     std::cout << "path: " << path << std::endl;
     
