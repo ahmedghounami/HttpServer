@@ -199,7 +199,7 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
     file.read(buffer, READ_BUFFER_SIZE);
     if (file.eof())
     {
-        file.close(), client.datafinished = 1, std::cout << "file end reached" << std::endl;
+        client.datafinished = 1, std::cout << "file end reached" << std::endl;
     }
     body = std::string(buffer, file.gcount());
     std::cout << "body size: " << body.size() << std::endl;
@@ -209,7 +209,7 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
     // file.seekg(-400, std::ios::cur); to go back 400 bytes
 
     success(client, body, path, whith_header);
-    // file.close();
+    file.close();
 
     std::cout << "data finished: " << client.datafinished << std::endl;
 }

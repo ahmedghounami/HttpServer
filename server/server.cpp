@@ -11,7 +11,7 @@ void check_ports(int port, std::string server_name, std::vector<port_used> &port
 
 server::server(std::string &config_file)
 {
-    // signal(SIGPIPE, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
     parse_config(config_file);
     for (unsigned int i = 0; i < servers.size(); i++)
     {

@@ -19,7 +19,7 @@
 #include <signal.h>
 #include <algorithm>
 #include <arpa/inet.h>
-#define READ_BUFFER_SIZE 1024
+#define READ_BUFFER_SIZE 10000
 struct location
 {
     std::string location_index;
