@@ -252,9 +252,12 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 			return false; // respond and clear client;
 		}
 		int index = findMatchingServer(client, server);
+		found = 0;
 		for (std::map<std::string, location>::iterator it = server[index].locations.begin(); it != server[index].locations.end(); ++it)
+		{
 			if (it->first == client.uri)
 			{
+				found = 1;
 				std::vector<std::string>::iterator allowedMethodsIt = std::find(it->second.allowed_methods.begin(), it->second.allowed_methods.end(), client.method);
 				if (allowedMethodsIt == it->second.allowed_methods.end())
 				{
@@ -296,6 +299,12 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 					}
 				}
 			}
+		}
+		if (found == 0)
+		{
+			not_found(client);
+			return false; // respond and clear client;
+		}
 	}
 
 	// std::map<std::string, std::string>::iterator it;
