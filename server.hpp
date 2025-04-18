@@ -19,7 +19,7 @@
 #include <signal.h>
 #include <algorithm>
 #include <arpa/inet.h>
-
+#define READ_BUFFER_SIZE 1024
 struct location
 {
     std::string location_index;
@@ -63,15 +63,17 @@ struct FormPart {
 struct client_info
 {
     int file_fd;
+    int poll_status;
+    int bodyTypeTaken;//flag
+    size_t chunkSize, pos;
+    
+    bool ReadSize;
     bool isChunked;
     bool bodyTaken;
     bool bodyReached;
-    bool bodyTypeTaken;//flag
-    int headersTaken;//flag
-    size_t bytesLeft, chunkSize, pos;
+    bool headersTaken;
 
     std::string name, filename, contentTypeform;
-    int poll_status;
     std::string data;
     std::string boundary;
     std::string chunkData;
@@ -80,8 +82,11 @@ struct client_info
     std::string method, uri, version;
     std::string query;
     std::map<std::string, std::string> headers;
+    bool datafinished;
 
     std::string response;
+    double bytes_sent;
+    bool isGet;
   time_t last_time;
 };
 
@@ -135,8 +140,12 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 void parse_chunk(client_info &client, std::map<int, server_config> &server);
 bool request_line(client_info &client);
 bool headers(client_info &client);
-bool takeBody(client_info& client);
-void ChunkedData(client_info &client);
+bool takeBodyType(client_info& client);
+void ChunkedFormData(client_info &client);//for chunked data / multipart/form-data
+void ChunkedOtherData(client_info &client);//for chunked data / other data
+void NewFile(client_info &client);
+void ParseContentDisposition(client_info& client);
+void ParseContentType(client_info& client);
 
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);
@@ -158,3 +167,5 @@ void writeToFile(std::string &body, int fd);
 int findMatchingServer(client_info &client, std::map<int, server_config> &server);
 //this fuction to get the location of the file if she exists in config file if not it return ""
 std::string getlocation(client_info &client, server_config &server); 
+//this function to get the path from the config file from location if she exists if not it return the server path
+std::string getcorectserver_path(client_info &client, std::map<int, server_config> &server);
