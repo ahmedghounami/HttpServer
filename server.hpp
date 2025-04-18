@@ -143,9 +143,7 @@ bool headers(client_info &client);
 bool takeBodyType(client_info& client);
 void ChunkedFormData(client_info &client);//for chunked data / multipart/form-data
 void ChunkedOtherData(client_info &client);//for chunked data / other data
-void NewFile(client_info &client);
-void ParseContentDisposition(client_info& client);
-void ParseContentType(client_info& client);
+void FormData(client_info& client);//for normal data / multipart/form-data
 
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);
@@ -162,6 +160,9 @@ std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 bool isValidContentLength(const std::string &lengthStr);
 void writeToFile(std::string &body, int fd);
+void NewFile(client_info &client);
+void ParseContentDisposition(client_info& client);
+void ParseContentType(client_info& client);
 
 //find which server config to use returns the server index
 int findMatchingServer(client_info &client, std::map<int, server_config> &server);
