@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/18 21:41:10 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/18 21:47:56 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,8 +102,8 @@ void success(client_info &client, std::string &body, std::string &path, std::str
         client.response += "Connection: keep-alive\r\n";
         client.response += "\r\n";
         client.bytes_sent = ((double)client.response.size()  * -1) - 1;
-        std::cout << "response size: " << client.bytes_sent << std::endl;
-        std::cout << "file size: " << file_size << std::endl;
+        // std::cout << "response size: " << client.bytes_sent << std::endl;
+        // std::cout << "file size: " << file_size << std::endl;
         // sleep(10);
     }
     else
@@ -234,7 +234,6 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
             }
             else
             {
-                std::cout << "in php file3" << std::endl;
                 // parent process
                 close(fd[1]);
                 char buffer[1024];
@@ -243,7 +242,6 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
                 //readline by line until we find \r\n\r\n
                 while ((bytes_read = read(fd[0], buffer, sizeof(buffer))) > 0)
                 {
-                    std::cout << "bytes read: " << bytes_read << std::endl;
                     headers += std::string(buffer, bytes_read);
                     if (headers.find("\r\n\r\n") != std::string::npos){
                         //remove what is after \r\n\r\n
@@ -255,21 +253,12 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
                         break;}
                     
                 }
-                std::cout << "bytes sent: " << client.bytes_sent << std::endl;
                 if(client.bytes_sent <= 0 && client.bytes_sent != -1 )
                 {
-                    std::ofstream headers_file("headers.txt");
-                    if (headers_file.is_open())
-                    {
-                        std::cout << "headers: " << std::endl;
-                        headers_file << headers;
-                        headers_file.close();
-                    }
                     while ((bytes_read = read(fd[0], buffer, sizeof(buffer))) > 0){
                         body+= std::string(buffer, bytes_read);
                         
                     }
-                    std::cout << "body size: " << body.size() << std::endl;
                     if(headers.size() > 0)
                         content_type = headers.substr(headers.find("Content-Type: ") + 14, headers.find("\r\n", headers.find("Content-Type: ")) - headers.find("Content-Type: ") - 14);
                     // if(content_type == "")
@@ -282,7 +271,6 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
                     //     body_file.close();
                     // }
                     wait(NULL);
-                    std::cout << "content type: " << content_type << std::endl;
                     // exit(0);
                     alarm(0);
                     close(fd[0]);
@@ -402,7 +390,6 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
         file.close(), client.datafinished = 1, std::cout << "file end reached" << std::endl;
     }
     body = std::string(buffer, file.gcount());
-    std::cout << "body size: " << body.size() << std::endl;
     // check if file end is reached
     delete[] buffer;
     // file.seekg(0, std::ios::beg); to go to the beginning
@@ -411,7 +398,6 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
     success(client, body, path, content_type, whith_header);
     // file.close();
 
-    std::cout << "data finished: " << client.datafinished << std::endl;
 }
 
 void handleDeleteRequest(client_info &client, std::map<int, server_config> &server)
