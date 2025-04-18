@@ -6,49 +6,49 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/20 00:16:24 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/18 16:16:26 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/18 19:46:53 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../server.hpp"
 
 
-void ChunkedOtherData(client_info& client) {
+// void ChunkedOtherData(client_info& client) {
 
-  if (client.ReadSize ==  true) {
-    client.ReadSize = false;
-    client.pos = client.data.find("\r\n");
-    std::string ChunkSizeString = client.data.substr(0, client.pos);
-    client.data = client.data.substr(client.pos + 2);
-    std::istringstream iss(ChunkSizeString);
-    client.chunkSize = 0;
-    iss >> std::hex >> client.chunkSize;
-    if (client.file_fd == -42) {
-      std::string fileName = "rawFile." + client.ContentType.substr(client.ContentType.find("/") + 1);
-      std::cerr << "fileName: " << fileName << std::endl;
-      client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-      if (client.file_fd == -1) {
-        std::cerr << "Error opening file" << std::endl;
-        return ;
-      }
-    }
-  }
+//   if (client.ReadSize ==  true) {
+//     client.ReadSize = false;
+//     client.pos = client.data.find("\r\n");
+//     std::string ChunkSizeString = client.data.substr(0, client.pos);
+//     client.data = client.data.substr(client.pos + 2);
+//     std::istringstream iss(ChunkSizeString);
+//     client.chunkSize = 0;
+//     iss >> std::hex >> client.chunkSize;
+//     if (client.file_fd == -42) {
+//       std::string fileName = "rawFile." + client.ContentType.substr(client.ContentType.find("/") + 1);
+//       std::cerr << "fileName: " << fileName << std::endl;
+//       client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+//       if (client.file_fd == -1) {
+//         std::cerr << "Error opening file" << std::endl;
+//         return ;
+//       }
+//     }
+//   }
 
-  if (client.chunkSize > 0 && client.chunkSize + 2 > client.data.size()) {
-    if (!client.data.empty())
-      writeToFile(client.data, client.file_fd);
-    client.chunkSize -= client.data.size();
-    client.data.clear();
-  } else if (client.chunkSize > 0) {
-    client.chunkData = client.data.substr(0, client.chunkSize);
-    if (!client.chunkData.empty())
-      writeToFile(client.chunkData, client.file_fd);
-    client.data = client.data.substr(client.chunkSize + 2);
-    client.chunkSize = 0;
-    client.bodyTaken = true;
-    std::cerr << "Data taken successfully" << std::endl;
-  }
-}
+//   if (client.chunkSize > 0 && client.chunkSize + 2 > client.data.size()) {
+//     if (!client.data.empty())
+//       writeToFile(client.data, client.file_fd);
+//     client.chunkSize -= client.data.size();
+//     client.data.clear();
+//   } else if (client.chunkSize > 0) {
+//     client.chunkData = client.data.substr(0, client.chunkSize);
+//     if (!client.chunkData.empty())
+//       writeToFile(client.chunkData, client.file_fd);
+//     client.data = client.data.substr(client.chunkSize + 2);
+//     client.chunkSize = 0;
+//     client.bodyTaken = true;
+//     std::cerr << "Data taken successfully" << std::endl;
+//   }
+// }
 
 void ChunkedFormData(client_info& client) {
 
@@ -57,8 +57,11 @@ void ChunkedFormData(client_info& client) {
     client.pos = client.data.find(client.boundary + "\r\n");
     if (client.pos != std::string::npos && client.ReadSize == true) {
       client.data = client.data.substr(client.pos);
+      if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
+        // std::cerr << "data not complete :|" << client.data << "|" << std::endl;
+        break;
+      }
       NewFile(client);
-      client.ReadSize = true;
       if (client.data.empty())
         break ;
     }
@@ -104,7 +107,6 @@ bool takeBodyType(client_info& client) {
 
   std::map<std::string, std::string>::iterator it = client.headers.find("transfer-encoding");
   if (it != client.headers.end() && it->second == "chunked") {
-    client.isChunked = true;
     it = client.headers.find("content-type");
     if (it != client.headers.end()) {
       client.ContentType = it->second;

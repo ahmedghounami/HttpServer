@@ -6,7 +6,7 @@
 /*   By: hboudar <hboudar@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/15 17:23:29 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/17 23:03:56 by hboudar          ###   ########.fr       */
+/*   Updated: 2025/04/18 19:34:03 by hboudar          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,7 +167,7 @@ std::string nameGenerator() {
 void ParseContentDisposition(client_info& client) {
   std::cerr << "-------------ParseContentDisposition------------" << std::endl;
   client.pos = client.data.find("name=\"");
-  client.data = client.data.substr(client.pos + 6, client.data.size());
+  client.data = client.data.substr(client.pos + 6, client.data.size());//problem
   std::string sub = client.data.substr(0, client.data.find("\""));
   client.data = client.data.substr(client.data.find("\"") + 3 , client.data.size());
   client.name = sub;

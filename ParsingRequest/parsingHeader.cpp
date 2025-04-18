@@ -206,7 +206,6 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 	client.chunkData = "";
 	client.ReadSize = true;
 	client.bodyTaken = false;
-	client.isChunked = false;
 	client.bodyTypeTaken = 0;
 	client.headersTaken = true;
 	client.file_fd = -42;
@@ -227,7 +226,6 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 		client.isGet = true;
 	else
 		client.isGet = false;
-		// handleGetRequest(client, server);
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
 	else if (client.method == "POST" && !client.bodyTaken) {
@@ -235,8 +233,8 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
       		return ;
 		if (client.bodyTypeTaken == 1)
 			ChunkedFormData(client);
-		else if (client.bodyTypeTaken == 2) 
-	  		ChunkedOtherData(client);
+		// else if (client.bodyTypeTaken == 2) 
+	  	// 	ChunkedOtherData(client);
 		// else if (client.bodyTypeTaken == 3)
 		// 	FormData(client);
 

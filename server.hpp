@@ -68,7 +68,6 @@ struct client_info
     size_t chunkSize, pos;
     
     bool ReadSize;
-    bool isChunked;
     bool bodyTaken;
     bool bodyReached;
     bool headersTaken;
