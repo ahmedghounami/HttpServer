@@ -100,7 +100,7 @@ void server::listen_for_connections()
             std::cerr << "Poll failed\n";
             continue;
         }
-        // check_timeout(clients_fds, clients);
+        check_timeout(clients_fds, clients);
         if (ret == 0)
         {
             // std::cerr << "No data, timeout\n";
@@ -127,10 +127,9 @@ void server::listen_for_connections()
                         i--;
                         continue;
                     }
-                    // clients[clients_fds[i].fd].last_time = time(NULL);
+                    clients[clients_fds[i].fd].last_time = time(NULL);
                     buffer[data] = '\0';
                     clients[clients_fds[i].fd].data.append(buffer, data);
-                    // clients_fds[i].events = POLLOUT;
                     parse_chunk(clients[clients_fds[i].fd], servers);
                     if (clients[clients_fds[i].fd].isGet == true)
                         clients_fds[i].events = POLLOUT;

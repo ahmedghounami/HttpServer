@@ -66,7 +66,7 @@ struct client_info
     int poll_status;
     int bodyTypeTaken;//flag
     size_t chunkSize, pos;
-    
+    bool autoindex;
     bool ReadSize;
     bool isChunked;
     bool bodyTaken;
@@ -138,7 +138,7 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 // parsing request
 void parse_chunk(client_info &client, std::map<int, server_config> &server);
-bool request_line(client_info &client);
+bool request_line(client_info &client, std::map<int, server_config> &server);
 bool headers(client_info &client);
 bool takeBodyType(client_info& client);
 void ChunkedFormData(client_info &client);//for chunked data / multipart/form-data
@@ -169,3 +169,12 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
 std::string getlocation(client_info &client, server_config &server); 
 //this function to get the path from the config file from location if she exists if not it return the server path
 std::string getcorectserver_path(client_info &client, std::map<int, server_config> &server);
+
+
+
+
+
+
+
+
+void path_checker(std::string path);

@@ -58,6 +58,8 @@ void server::parse_config(std::string config_file)
 				if (servers[i].locations[location_index].upload_path.empty() && find(servers[i].locations[location_index].allowed_methods.begin(), servers[i].locations[location_index].allowed_methods.end(), "POST") != servers[i].locations[location_index].allowed_methods.end())
 					throw std::runtime_error("upload path missing in location block");
 			}
+			if (stack.top() == "location" && servers[i].locations[location_index].allowed_methods.empty())
+				throw std::runtime_error("allowed methods missing in location block");
 			stack.pop();
 			continue;
 		}
@@ -95,11 +97,12 @@ void server::parse_config(std::string config_file)
 		//          it != servers[i].error_pages.end(); it++)
 		//       std::cout << "error_page: " << it->first << " " << it->second
 		//                 << std::endl;
-		// for (std::map<std::string, location>::iterator it = servers[i].locations.begin();
-		//      it != servers[i].locations.end(); it++)
-		// {
-		//   // std::cout << "location: " << it->second.path << std::endl;
-		// }
+		for (std::map<std::string, location>::iterator it = servers[i].locations.begin();
+		     it != servers[i].locations.end(); it++)
+		{
+		  std::cout << "path: " << it->second.path << std::endl;
+		  std::cout << "upload path: " << it->second.upload_path << std::endl;
+		}
 		// // std::cout << "-------------------" << std::endl;
 	}
 

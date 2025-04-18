@@ -1,7 +1,63 @@
 #include "../server.hpp"
 
-bool request_line(client_info &client) {
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sstream>
+#include <fstream>
 
+bool generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path)
+{
+	DIR *dir = opendir(directory_path.c_str());
+	if (!dir)
+		return false;
+
+	std::stringstream html;
+	html << "<!DOCTYPE html>\n"
+			"<html>\n"
+			"<head><meta charset='UTF-8'><title>Directory Listing</title></head>\n"
+			"<body>\n"
+			"<h1>Directory Listing</h1>\n"
+			"<table>\n"
+			"<thead><tr><th>Name</th><th>Type</th></tr></thead>\n"
+			"<tbody>\n";
+
+	struct dirent *entry;
+	while ((entry = readdir(dir)) != NULL)
+	{
+		std::string name = entry->d_name;
+		if (name == ".")
+			continue;
+
+		std::string full_path = directory_path + "/" + name;
+		struct stat file_stat;
+		std::string type = "File";
+
+		if (stat(full_path.c_str(), &file_stat) == 0 && S_ISDIR(file_stat.st_mode))
+		{
+			name += "/";
+			type = "Directory";
+		}
+
+		html << "<tr><td><a href=\"" << uri << name << "\">" << name << "</a></td><td>" << type << "</td></tr>\n";
+	}
+
+	html << "</tbody>\n</table>\n</body>\n</html>\n";
+	closedir(dir);
+
+	// Write to output file
+	std::ofstream file(output_file_path.c_str());
+	if (!file.is_open())
+		return false;
+
+	file << html.str();
+	file.close();
+
+	return true;
+}
+
+bool request_line(client_info &client, std::map<int, server_config> &server)
+{
+	(void)server;
 	if (client.method.empty() == false)
 		return true;
 
@@ -79,11 +135,11 @@ bool request_line(client_info &client) {
 		http_version_not_supported(client);
 		return false; // respond and clear client;
 	}
-	// std::cerr << "method '" << client.method << "'\nuri '" << client.uri << "'\nversion '" << client.version << "'\n" << std::endl;
 	return true;
 }
 
-bool headers(client_info &client, std::map<int, server_config> &server) {
+bool headers(client_info &client, std::map<int, server_config> &server)
+{
 
 	if (client.headersTaken)
 		return true;
@@ -119,7 +175,7 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 		if (delimiterPos == std::string::npos)
 		{
 			std::cerr << "Error: Malformed header (missing ':'): " << line
-								<< std::endl;
+					  << std::endl;
 			bad_request(client);
 			return false; // respond and clear client;
 		}
@@ -195,6 +251,51 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 			bad_request(client);
 			return false; // respond and clear client;
 		}
+		int index = findMatchingServer(client, server);
+		for (std::map<std::string, location>::iterator it = server[index].locations.begin(); it != server[index].locations.end(); ++it)
+			if (it->first == client.uri)
+			{
+				std::vector<std::string>::iterator allowedMethodsIt = std::find(it->second.allowed_methods.begin(), it->second.allowed_methods.end(), client.method);
+				if (allowedMethodsIt == it->second.allowed_methods.end())
+				{
+					std::cerr << "Error: Method not allowed for this location: " << client.method << std::endl;
+					not_allowed_method(client);
+					return false; // respond and clear client;
+				}
+				else if (client.method == "GET")
+				{
+					if (it->second.redirect.first.empty() == true)
+					{
+						struct stat info;
+						if (it->second.index.empty() == false && stat((it->second.path + "/" + it->second.index[0].c_str()).c_str(), &info) == 0 && access((it->second.path + "/" + it->second.index[0].c_str()).c_str(), R_OK) == 0)
+							client.uri = "/" + it->second.index[0];
+						else if (it->second.index.empty() == false && (stat((it->second.path + "/" + it->second.index[0].c_str()).c_str(), &info) != 0 || access((it->second.path + "/" + it->second.index[0].c_str()).c_str(), R_OK) != 0) && it->second.autoindex == true)
+						{
+							generateAutoindexToFile(client.uri, it->second.path, "/Users/aghounam/Desktop/www.webserv/www/test.html");
+							client.uri = "/test.html";
+						}
+						else if (it->second.index.empty() == false && (stat((it->second.path + "/" + it->second.index[0].c_str()).c_str(), &info) != 0 || access((it->second.path + "/" + it->second.index[0].c_str()).c_str(), R_OK) != 0) && it->second.autoindex == false)
+						{
+							not_found(client);
+							return false; // respond and clear client;
+						}
+						if (it->second.index.empty() == true && stat((it->second.path + "/index.html").c_str(), &info) == 0 && access((it->second.path + "/index.html").c_str(), R_OK) == 0)
+						{
+							client.uri = "/index.html";
+						}
+						if (it->second.index.empty() == true && (stat((it->second.path + "/index.html").c_str(), &info) != 0 || access((it->second.path + "/index.html").c_str(), R_OK) != 0) && it->second.autoindex == true)
+						{
+							generateAutoindexToFile(client.uri, it->second.path, "/Users/aghounam/Desktop/www.webserv/www/test.html");
+							client.uri = "/test.html";
+						}
+						else if (it->second.index.empty() == true && (stat((it->second.path + "/index.html").c_str(), &info) != 0 || access((it->second.path + "/index.html").c_str(), R_OK) != 0) && it->second.autoindex == false)
+						{
+							not_found(client);
+							return false; // respond and clear client;
+						}
+					}
+				}
+			}
 	}
 
 	// std::map<std::string, std::string>::iterator it;
@@ -212,26 +313,27 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server)
 {
-  	client.file_fd = open("data", O_WRONLY | O_APPEND);//append
-  	// write(fd, client.data.c_str(), client.data.size());
+	client.file_fd = open("data", O_WRONLY | O_APPEND); // append
+	// write(fd, client.data.c_str(), client.data.size());
 	// client.data.clear();
-  	// return ;
+	// return ;
 
-	if (request_line(client) == false || headers(client, server) == false)
+	if (request_line(client, server) == false || headers(client, server) == false)
 		return;
 	if (client.method == "GET")
 		client.isGet = true;
 	else
 		client.isGet = false;
-		// handleGetRequest(client, server);
+	// handleGetRequest(client, server);
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
-	else if (client.method == "POST") {
+	else if (client.method == "POST")
+	{
 		if (takeBodyType(client) == false)
-      		return ;
+			return;
 		if (client.bodyTypeTaken == 1)
 			ChunkedFormData(client);
-		else if (client.bodyTypeTaken == 2) 
-	  		ChunkedOtherData(client);
-	} 
+		else if (client.bodyTypeTaken == 2)
+			ChunkedOtherData(client);
+	}
 }
