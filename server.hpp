@@ -122,6 +122,7 @@ void bad_request(client_info &client); // example: invalid or malformed HTTP ver
 void not_found(client_info &client); // example: file not found
 void forbidden(client_info &client); // example: you are not allowed to access the file
 void unknown_error(client_info &client); // example: unknown error
+void timeoutserver(client_info &client); // example: timeout error from server to backend
 
 
 // server

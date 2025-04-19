@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/19 11:50:40 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/19 21:25:29 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,11 @@ std::string getContentType(const std::string &path)
         return "audio/mpeg";
     else if (extension == "xml")
         return "application/xml";
-    return "text/plain";
+    else if (extension == "gif")
+        return "image/gif";
+    else if (extension == "svg")
+        return "image/svg+xml";
+    return "text/html"; // default to HTML if unknown
 }
 
 int findMatchingServer(client_info &client, std::map<int, server_config> &server)
@@ -98,6 +102,7 @@ void success(client_info &client, std::string &body, std::string &path, std::str
     }
     else
         client.response += body;
+    
 }
 std::string getlocation(client_info &client, server_config &server)
 {
@@ -151,6 +156,9 @@ std::string readheadercgi(int fd, std::string &body)
             break;
         }
     }
+    // std::cout << "headers: " << headers << std::endl;
+    // exit(0);
+    std::transform(headers.begin(), headers.end(), headers.begin(), ::tolower);
     return headers;
 }
 void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path)
@@ -176,6 +184,21 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         dup2(fd[1], STDOUT_FILENO);
         close(fd[0]);
         close(fd[1]);
+        char *envp[] = {
+    // (char *)"REQUEST_METHOD=GET",
+    // (char *)"CONTENT_TYPE=text/html",
+    // (char *)"CONTENT_LENGTH=0",
+    // (char *)"PATH_INFO=/",
+    // (char *)"QUERY_STRING=",
+    // (char *)"SCRIPT_NAME=/script.php",
+    // (char *)"SCRIPT_FILENAME=/Users/mkibous/Desktop/webserver/www/script.php",
+    // (char *)"SERVER_NAME=localhost",
+    // (char *)"SERVER_PORT=8080",
+    // (char *)"GATEWAY_INTERFACE=CGI/1.1",
+    // (char *)"SERVER_PROTOCOL=HTTP/1.1",
+    NULL
+};
+
         char *cgi_path;
         if (path.substr(path.find_last_of(".") + 1) == "php")
             cgi_path = (char *)"/Users/mkibous/Desktop/webserver/CGI/php-cgi";
@@ -183,8 +206,9 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             cgi_path = (char *)"/Users/mkibous/Desktop/webserver/CGI/python-cgi";
         char *args[] = {cgi_path, (char *)path.c_str(), NULL};
         alarm(5); // set timeout to 5 seconds
-        execv(args[0], args);
-        exit(0);
+        if(execve(args[0], args, envp))
+            exit(1);
+        exit(0); // execve only returns on error
     }
     else
     {
@@ -198,15 +222,33 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             while ((bytes_read = read(fd[0], buffer, sizeof(buffer))) > 0)
                 body+= std::string(buffer, bytes_read);
             if(headers.size() > 0)
-                content_type = headers.substr(headers.find("Content-Type: ") + 14, headers.find("\r\n", headers.find("Content-Type: ")) - headers.find("Content-Type: ") - 14);
-            wait(NULL);
+                content_type = headers.substr(headers.find("content-type:") + 13, headers.find("\r\n", headers.find("content-type:")) - headers.find("content-type:") - 13);
+            // if(content_type.size() > 0)
+            //     content_type = content_type.substr(0, content_type.find("\r\n"));
+            // std::cout << "contxxxxxxxxent_type: " << content_type << std::endl;
+            // exit(0);
+            int status;
+            waitpid(pid, &status, 0);
+            //get child process exit status
             alarm(0);
             close(fd[0]);
-            if(content_type == "")
+            if (WIFEXITED(status))
             {
-                unknown_error(client);
-                return ;
-                
+                int exitstatus = WEXITSTATUS(status);
+                if (exitstatus != 0)
+                {
+                    std::cerr << "CGI process exited with status: " << exitstatus << std::endl;
+                    unknown_error(client);
+                    return;
+                }
+            } else if (WIFSIGNALED(status))
+            {
+                int signal = WTERMSIG(status);
+                if(signal == SIGALRM)
+                    timeoutserver(client);
+                else
+                    unknown_error(client);
+                return;
             }
             success(client, body, path, content_type, true, body.size());
             return;
@@ -296,6 +338,36 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 void handleDeleteRequest(client_info &client, std::map<int, server_config> &server)
 {
     std::cout << "in delete funciton" << std::endl;
+    std::string path = getcorectserver_path(client, server) + client.uri;
+    if (std::remove(path.c_str()) != 0)
+    {
+        switch (errno)
+        {
+        case ENOENT:
+            not_found(client); // 404
+            break;
+        case EACCES:
+            forbidden(client); // 403
+            break;
+        default:
+            unknown_error(client); // 500
+            break;
+        }
+    }
+    else
+    {
+        std::string body = "File deleted successfully";
+        client.response = "HTTP/1.1 200 OK\r\n";
+        client.response += "Content-Type: text/plain\r\n";
+        client.response += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+        client.response += "Connection: keep-alive\r\n";
+        client.response += "\r\n";
+        client.response += body;
+        client.bytes_sent = ((double)client.response.size()  * -1) - 1;
+        
+        client.poll_status = 1;
+        client.datafinished = 1;
+    }
     (void)client;
     (void)server;
 }

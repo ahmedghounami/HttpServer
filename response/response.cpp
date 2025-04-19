@@ -81,3 +81,12 @@ void unknown_error(client_info &client)
     std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
 }
+void timeoutserver(client_info &client)
+{
+    client.poll_status = 1;
+    client.datafinished = true;
+    client.response = "HTTP/1.1 504 Gateway Timeout\r\nContent-Type: text/html\r\nContent-Length: ";
+    std::ifstream file("errors/504.html");
+    std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
+}
