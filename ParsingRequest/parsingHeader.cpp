@@ -233,8 +233,8 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
       		return ;
 		if (client.bodyTypeTaken == 1)
 			ChunkedFormData(client);
-		// else if (client.bodyTypeTaken == 2) 
-	  	// 	ChunkedOtherData(client);
+		else if (client.bodyTypeTaken == 2) 
+	  		ChunkedOtherData(client);
 		// else if (client.bodyTypeTaken == 3)
 		// 	FormData(client);
 
