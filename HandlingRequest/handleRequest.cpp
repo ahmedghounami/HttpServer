@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/19 21:25:29 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/20 17:09:48 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
     }
     return server_index;
 }
-void success(client_info &client, std::string &body, std::string &path, std::string content_type = "", bool whith_header = true, double file_size = -1)
+void success(client_info &client, std::string body, bool whith_header, std::string path ="", std::string content_type = "", double file_size = -1)
 {
     if( content_type == "")
         content_type = getContentType(path);
@@ -93,10 +93,11 @@ void success(client_info &client, std::string &body, std::string &path, std::str
             file_size = file.tellg();
             file.seekg(0, std::ios::beg);
         }
+        std::string conection = client.headers["connection"];
         client.response = "HTTP/1.1 200 OK\r\n";
         client.response += "Content-Type: " + content_type + "\r\n";
         client.response += "Content-Length: " + std::to_string(file_size) + "\r\n";
-        client.response += "Connection: keep-alive\r\n";
+        client.response += "Connection: " + conection + "\r\n";
         client.response += "\r\n";
         client.bytes_sent = ((double)client.response.size()  * -1) - 1;
     }
@@ -185,17 +186,6 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         close(fd[0]);
         close(fd[1]);
         char *envp[] = {
-    // (char *)"REQUEST_METHOD=GET",
-    // (char *)"CONTENT_TYPE=text/html",
-    // (char *)"CONTENT_LENGTH=0",
-    // (char *)"PATH_INFO=/",
-    // (char *)"QUERY_STRING=",
-    // (char *)"SCRIPT_NAME=/script.php",
-    // (char *)"SCRIPT_FILENAME=/Users/mkibous/Desktop/webserver/www/script.php",
-    // (char *)"SERVER_NAME=localhost",
-    // (char *)"SERVER_PORT=8080",
-    // (char *)"GATEWAY_INTERFACE=CGI/1.1",
-    // (char *)"SERVER_PROTOCOL=HTTP/1.1",
     NULL
 };
 
@@ -250,7 +240,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
                     unknown_error(client);
                 return;
             }
-            success(client, body, path, content_type, true, body.size());
+            success(client, body, true, path, content_type, body.size());
             return;
         }
         else if(client.bytes_sent == -1)
@@ -268,37 +258,58 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             client.datafinished = 1;
         alarm(0);
         close(fd[0]);
-        success(client, body, path, content_type, false);
+        success(client, body, false, path, content_type);
         return;
     }
     (void)server;
 }
+void sendbodypart(client_info &client, std::string path)
+{
+    std::string body;
+    if(client.bytes_sent == -1)
+        client.bytes_sent = 0;
+    std::ifstream file(path.c_str());
+    char *buffer = new char[READ_BUFFER_SIZE];
+    file.seekg(0, std::ios::beg);                 // move to the beginning
+    file.seekg(client.bytes_sent, std::ios::beg); // move to byte  from the beginning
+    file.read(buffer, READ_BUFFER_SIZE);
+    if (file.eof())
+    {
+        client.datafinished = 1, std::cout << "file end reached" << std::endl;
+    }
+    body = std::string(buffer, file.gcount());
+    delete[] buffer;
+
+    success(client, body, false);
+    file.close();
+}
 void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 {
+    if(client.error_code != 0)
+    {
+        error_response(client, client.error_code, "");
+        return;
+    }
     std::cout << "in get funciton" << std::endl;
     client.response.clear();
     std::string content_type = "";
 
-
-    std::string body;
     long content_size = -1;
 
     std::string path = getcorectserver_path(client, server) + client.uri;
-
-    bool whith_header = 0;
     std::ifstream file(path.c_str());
     if (!file.is_open())
     {
         switch (errno)
         {
         case ENOENT:
-            not_found(client); // 404
+            error_response(client, 404, ""); // 404
             break;
         case EACCES:
-            forbidden(client); // 403
+            error_response(client, 403, ""); // 403
             break;
         default:
-            unknown_error(client); // 500
+            error_response(client, 500, ""); // 500
             break;
         }
         return;
@@ -314,23 +325,10 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
     }
     if(client.bytes_sent <= 0 && client.bytes_sent != -1 )
     {
-        success(client, body, path, content_type, true, content_size);
+        success(client, "", true, path, content_type, content_size);
         return;
     }
-    else if(client.bytes_sent == -1)
-        client.bytes_sent = 0;
-    char *buffer = new char[READ_BUFFER_SIZE];
-    file.seekg(0, std::ios::beg);                 // move to the beginning
-    file.seekg(client.bytes_sent, std::ios::beg); // move to byte  from the beginning
-    file.read(buffer, READ_BUFFER_SIZE);
-    if (file.eof())
-    {
-        client.datafinished = 1, std::cout << "file end reached" << std::endl;
-    }
-    body = std::string(buffer, file.gcount());
-    delete[] buffer;
-
-    success(client, body, path, content_type, whith_header);
+    sendbodypart(client, path);
     file.close();
 
 }
@@ -371,17 +369,3 @@ void handleDeleteRequest(client_info &client, std::map<int, server_config> &serv
     (void)client;
     (void)server;
 }
-// HTTP/1.1 200 OK
-// Content-Type: text/html
-// Content-Length: 56
-// Connection: close
-
-// html, .htm	                    text/html
-// .css	                            text/css
-// .js	                            application/javascript
-// .json	                        application/json
-// .png	                            image/png
-// .jpg, .jpeg	                    image/jpeg
-// .txt	                            text/plain
-// .sh	                            text/x-shellscript or text/plain
-// .pdf	                             application/pdf
