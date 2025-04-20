@@ -1,59 +1,5 @@
 #include "../server.hpp"
 
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sstream>
-#include <fstream>
-
-bool generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path)
-{
-	DIR *dir = opendir(directory_path.c_str());
-	if (!dir)
-		return false;
-
-	std::stringstream html;
-	html << "<!DOCTYPE html>\n"
-			"<html>\n"
-			"<head><meta charset='UTF-8'><title>Directory Listing</title></head>\n"
-			"<body>\n"
-			"<h1>Directory Listing</h1>\n"
-			"<table>\n"
-			"<thead><tr><th>Name</th><th>Type</th></tr></thead>\n"
-			"<tbody>\n";
-
-	struct dirent *entry;
-	while ((entry = readdir(dir)) != NULL)
-	{
-		std::string name = entry->d_name;
-		if (name == ".")
-			continue;
-
-		std::string full_path = directory_path + "/" + name;
-		struct stat file_stat;
-		std::string type = "File";
-
-		if (stat(full_path.c_str(), &file_stat) == 0 && S_ISDIR(file_stat.st_mode))
-		{
-			name += "/";
-			type = "Directory";
-		}
-
-		html << "<tr><td><a href=\"" << uri << name << "\">" << name << "</a></td><td>" << type << "</td></tr>\n";
-	}
-
-	html << "</tbody>\n</table>\n</body>\n</html>\n";
-	closedir(dir);
-
-	// Write to output file
-	std::ofstream file(output_file_path.c_str());
-	if (!file.is_open())
-		return false;
-
-	file << html.str();
-	file.close();
-
-	return true;
-}
 
 bool request_line(client_info &client, std::map<int, server_config> &server)
 {
@@ -269,41 +215,23 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 				{
 					if (it->second.redirect.first.empty() == true)
 					{
-						struct stat info;
-						if (it->second.index.empty() == false && stat((it->second.path + "/" + it->second.index[0].c_str()).c_str(), &info) == 0 && access((it->second.path + "/" + it->second.index[0].c_str()).c_str(), R_OK) == 0)
-							client.uri = "/" + it->second.index[0];
-						else if (it->second.index.empty() == false && (stat((it->second.path + "/" + it->second.index[0].c_str()).c_str(), &info) != 0 || access((it->second.path + "/" + it->second.index[0].c_str()).c_str(), R_OK) != 0) && it->second.autoindex == true)
-						{
-							generateAutoindexToFile(client.uri, it->second.path, "/Users/aghounam/Desktop/www.webserv/www/test.html");
-							client.uri = "/test.html";
-						}
-						else if (it->second.index.empty() == false && (stat((it->second.path + "/" + it->second.index[0].c_str()).c_str(), &info) != 0 || access((it->second.path + "/" + it->second.index[0].c_str()).c_str(), R_OK) != 0) && it->second.autoindex == false)
-						{
-							not_found(client);
+						if (autoindex(client, it->second) == false)
 							return false; // respond and clear client;
-						}
-						if (it->second.index.empty() == true && stat((it->second.path + "/index.html").c_str(), &info) == 0 && access((it->second.path + "/index.html").c_str(), R_OK) == 0)
-						{
-							client.uri = "/index.html";
-						}
-						if (it->second.index.empty() == true && (stat((it->second.path + "/index.html").c_str(), &info) != 0 || access((it->second.path + "/index.html").c_str(), R_OK) != 0) && it->second.autoindex == true)
-						{
-							generateAutoindexToFile(client.uri, it->second.path, "/Users/aghounam/Desktop/www.webserv/www/test.html");
-							client.uri = "/test.html";
-						}
-						else if (it->second.index.empty() == true && (stat((it->second.path + "/index.html").c_str(), &info) != 0 || access((it->second.path + "/index.html").c_str(), R_OK) != 0) && it->second.autoindex == false)
-						{
-							not_found(client);
-							return false; // respond and clear client;
-						}
 					}
 				}
 			}
 		}
-		if (found == 0)
+		// if (found == 0 && client.uri != "/")
+		// {
+		// 	std::cerr << "Error: Invalid location: " << client.uri << std::endl;
+		// 	not_found(client);
+		// 	return false; // respond and clear client;
+		// }
+		if (found == 0 && client.uri == "/")
 		{
-			not_found(client);
-			return false; // respond and clear client;
+			std::cerr << "im in the server--------------------------------------------------------------------" << std::endl;
+			if (autoindex_server(client, server[index]) == false)
+				return false; // respond and clear client;
 		}
 	}
 

@@ -19,6 +19,12 @@
 #include <signal.h>
 #include <algorithm>
 #include <arpa/inet.h>
+
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sstream>
+#include <fstream>
+
 #define READ_BUFFER_SIZE 10000
 struct location
 {
@@ -170,11 +176,7 @@ std::string getlocation(client_info &client, server_config &server);
 //this function to get the path from the config file from location if she exists if not it return the server path
 std::string getcorectserver_path(client_info &client, std::map<int, server_config> &server);
 
-
-
-
-
-
-
-
-void path_checker(std::string path);
+// autoindex
+bool generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path);
+bool autoindex_server(client_info &client, server_config &loc);
+bool autoindex(client_info &client, location &loc);

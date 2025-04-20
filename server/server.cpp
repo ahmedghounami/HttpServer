@@ -115,7 +115,7 @@ void server::listen_for_connections()
                     accept_connection(clients_fds[i].fd, clients_fds, clients);
                 else
                 {
-                    char buffer[1024];
+                    char buffer[READ_BUFFER_SIZE];
                     int data = recv(clients_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
 
                     if (data < 0)
