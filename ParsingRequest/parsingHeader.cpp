@@ -221,12 +221,6 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 				}
 			}
 		}
-		// if (found == 0 && client.uri != "/")
-		// {
-		// 	std::cerr << "Error: Invalid location: " << client.uri << std::endl;
-		// 	not_found(client);
-		// 	return false; // respond and clear client;
-		// }
 		if (found == 0 && client.uri == "/")
 		{
 			std::cerr << "im in the server--------------------------------------------------------------------" << std::endl;

@@ -177,6 +177,6 @@ std::string getlocation(client_info &client, server_config &server);
 std::string getcorectserver_path(client_info &client, std::map<int, server_config> &server);
 
 // autoindex
-bool generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path);
+void generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path);
 bool autoindex_server(client_info &client, server_config &loc);
 bool autoindex(client_info &client, location &loc);

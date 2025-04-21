@@ -8,8 +8,8 @@ bool autoindex_server(client_info &client, server_config &loc)
 		client.uri = "/" + loc.index[0];
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == true)
 	{
-		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/test.html");
-		client.uri = "/test.html";
+		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/direc.html");
+		client.uri = "/direc.html";
 	}
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
@@ -23,8 +23,8 @@ bool autoindex_server(client_info &client, server_config &loc)
 	}
 	if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == true)
 	{
-		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/test.html");
-		client.uri = "/test.html";
+		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/direc.html");
+		client.uri = "/direc.html";
 	}
 	else if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
@@ -41,8 +41,8 @@ bool autoindex(client_info &client, location &loc)
 		client.uri = "/" + loc.index[0];
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == true)
 	{
-		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/test.html");
-		client.uri = "/test.html";
+		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/direc.html");
+		client.uri = "/direc.html";
 	}
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
@@ -55,8 +55,8 @@ bool autoindex(client_info &client, location &loc)
 	}
 	if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == true)
 	{
-		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/test.html");
-		client.uri = "/test.html";
+		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/direc.html");
+		client.uri = "/direc.html";
 	}
 	else if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
@@ -66,26 +66,36 @@ bool autoindex(client_info &client, location &loc)
 	return true;
 }
 
-bool generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path)
+void generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path)
 {
 	DIR *dir = opendir(directory_path.c_str());
 	if (!dir)
-		return false;
+		return ;
 
-	std::stringstream html;
+	std::stringstream html; 
 	html << "<!DOCTYPE html>\n"
 			"<html>\n"
 			"<head><meta charset='UTF-8'><title>Directory Listing</title></head>\n"
+			"<style>\n"
+			"body { font-family: Arial, sans-serif; }\n"
+			"table { width: 100%; border-collapse: collapse; }\n"
+			"th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }\n"
+			"tr:hover { background-color: #f1f1f1; }\n"
+			"a { text-decoration: none; color: #007BFF; }\n"
+			"a:hover { text-decoration: underline; }\n"
+			"</style>\n"
 			"<body>\n"
 			"<h1>Directory Listing</h1>\n"
 			"<table>\n"
 			"<thead><tr><th>Name</th><th>Type</th></tr></thead>\n"
 			"<tbody>\n";
+			
 
 	struct dirent *entry;
 	while ((entry = readdir(dir)) != NULL)
 	{
 		std::string name = entry->d_name;
+		std::cout << "name: " << name << std::endl;
 		if (name == ".")
 			continue;
 
@@ -106,12 +116,13 @@ bool generateAutoindexToFile(const std::string &uri, const std::string &director
 	closedir(dir);
 
 	// Write to output file
-	std::ofstream file(output_file_path.c_str());
-	if (!file.is_open())
-		return false;
+	std::ofstream file(output_file_path);
+	if (!file.good())
+	{
+		std::cerr << "Error: Unable to open file for writing: " << output_file_path << std::endl;
+		return;
+	}
 
 	file << html.str();
 	file.close();
-
-	return true;
 }
