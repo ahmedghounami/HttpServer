@@ -237,9 +237,11 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 	  		ChunkedOtherData(client);
 		else if (client.bodyTypeTaken == 3)
 			FormData(client);
-		return ;
-	} else {
-		;
+	}
+
+	if (client.bodyTaken == true)
+	{
+		std::cerr << "data finished" << std::endl;
 	}
 }
 /*notes
