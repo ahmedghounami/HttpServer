@@ -194,6 +194,7 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 		}
 		else
 		{
+			std::cerr << "Error: Invalid host: " << client.headers["host"] << std::endl;
 			bad_request(client);
 			return false; // respond and clear client;
 		}
@@ -251,7 +252,8 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 
 	if (client.bodyTaken == true)
 	{
-		std::cerr << "data finished-------------------------------------------" << std::endl;
+		std::string body = "<html><body><h1>Success</h1></body></html>";
+		post_success(client, body);
 	}
 }
 /*notes

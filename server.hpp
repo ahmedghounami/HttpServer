@@ -129,7 +129,7 @@ void not_found(client_info &client); // example: file not found
 void forbidden(client_info &client); // example: you are not allowed to access the file
 void unknown_error(client_info &client); // example: unknown error
 void timeoutserver(client_info &client); // example: timeout error from server to backend
-
+void post_success(client_info &client, std::string body);
 void error_response(client_info &client, int error_code, std::string path);//this function can hndle all the errors
 //to add new error just add in it a condition to handle the error header
 
