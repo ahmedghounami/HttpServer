@@ -36,7 +36,7 @@ bool autoindex_server(client_info &client, server_config &loc)
 
 bool autoindex(client_info &client, location &loc)
 {
-		struct stat info;
+	struct stat info;
 	if (loc.index.empty() == false && stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) == 0 && access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) == 0)
 		client.uri = "/" + loc.index[0];
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == true)
@@ -70,9 +70,9 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 {
 	DIR *dir = opendir(directory_path.c_str());
 	if (!dir)
-		return ;
+		return;
 
-	std::stringstream html; 
+	std::stringstream html;
 	html << "<!DOCTYPE html>\n"
 			"<html>\n"
 			"<head><meta charset='UTF-8'><title>Directory Listing</title></head>\n"
@@ -89,7 +89,6 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 			"<table>\n"
 			"<thead><tr><th>Name</th><th>Type</th></tr></thead>\n"
 			"<tbody>\n";
-			
 
 	struct dirent *entry;
 	while ((entry = readdir(dir)) != NULL)
@@ -125,4 +124,52 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 
 	file << html.str();
 	file.close();
+}
+
+bool check_autoindex(client_info &client, std::map<int, server_config> &server)
+{
+	int index = findMatchingServer(client, server);
+	int found = 0;
+	for (std::map<std::string, location>::iterator it = server[index].locations.begin(); it != server[index].locations.end(); ++it)
+	{
+		if (it->first == client.uri && it->second.redirect.first.empty() == true)
+		{
+			found = 1;
+			if (client.method == "GET")
+			{
+				if (it->second.redirect.first.empty() == true)
+				{
+					if (autoindex(client, it->second) == false)
+						return false; // respond and clear client;
+				}
+			}
+		}
+		else if (it->first == client.uri && it->second.redirect.first.empty() == false)
+		{
+			redirect(client, it->second.redirect);
+			return false; // respond and clear client;
+		}
+	}
+	if (found == 0 && client.uri == "/" && client.method == "GET")
+	{
+		if (autoindex_server(client, server[index]) == false)
+		{
+			std::cerr << "Error: Invalid uri: " << client.uri << std::endl;
+			return false; // respond and clear client;
+		}
+	}
+	else if (found == 0 && client.uri == "/" && client.method == "POST")
+	{
+		if (server[index].upload_path.empty())
+		{
+			not_implemented_method(client);
+			return false; // respond and clear client;
+		}
+	}
+	else if (found == 0 && client.method == "POST")
+	{
+		not_found(client);
+		return false; // respond and clear client;
+	}
+	return true;
 }

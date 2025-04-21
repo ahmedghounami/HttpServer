@@ -67,7 +67,7 @@ bool request_line(client_info &client, std::map<int, server_config> &server)
 		return false; // respond and clear client;
 	}
 
-	if (client.uri.empty() || client.uri[0] != '/' || parseRequestPath(client) == false)
+	if (client.uri.empty() || client.uri[0] != '/')
 	{
 		std::cerr << "Error: Invalid request-target (URI must start with '/')" << std::endl;
 		not_found(client);
@@ -80,6 +80,8 @@ bool request_line(client_info &client, std::map<int, server_config> &server)
 		http_version_not_supported(client);
 		return false; // respond and clear client;
 	}
+
+	// std::cerr << "method '" << client.method << "'\nuri '" << client.uri << "'\nversion '" << client.version << "'\n" << std::endl;
 	return true;
 }
 
@@ -192,55 +194,11 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 		}
 		else
 		{
-			std::cerr << "invalid host ------------------------------------" << std::endl;
 			bad_request(client);
 			return false; // respond and clear client;
 		}
-		int index = findMatchingServer(client, server);
-		found = 0;
-		for (std::map<std::string, location>::iterator it = server[index].locations.begin(); it != server[index].locations.end(); ++it)
-		{
-			if (it->first == client.uri && it->second.redirect.first.empty() == true)
-			{
-				found = 1;
-				if (client.method == "GET")
-				{
-					if (it->second.redirect.first.empty() == true)
-					{
-						if (autoindex(client, it->second) == false)
-							return false; // respond and clear client;
-					}
-				}
-			}
-			else if (it->first == client.uri && it->second.redirect.first.empty() == false)
-			{
-				redirect(client, it->second.redirect);
-				return false; // respond and clear client;
-			}
-
-		}
-		if (found == 0 && client.uri == "/" && client.method == "GET")
-		{
-			std::cerr << "im in the server--------------------------------------------------------------------" << std::endl;
-			if (autoindex_server(client, server[index]) == false)
-			{
-				std::cerr << "Error: Invalid uri: " << client.uri << std::endl;
-				return false; // respond and clear client;
-			}
-		}
-		else if (found == 0 && client.uri == "/" && client.method == "POST")
-		{
-			if (server[index].upload_path.empty())
-			{
-				not_implemented_method(client);
-				return false; // respond and clear client;
-			}
-		}
-		else if (found == 0 && client.method == "POST")
-		{
-			not_found(client);
+		if (check_autoindex(client, server) == false)
 			return false; // respond and clear client;
-		}
 	}
 
 	// std::map<std::string, std::string>::iterator it;
@@ -249,22 +207,28 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 	// 	// std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
 	// }
 
-	client.headersTaken = true;
+	client.chunkData = "";
+	client.ReadFlag = true;
+	client.bodyTaken = false;
 	client.bodyTypeTaken = 0;
-	client.isChunked = false;
+	client.headersTaken = true;
+	client.file_fd = -42;
 
 	return true;
 }
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server)
 {
-	client.file_fd = open("data", O_WRONLY | O_APPEND); // append
+  	// int fd = open("data", O_WRONLY | O_APPEND);//append
+  	// write(fd, client.data.c_str(), client.data.size());
+	// client.file_fd = open("data", O_WRONLY | O_APPEND); // append
 	// write(fd, client.data.c_str(), client.data.size());
 	// client.data.clear();
 	// return ;
 
 	if (request_line(client, server) == false || headers(client, server) == false)
 		return;
+	client.isGet = false;
 	if (client.method == "GET")
 		client.isGet = true;
 	else
@@ -272,13 +236,24 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 	// handleGetRequest(client, server);
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
-	else if (client.method == "POST")
+	else if (client.method == "POST" && !client.bodyTaken) 
 	{
 		if (takeBodyType(client) == false)
 			return;
 		if (client.bodyTypeTaken == 1)
 			ChunkedFormData(client);
-		else if (client.bodyTypeTaken == 2)
-			ChunkedOtherData(client);
+		else if (client.bodyTypeTaken == 2) 
+	  		ChunkedOtherData(client);
+		else if (client.bodyTypeTaken == 3)
+			FormData(client);
+	}
+
+	if (client.bodyTaken == true)
+	{
+		std::cerr << "data finished-------------------------------------------" << std::endl; 
 	}
 }
+/*notes
+	set file descriptor to non-blocking mode
+	check the content length in config file with the content length in header
+*/

@@ -68,6 +68,8 @@ struct client_info
     int poll_status;
     int bodyTypeTaken;//flag
     size_t chunkSize, pos;
+    
+    bool ReadFlag;
     bool autoindex;
     bool ReadSize;
     bool isChunked;
@@ -142,8 +144,13 @@ int somthing_after(std::istringstream &ss);
 void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 
-// parsing request
+//Parsing
 void parse_chunk(client_info &client, std::map<int, server_config> &server);
+
+bool takeBodyType(client_info& client);//     Taking body type
+void FormData(client_info& client);//         Raw/Binary data
+void ChunkedFormData(client_info &client);//  Chunked data -> Multipart/form-data
+void ChunkedOtherData(client_info &client);// Chunked data -> Raw/Binary data
 bool request_line(client_info &client, std::map<int, server_config> &server);
 bool headers(client_info &client);
 bool takeBodyType(client_info& client);
@@ -168,6 +175,10 @@ std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 bool isValidContentLength(const std::string &lengthStr);
 void writeToFile(std::string &body, int fd);
+void NewFileChunked(client_info &client);
+void NewFile(client_info &client);
+void ParseContentDisposition(client_info& client);
+void ParseContentType(client_info& client);
 
 //find which server config to use returns the server index
 int findMatchingServer(client_info &client, std::map<int, server_config> &server);
@@ -184,7 +195,7 @@ std::string getContentType(const std::string &path);
 void generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path);
 bool autoindex_server(client_info &client, server_config &loc);
 bool autoindex(client_info &client, location &loc);
-
+bool check_autoindex(client_info &client, std::map<int, server_config> &server);
 
 // redirect
 void redirect(client_info &client, std::pair<std::string, std::string> &redirect);
