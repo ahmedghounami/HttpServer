@@ -77,7 +77,7 @@ struct client_info
     std::string chunkData;
     std::vector<FormPart> formParts;
     std::string ContentType;
-    std::string method, uri, version;
+    std::string method, uri, version, path_info;
     std::string query;
     std::map<std::string, std::string> headers;
     bool datafinished;

@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/20 17:09:48 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/21 11:57:56 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,12 +182,12 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
     else if (pid == 0)
     {
         // child process
-        dup2(fd[1], STDOUT_FILENO);
+        dup2(fd[1], STDOUT_FILENO);// redirect stdout to pipe
         close(fd[0]);
         close(fd[1]);
         char *envp[] = {
-    NULL
-};
+        NULL
+        };
 
         char *cgi_path;
         if (path.substr(path.find_last_of(".") + 1) == "php")
@@ -196,6 +196,21 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             cgi_path = (char *)"/Users/mkibous/Desktop/webserver/CGI/python-cgi";
         char *args[] = {cgi_path, (char *)path.c_str(), NULL};
         alarm(5); // set timeout to 5 seconds
+        std::cerr << "client method: " << client.method << std::endl;
+        std::cerr << "script name: " << client.uri << std::endl;
+        std::cerr << "path info: "  << client.path_info << std::endl;
+        std::cerr << "query string: " << client.query << std::endl;
+        std::cerr << "content type: " << content_type << std::endl;
+        std::cerr << "content length: "  << std::endl;
+        std::cerr << "serer name: "  << std::endl;
+        std::cerr << "server port: " << std::endl;
+        std::cerr << "server protocol: " << std::endl;
+        std::cerr << "getway interface: " << "CGI/1.1" << std::endl;
+        std::cerr << "remote addr: " << "server  name" << std::endl;
+        std::cerr << "http cockies: " << std::endl;
+        std::cerr << "http user agent: " << std::endl;
+        std::cerr << "http host: " << std::endl;
+    exit(0);
         if(execve(args[0], args, envp))
             exit(1);
         exit(0); // execve only returns on error
@@ -283,6 +298,23 @@ void sendbodypart(client_info &client, std::string path)
     success(client, body, false);
     file.close();
 }
+void handlepathinfo(client_info &client){
+    bool is_php = false;
+    size_t pos = client.uri.find(".php/");
+    if (pos == std::string::npos)
+        pos = client.uri.find(".py/");
+    else
+        is_php = true;
+    if (pos != std::string::npos)
+    {
+        int add = 3 + is_php;
+        std::string path_info = client.uri.substr(pos + add);
+        client.path_info = path_info;
+        client.uri = client.uri.substr(0, pos + add);
+    }
+    // else
+    //     client.path_info = "";
+}
 void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 {
     if(client.error_code != 0)
@@ -295,7 +327,10 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
     std::string content_type = "";
 
     long content_size = -1;
-
+    handlepathinfo(client);
+    // std::cout << "path info: " << client.path_info << std::endl;
+    // std::cout << "uri: " << client.uri << std::endl;
+    // exit(0);
     std::string path = getcorectserver_path(client, server) + client.uri;
     std::ifstream file(path.c_str());
     if (!file.is_open())
