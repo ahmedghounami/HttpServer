@@ -1,6 +1,5 @@
 #include "../server.hpp"
 
-
 bool request_line(client_info &client, std::map<int, server_config> &server)
 {
 	(void)server;
@@ -201,17 +200,10 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 		found = 0;
 		for (std::map<std::string, location>::iterator it = server[index].locations.begin(); it != server[index].locations.end(); ++it)
 		{
-			if (it->first == client.uri)
+			if (it->first == client.uri && it->second.redirect.first.empty() == true)
 			{
 				found = 1;
-				std::vector<std::string>::iterator allowedMethodsIt = std::find(it->second.allowed_methods.begin(), it->second.allowed_methods.end(), client.method);
-				if (allowedMethodsIt == it->second.allowed_methods.end())
-				{
-					std::cerr << "Error: Method not allowed for this location: " << client.method << std::endl;
-					not_allowed_method(client);
-					return false; // respond and clear client;
-				}
-				else if (client.method == "GET")
+				if (client.method == "GET")
 				{
 					if (it->second.redirect.first.empty() == true)
 					{
@@ -220,12 +212,43 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 					}
 				}
 			}
+			else if (it->first == client.uri && it->second.redirect.first.empty() == false)
+			{
+				throw std::runtime_error("Redirect not implemented yet");
+				// std::string location_url = location_config.redirect_url;
+
+				// std::stringstream response;
+				// response << "HTTP/1.1 301 Moved Permanently\r\n";
+				// response << "Location: " << location_url << "\r\n";
+				// response << "Content-Length: 0\r\n";
+				// response << "\r\n";
+
+				// send(client_socket, response.str().c_str(), response.str().size(), 0);
+				// return;
+			}
+
 		}
-		if (found == 0 && client.uri == "/")
+		if (found == 0 && client.uri == "/" && client.method == "GET")
 		{
 			std::cerr << "im in the server--------------------------------------------------------------------" << std::endl;
 			if (autoindex_server(client, server[index]) == false)
+			{
+				std::cerr << "Error: Invalid uri: " << client.uri << std::endl;
 				return false; // respond and clear client;
+			}
+		}
+		else if (found == 0 && client.uri == "/" && client.method == "POST")
+		{
+			if (server[index].upload_path.empty())
+			{
+				not_implemented_method(client);
+				return false; // respond and clear client;
+			}
+		}
+		else if (found == 0 && client.method == "POST")
+		{
+			not_found(client);
+			return false; // respond and clear client;
 		}
 	}
 

@@ -27,7 +27,12 @@ server::server(std::string &config_file)
             server_addr.sin_family = AF_INET;
             server_addr.sin_port = htons(servers[i].ports[j]);
             server_addr.sin_addr.s_addr = INADDR_ANY;
-            inet_pton(AF_INET, servers[i].host.c_str(), &server_addr.sin_addr);
+            if (inet_pton(AF_INET, servers[i].host.c_str(), &server_addr.sin_addr) <= 0 && 
+                servers[i].host != "localhost")
+            {
+                std::cerr << "Invalid address/ Address not supported" << std::endl;
+                throw std::runtime_error("Invalid address");
+            }
             
             int opt = 1;
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -103,7 +108,7 @@ void server::listen_for_connections()
         check_timeout(clients_fds, clients);
         if (ret == 0)
         {
-            // std::cerr << "No data, timeout\n";
+            std::cerr << "No data, timeout\n";
             continue;
         }
         for (unsigned int i = 0; i < clients_fds.size(); i++)

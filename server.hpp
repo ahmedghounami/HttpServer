@@ -19,11 +19,7 @@
 #include <signal.h>
 #include <algorithm>
 #include <arpa/inet.h>
-
 #include <dirent.h>
-#include <sys/stat.h>
-#include <sstream>
-#include <fstream>
 
 #define READ_BUFFER_SIZE 10000
 struct location
@@ -89,7 +85,7 @@ struct client_info
     std::string query;
     std::map<std::string, std::string> headers;
     bool datafinished;
-
+    int error_code;
     std::string response;
     double bytes_sent;
     bool isGet;
@@ -130,6 +126,10 @@ void bad_request(client_info &client); // example: invalid or malformed HTTP ver
 void not_found(client_info &client); // example: file not found
 void forbidden(client_info &client); // example: you are not allowed to access the file
 void unknown_error(client_info &client); // example: unknown error
+void timeoutserver(client_info &client); // example: timeout error from server to backend
+
+void error_response(client_info &client, int error_code, std::string path);//this function can hndle all the errors
+//to add new error just add in it a condition to handle the error header
 
 
 // server
@@ -175,6 +175,10 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
 std::string getlocation(client_info &client, server_config &server); 
 //this function to get the path from the config file from location if she exists if not it return the server path
 std::string getcorectserver_path(client_info &client, std::map<int, server_config> &server);
+//this function to send the body of the file to the client part by part
+void sendbodypart(client_info &client, std::string path);
+std::string getContentType(const std::string &path);
+
 
 // autoindex
 void generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path);
