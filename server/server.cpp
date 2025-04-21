@@ -57,7 +57,7 @@ server::server(std::string &config_file)
             // port.server_name = servers[i].server_name;
             // ports_used.push_back(port);
 
-            std::cout << "Server started on port " << servers[i].ports[j] << std::endl;
+            // std::cout << "Server started on port " << servers[i].ports[j] << std::endl;
         }
     }
 }

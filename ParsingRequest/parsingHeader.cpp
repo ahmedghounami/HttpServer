@@ -1,11 +1,11 @@
 #include "../server.hpp"
 
-bool request_line(client_info &client)
-{
+bool request_line(client_info &client) {
+
 	if (client.method.empty() == false)
 		return true;
-	std::cerr << "Parsing request line" << std::endl;
-	client.headersTaken = 0;
+
+	client.headersTaken = false;
 	size_t pos = client.data.find("\r\n");
 	if (pos == std::string::npos) // not enough data
 		return false;
@@ -83,12 +83,11 @@ bool request_line(client_info &client)
 	return true;
 }
 
-bool headers(client_info &client, std::map<int, server_config> &server)
-{
+bool headers(client_info &client, std::map<int, server_config> &server) {
+
 	if (client.headersTaken)
 		return true;
 
-	std::cerr << "Parsing headers" << std::endl;
 	size_t pos = client.data.find("\r\n\r\n");
 	if (pos == std::string::npos) // not enough data
 		return false;
@@ -157,7 +156,7 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 
 		lastKey = key;
 	}
-	(void)server;
+
 	if (client.headers.find("host") == client.headers.end())
 	{
 		std::cerr << "Error: Missing 'Host' header" << std::endl;
@@ -198,39 +197,46 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 		}
 	}
 
-	std::map<std::string, std::string>::iterator it;
+	// std::map<std::string, std::string>::iterator it;
 	// for (it = client.headers.begin(); it != client.headers.end(); ++it)
 	// {
 	// 	// std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
 	// }
 
-	client.headersTaken = 1;
+	client.chunkData = "";
+	client.ReadSize = true;
+	client.bodyTaken = false;
 	client.bodyTypeTaken = 0;
-	client.isChunked = false;
+	client.headersTaken = true;
+	client.file_fd = -42;
 
 	return true;
 }
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server)
 {
-	// std::ofstream file("data");
-	// file << client.data;
-	// file.close();
-	// return ;
-	// std::cout << "Parsing chunked data" << std::endl;
+  	// int fd = open("data", O_WRONLY | O_APPEND);//append
+  	// write(fd, client.data.c_str(), client.data.size());
+	// client.data.clear();
+  	// return ;
+
 	if (request_line(client) == false || headers(client, server) == false)
 		return;
-	// exit(0);
 	if (client.method == "GET")
 		client.isGet = true;
 	else
 		client.isGet = false;
-		// handleGetRequest(client, server);
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
-	else if (client.method == "POST" && takeBody(client) == false)
-		return;
+	else if (client.method == "POST" && !client.bodyTaken) {
+		if (takeBodyType(client) == false)
+      		return ;
+		if (client.bodyTypeTaken == 1)
+			ChunkedFormData(client);
+		else if (client.bodyTypeTaken == 2) 
+	  		ChunkedOtherData(client);
+		// else if (client.bodyTypeTaken == 3)
+		// 	FormData(client);
 
-	if (client.bodyTypeTaken == 1)
-		ChunkedData(client);
+	} 
 }
