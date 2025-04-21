@@ -67,7 +67,7 @@ struct client_info
     int bodyTypeTaken;//flag
     size_t chunkSize, pos;
     
-    bool ReadSize;
+    bool ReadFlag;
     bool bodyTaken;
     bool bodyReached;
     bool headersTaken;
@@ -158,6 +158,7 @@ std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 bool isValidContentLength(const std::string &lengthStr);
 void writeToFile(std::string &body, int fd);
+void NewFileChunked(client_info &client);
 void NewFile(client_info &client);
 void ParseContentDisposition(client_info& client);
 void ParseContentType(client_info& client);

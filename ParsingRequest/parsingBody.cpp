@@ -1,15 +1,57 @@
 #include "../server.hpp"
 
-// void FormData(client_info& clietn) {
+void FormData(client_info& client) {
 
-// }
+  while (!client.data.empty()) {
+
+    client.pos = client.data.find(client.boundary + "\r\n");
+    if (client.pos != std::string::npos && client.ReadFlag == true) {
+      client.data = client.data.substr(client.pos);
+      if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
+        std::cerr << "breaking from loop : 'CRLF' found." << std::endl;
+        break;
+      }
+      NewFile(client);
+      client.ReadFlag = false;
+      if (client.data.empty()) {
+        std::cerr << "breaking from loop : data is empty." << std::endl;
+        break ;
+      }
+    }
+
+    //client.data filled with : only data or data with another boundary
+    client.pos = client.data.find("\r\n");
+    if (client.pos != std::string::npos) {
+      client.chunkData = client.data.substr(0, client.pos);
+      client.data = client.data.substr(client.pos + 2);
+      if (!client.chunkData.empty())
+        writeToFile(client.chunkData, client.file_fd);
+      client.chunkData.clear();
+      client.ReadFlag = true;
+
+      client.pos = client.data.find(client.boundary + "--");
+      if (client.pos != std::string::npos && client.pos == 0) {
+        std::cerr << "end boundary found " << std::endl;
+        close(client.file_fd);
+        client.file_fd = -42;
+        client.bodyTaken = true;
+        client.data.clear();
+        return ;
+      }
+    } else if (!client.data.empty()) {
+        writeToFile(client.data, client.file_fd);
+      client.data.clear();
+    }
+  }
+  std::cerr << "the data is empty." << std::endl;
+}
 
 void ChunkedOtherData(client_info& client) {
 
   while (!client.data.empty()) {
 
-    if (client.ReadSize ==  true) {
-      client.ReadSize = false;
+    if (client.ReadFlag ==  true) {//move this part to takeBodyType function
+      client.ReadFlag = false;
       client.pos = client.data.find("\r\n");
       std::string ChunkSizeString = client.data.substr(0, client.pos);
       client.data = client.data.substr(client.pos + 2);
@@ -39,7 +81,7 @@ void ChunkedOtherData(client_info& client) {
           writeToFile(client.chunkData, client.file_fd);
         client.data = client.data.substr(client.chunkSize + 2);
         client.chunkSize = 0;
-        client.ReadSize = true;
+        client.ReadFlag = true;
 
         client.pos = client.data.find("0\r\n");
         if (client.pos != std::string::npos) {
@@ -59,17 +101,19 @@ void ChunkedFormData(client_info& client) {
   while (!client.data.empty()) {
 
     client.pos = client.data.find(client.boundary + "\r\n");
-    if (client.pos != std::string::npos && client.ReadSize == true) {
+    if (client.pos != std::string::npos && client.ReadFlag == true) {
       client.data = client.data.substr(client.pos);
-      if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos)
+      if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
+        std::cerr << "breaking from loop." << std::endl;
         break;
-      NewFile(client);
+      }
+      NewFileChunked(client);
       if (client.data.empty())
         break ;
     }
 
-    if (client.ReadSize ==  true) {
-      client.ReadSize = false;
+    if (client.ReadFlag ==  true) {
+      client.ReadFlag = false;
       client.pos = client.data.find("\r\n");
       std::string ChunkSizeString = client.data.substr(0, client.pos);
       client.data = client.data.substr(client.pos + 2);
@@ -80,7 +124,7 @@ void ChunkedFormData(client_info& client) {
 
     if (client.chunkSize > 0) {
       if (client.chunkSize + 2 > client.data.size()) {
-        client.ReadSize = false;
+        client.ReadFlag = false;
         break ;
       }
       else {
@@ -88,7 +132,7 @@ void ChunkedFormData(client_info& client) {
         if (!client.chunkData.empty())
           writeToFile(client.chunkData, client.file_fd);
         client.data = client.data.substr(client.chunkSize + 2);
-        client.ReadSize = true;
+        client.ReadFlag = true;
         client.chunkSize = 0;
 
         client.pos = client.data.find(client.boundary + "--");

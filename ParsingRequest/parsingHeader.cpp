@@ -80,10 +80,6 @@ bool request_line(client_info &client) {
 		return false; // respond and clear client;
 	}
 
-	client.isGet = false;
-	if (client.method == "GET")
-		client.isGet = true;
-
 	// std::cerr << "method '" << client.method << "'\nuri '" << client.uri << "'\nversion '" << client.version << "'\n" << std::endl;
 	return true;
 }
@@ -209,7 +205,7 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 	// }
 
 	client.chunkData = "";
-	client.ReadSize = true;
+	client.ReadFlag = true;
 	client.bodyTaken = false;
 	client.bodyTypeTaken = 0;
 	client.headersTaken = true;
@@ -227,6 +223,9 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 
 	if (request_line(client) == false || headers(client, server) == false)
 		return;
+	client.isGet = false;
+	if (client.method == "GET")
+		client.isGet = true;
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
 	else if (client.method == "POST" && !client.bodyTaken) {
@@ -236,7 +235,14 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 			ChunkedFormData(client);
 		else if (client.bodyTypeTaken == 2) 
 	  		ChunkedOtherData(client);
-		// else if (client.bodyTypeTaken == 3)
-		// 	FormData(client);
-	} 
+		else if (client.bodyTypeTaken == 3)
+			FormData(client);
+		return ;
+	} else {
+		;
+	}
 }
+/*notes
+	set file descriptor to non-blocking mode
+	check the content length in config file with the content length in header
+*/
