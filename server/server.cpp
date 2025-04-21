@@ -11,7 +11,7 @@ void check_ports(int port, std::string server_name, std::vector<port_used> &port
 
 server::server(std::string &config_file)
 {
-    // signal(SIGPIPE, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
     parse_config(config_file);
     for (unsigned int i = 0; i < servers.size(); i++)
     {
@@ -27,7 +27,12 @@ server::server(std::string &config_file)
             server_addr.sin_family = AF_INET;
             server_addr.sin_port = htons(servers[i].ports[j]);
             server_addr.sin_addr.s_addr = INADDR_ANY;
-            inet_pton(AF_INET, servers[i].host.c_str(), &server_addr.sin_addr);
+            if (inet_pton(AF_INET, servers[i].host.c_str(), &server_addr.sin_addr) <= 0 && 
+                servers[i].host != "localhost")
+            {
+                std::cerr << "Invalid address/ Address not supported" << std::endl;
+                throw std::runtime_error("Invalid address");
+            }
             
             int opt = 1;
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -100,10 +105,10 @@ void server::listen_for_connections()
             std::cerr << "Poll failed\n";
             continue;
         }
-        // check_timeout(clients_fds, clients);
+        check_timeout(clients_fds, clients);
         if (ret == 0)
         {
-            // std::cerr << "No data, timeout\n";
+            std::cerr << "No data, timeout\n";
             continue;
         }
         for (unsigned int i = 0; i < clients_fds.size(); i++)
@@ -115,7 +120,7 @@ void server::listen_for_connections()
                     accept_connection(clients_fds[i].fd, clients_fds, clients);
                 else
                 {
-                    char buffer[1024];
+                    char buffer[READ_BUFFER_SIZE];
                     int data = recv(clients_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
 
                     if (data < 0)
@@ -127,10 +132,9 @@ void server::listen_for_connections()
                         i--;
                         continue;
                     }
-                    // clients[clients_fds[i].fd].last_time = time(NULL);
+                    clients[clients_fds[i].fd].last_time = time(NULL);
                     buffer[data] = '\0';
                     clients[clients_fds[i].fd].data.append(buffer, data);
-                    // clients_fds[i].events = POLLOUT;
                     parse_chunk(clients[clients_fds[i].fd], servers);
                     if (clients[clients_fds[i].fd].isGet == true)
                         clients_fds[i].events = POLLOUT;
@@ -163,8 +167,12 @@ void server::listen_for_connections()
     }
 }
 
+
+
 server::~server()
+
 {
+    
     for (unsigned int i = 0; i < clients_fds.size(); i++)
         close(clients_fds[i].fd);
 }

@@ -1,20 +1,10 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   handleRequest.cpp                                  :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/17 22:23:34 by mkibous          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "../server.hpp"
 // Caching Considerations:
 //  Because GET requests are cacheable, the caching behavior is defined
 //  in related RFCs (e.g., RFC 7234). This means that responses to GET
 //  requests can be stored and reused under the right conditions.
+
 std::string getContentType(const std::string &path)
 {
     std::string extension = path.substr(path.find_last_of(".") + 1);
@@ -40,7 +30,13 @@ std::string getContentType(const std::string &path)
         return "audio/mpeg";
     else if (extension == "xml")
         return "application/xml";
-    return "text/plain";
+    else if (extension == "gif")
+        return "image/gif";
+    else if (extension == "svg")
+        return "image/svg+xml";
+    else if(extension == "ico")
+        return "image/x-icon";
+    return "text/html"; // default to HTML if unknown
 }
 
 int findMatchingServer(client_info &client, std::map<int, server_config> &server)
@@ -51,16 +47,11 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
 
     for (std::map<std::string, std::string>::iterator it = client.headers.begin(); it != client.headers.end(); ++it)
     {
-        // std::cout << it->first << ": " << it->second << std::endl;
         if (it->first == "host")
         {
             std::istringstream iss(it->second);
             std::getline(iss, host, ':');
             iss >> port;
-
-            // std::cout << "Host: " << host << std::endl;
-            // std::cout << "Port: " << port << std::endl;
-
             for (std::map<int, server_config>::iterator it = server.begin(); it != server.end(); ++it)
             {
                 if (std::find(it->second.ports.begin(), it->second.ports.end(), port) != it->second.ports.end() && server_index == -1)
@@ -73,40 +64,42 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
             }
         }
     }
-    // std::cout << "Server config found for host: " << host << " and port: " << port << "in server config index: " << server_index << std::endl;
     return server_index;
 }
-void success(client_info &client, std::string &body, std::string &path, bool whith_header = true)
+void success(client_info &client, std::string body, bool whith_header, std::string path ="", std::string content_type = "", long long file_size = -1)
 {
-
+    if( content_type == "")
+        content_type = getContentType(path);
     client.poll_status = 1;
     if (whith_header)
     {
-        std::ifstream file(path.c_str());
-        if (!file.is_open())
+        if(file_size == -1)
         {
-            return;
+            std::ifstream file(path.c_str());
+            if (!file.is_open())
+            {
+                return;
+            }
+            file.seekg(0, std::ios::end);
+            file_size = file.tellg();
+            file.seekg(0, std::ios::beg);
         }
-        file.seekg(0, std::ios::end);
-        int file_size = file.tellg();
-        file.seekg(0, std::ios::beg);
-        std::cout << "file size: " << file_size << std::endl;
+        std::string conection = client.headers["connection"];
         client.response = "HTTP/1.1 200 OK\r\n";
-        client.response += "Content-Type: " + getContentType(path) + "\r\n";
+        client.response += "Content-Type: " + content_type + "\r\n";
         client.response += "Content-Length: " + std::to_string(file_size) + "\r\n";
-        client.response += "Connection: keep-alive\r\n";
+        client.response += "Connection: " + conection + "\r\n";
         client.response += "\r\n";
         client.bytes_sent = ((double)client.response.size()  * -1) - 1;
-        std::cout << "response size: " << client.bytes_sent << std::endl;
-        // sleep(10);
     }
     else
         client.response += body;
+    
 }
 std::string getlocation(client_info &client, server_config &server)
 {
     // std::cout << "in getlocation funciton" << std::endl;
-    // finde last / in uri
+    
     std::string uri = client.uri;
     while (uri.size() > 0)
     {
@@ -115,7 +108,6 @@ std::string getlocation(client_info &client, server_config &server)
             break;
         if (pos == 0 && uri.size() > 1)
             pos++;
-        uri = uri.substr(0, pos);
         // std::cout << "location: " << uri << std::endl;
         std::map<std::string, location>::iterator it = server.locations.find(uri);
         if (it != server.locations.end())
@@ -123,6 +115,7 @@ std::string getlocation(client_info &client, server_config &server)
             // std::cout << "found location: " << it->first << std::endl;
             return it->first;
         }
+        uri = uri.substr(0, pos);
     }
 
     return "";
@@ -137,100 +130,235 @@ std::string getcorectserver_path(client_info &client, std::map<int, server_confi
         return server[server_index].locations[loc].path;
     return server[server_index].path;
 }
-void handleGetRequest(client_info &client, std::map<int, server_config> &server)
+std::string readheadercgi(int fd, std::string &body)
 {
-    std::cout << "in get funciton" << std::endl;
-    client.response.clear();
-    // int server_index = findMatchingServer(client, server);
 
-    // std::cout << "server path: " << server[server_index].path << std::endl;
-    // std::cout << "client path: " << client.uri << std::endl;
-    // std::string loc = getlocation(client, server[server_index]);
-    std::string body;
-
-    std::string path = getcorectserver_path(client, server) + client.uri;
-
-    std::cout << "path: " << path << std::endl;
-
-    // try to open the file
-    bool whith_header = 0;
-    std::ifstream file(path.c_str());
-    //get the file size cpp 98
-    
-    // if (!file.is_open())
-    // {
-        // std::cout << "file not open" << std::endl;
-        // file.open(path.c_str());
-        // whith_header = 1;
-        // client.datafinished = 0;
-        // client.bytes_sent = 0;
-        if (!file.is_open())
-        {
-            switch (errno)
-            {
-            case ENOENT:
-                not_found(client); // 404
-                break;
-            case EACCES:
-                forbidden(client); // 403
-                break;
-            default:
-                unknown_error(client); // 500
-                break;
-            }
-            return;
-        }
-        // success(client,body, path, whith_header);
-        // std::cout << "file open" << std::endl;
-        // return;
-    // }
-    if(client.bytes_sent <= 0 && client.bytes_sent != -1 )
+    char buffer[1024];
+    int bytes_read;
+    std::string headers; 
+    while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0)
     {
-        success(client, body, path, true);
+        headers += std::string(buffer, bytes_read);
+        if (headers.find("\r\n\r\n") != std::string::npos)
+        {
+            size_t pos = headers.find("\r\n\r\n");
+            size_t size = headers.size() - pos - 4;
+            body = headers.substr(pos + 4, size);
+            headers = headers.substr(0, pos + 4);
+            break;
+        }
+    }
+    // std::cout << "headers: " << headers << std::endl;
+    // exit(0);
+    std::transform(headers.begin(), headers.end(), headers.begin(), ::tolower);
+    return headers;
+}
+void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path)
+{
+    std::cout << "in cgi funciton" << std::endl;
+    int fd[2];
+    std::string body;
+    std::string content_type = "";
+    if (pipe(fd) == -1)
+    {
+        std::cerr << "pipe failed" << std::endl;
         return;
     }
-    else if(client.bytes_sent == -1)
+    pid_t pid = fork();
+    if (pid == -1)
+    {
+        std::cerr << "fork failed" << std::endl;
+        return;
+    }
+    else if (pid == 0)
+    {
+        // child process
+        dup2(fd[1], STDOUT_FILENO);
+        close(fd[0]);
+        close(fd[1]);
+        char *envp[] = {
+    NULL
+};
+
+        char *cgi_path;
+        if (path.substr(path.find_last_of(".") + 1) == "php")
+            cgi_path = (char *)"/Users/mkibous/Desktop/webserver/CGI/php-cgi";
+        else
+            cgi_path = (char *)"/Users/mkibous/Desktop/webserver/CGI/python-cgi";
+        char *args[] = {cgi_path, (char *)path.c_str(), NULL};
+        alarm(5); // set timeout to 5 seconds
+        if(execve(args[0], args, envp))
+            exit(1);
+        exit(0); // execve only returns on error
+    }
+    else
+    {
+        // parent process
+        close(fd[1]);
+        char buffer[1024];
+        int bytes_read;
+        std::string headers = readheadercgi(fd[0], body);
+        if(client.bytes_sent <= 0 && client.bytes_sent != -1 )
+        {
+            while ((bytes_read = read(fd[0], buffer, sizeof(buffer))) > 0)
+                body+= std::string(buffer, bytes_read);
+            if(headers.size() > 0)
+                content_type = headers.substr(headers.find("content-type:") + 13, headers.find("\r\n", headers.find("content-type:")) - headers.find("content-type:") - 13);
+            // if(content_type.size() > 0)
+            //     content_type = content_type.substr(0, content_type.find("\r\n"));
+            // std::cout << "contxxxxxxxxent_type: " << content_type << std::endl;
+            // exit(0);
+            int status;
+            waitpid(pid, &status, 0);
+            //get child process exit status
+            alarm(0);
+            close(fd[0]);
+            if (WIFEXITED(status))
+            {
+                int exitstatus = WEXITSTATUS(status);
+                if (exitstatus != 0)
+                {
+                    std::cerr << "CGI process exited with status: " << exitstatus << std::endl;
+                    unknown_error(client);
+                    return;
+                }
+            } else if (WIFSIGNALED(status))
+            {
+                int signal = WTERMSIG(status);
+                if(signal == SIGALRM)
+                    timeoutserver(client);
+                else
+                    unknown_error(client);
+                return;
+            }
+            success(client, body, true, path, content_type, body.size());
+            return;
+        }
+        else if(client.bytes_sent == -1)
+            client.bytes_sent = 0;
+        while  (body.size() < client.bytes_sent && (bytes_read = read(fd[0], buffer, sizeof(buffer))) > 0 )
+            body += std::string(buffer, bytes_read);
+        if(body.size() >= client.bytes_sent)
+        {
+            std::string temp = body.substr(client.bytes_sent, body.size() - client.bytes_sent);
+            body = temp;
+        }
+        while (body.size() < READ_BUFFER_SIZE && (bytes_read = read(fd[0], buffer, sizeof(buffer))) > 0)
+            body += std::string(buffer, bytes_read);
+        if(bytes_read == 0)
+            client.datafinished = 1;
+        alarm(0);
+        close(fd[0]);
+        success(client, body, false, path, content_type);
+        return;
+    }
+    (void)server;
+}
+void sendbodypart(client_info &client, std::string path)
+{
+    std::string body;
+    if(client.bytes_sent == -1)
         client.bytes_sent = 0;
+    // std::cout << "path: " << path << std::endl;
+    std::ifstream file(path.c_str());
     char *buffer = new char[READ_BUFFER_SIZE];
-    // read only 1024 bytes
     file.seekg(0, std::ios::beg);                 // move to the beginning
     file.seekg(client.bytes_sent, std::ios::beg); // move to byte  from the beginning
-    // std::cout << "bytes sent: " << client.bytes_sent << std::endl;
+    std::cout << "client.bytes_sent: " << client.bytes_sent << std::endl;
     file.read(buffer, READ_BUFFER_SIZE);
     if (file.eof())
     {
-        file.close(), client.datafinished = 1, std::cout << "file end reached" << std::endl;
+        client.datafinished = 1, std::cout << "file end reached" << std::endl;
     }
     body = std::string(buffer, file.gcount());
-    std::cout << "body size: " << body.size() << std::endl;
-    // check if file end is reached
     delete[] buffer;
-    // file.seekg(0, std::ios::beg); to go to the beginning
-    // file.seekg(-400, std::ios::cur); to go back 400 bytes
 
-    success(client, body, path, whith_header);
-    // file.close();
+    success(client, body, false);
+    file.close();
+}
+void handleGetRequest(client_info &client, std::map<int, server_config> &server)
+{
+    if(client.error_code != 0)
+    {
+        error_response(client, client.error_code, "");
+        return;
+    }
+    std::cout << "in get funciton" << std::endl;
+    client.response.clear();
+    std::string content_type = "";
+    std::cout << "client.uri: " << client.uri << std::endl;
+    long content_size = -1;
 
-    std::cout << "data finished: " << client.datafinished << std::endl;
+    std::string path = getcorectserver_path(client, server) + client.uri;
+    std::ifstream file(path.c_str());
+    if (!file.is_open())
+    {
+        switch (errno)
+        {
+        case ENOENT:
+            error_response(client, 404, ""); // 404
+            break;
+        case EACCES:
+            error_response(client, 403, ""); // 403
+            break;
+        default:
+            error_response(client, 500, ""); // 500
+            break;
+        }
+        return;
+    }
+    if(path.find_last_of(".") != std::string::npos)
+    {
+        std::cout << "in php file" << std::endl;
+        if(path.substr(path.find_last_of(".") + 1) == "php" || path.substr(path.find_last_of(".") + 1) == "py")
+        {
+            handleCgi(client, server, path);
+            return;
+        }
+    }
+    if(client.bytes_sent <= 0 && client.bytes_sent != -1 )
+    {
+        success(client, "", true, path, content_type, content_size);
+        return;
+    }
+    sendbodypart(client, path);
+    file.close();
+
 }
 
 void handleDeleteRequest(client_info &client, std::map<int, server_config> &server)
 {
     std::cout << "in delete funciton" << std::endl;
+    std::string path = getcorectserver_path(client, server) + client.uri;
+    if (std::remove(path.c_str()) != 0)
+    {
+        switch (errno)
+        {
+        case ENOENT:
+            not_found(client); // 404
+            break;
+        case EACCES:
+            forbidden(client); // 403
+            break;
+        default:
+            unknown_error(client); // 500
+            break;
+        }
+    }
+    else
+    {
+        std::string body = "File deleted successfully";
+        client.response = "HTTP/1.1 200 OK\r\n";
+        client.response += "Content-Type: text/plain\r\n";
+        client.response += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+        client.response += "Connection: keep-alive\r\n";
+        client.response += "\r\n";
+        client.response += body;
+        client.bytes_sent = ((double)client.response.size()  * -1) - 1;
+        
+        client.poll_status = 1;
+        client.datafinished = 1;
+    }
     (void)client;
     (void)server;
 }
-// HTTP/1.1 200 OK
-// Content-Type: text/html
-// Content-Length: 56
-// Connection: close
-
-// html, .htm	                    text/html
-// .css	                            text/css
-// .js	                            application/javascript
-// .json	                        application/json
-// .png	                            image/png
-// .jpg, .jpeg	                    image/jpeg
-// .txt	                            text/plain
-// .sh	                            text/x-shellscript or text/plain
-// .pdf	                             application/pdf

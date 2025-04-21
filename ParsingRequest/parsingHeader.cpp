@@ -1,7 +1,8 @@
 #include "../server.hpp"
 
-bool request_line(client_info &client) {
-
+bool request_line(client_info &client, std::map<int, server_config> &server)
+{
+	(void)server;
 	if (client.method.empty() == false)
 		return true;
 
@@ -66,7 +67,7 @@ bool request_line(client_info &client) {
 		return false; // respond and clear client;
 	}
 
-	if (client.uri.empty() || client.uri[0] != '/' || parseRequestPath(client) == false)
+	if (client.uri.empty() || client.uri[0] != '/')
 	{
 		std::cerr << "Error: Invalid request-target (URI must start with '/')" << std::endl;
 		not_found(client);
@@ -79,11 +80,13 @@ bool request_line(client_info &client) {
 		http_version_not_supported(client);
 		return false; // respond and clear client;
 	}
+
 	// std::cerr << "method '" << client.method << "'\nuri '" << client.uri << "'\nversion '" << client.version << "'\n" << std::endl;
 	return true;
 }
 
-bool headers(client_info &client, std::map<int, server_config> &server) {
+bool headers(client_info &client, std::map<int, server_config> &server)
+{
 
 	if (client.headersTaken)
 		return true;
@@ -119,7 +122,7 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 		if (delimiterPos == std::string::npos)
 		{
 			std::cerr << "Error: Malformed header (missing ':'): " << line
-								<< std::endl;
+					  << std::endl;
 			bad_request(client);
 			return false; // respond and clear client;
 		}
@@ -191,47 +194,65 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 		}
 		else
 		{
-			std::cerr << "invalid host ------------------------------------" << std::endl;
 			bad_request(client);
 			return false; // respond and clear client;
 		}
 	}
+	if (check_autoindex(client, server) == false)
+	{
+		std::cerr << "im in hte check_autoindex" << std::endl;
+		return false; // respond and clear client;
+	}
 
 	// std::map<std::string, std::string>::iterator it;
 	// for (it = client.headers.begin(); it != client.headers.end(); ++it)
-	// {
-	// 	// std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
-	// }
+	// 	std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
 
-	client.headersTaken = true;
+	client.chunkData = "";
+	client.ReadFlag = true;
+	client.bodyTaken = false;
 	client.bodyTypeTaken = 0;
-	client.isChunked = false;
+	client.headersTaken = true;
+	client.file_fd = -42;
 
 	return true;
 }
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server)
 {
-  	client.file_fd = open("data", O_WRONLY | O_APPEND);//append
-  	// write(fd, client.data.c_str(), client.data.size());
+	// int fd = open("data1", O_WRONLY | O_APPEND);//append
+	// write(fd, client.data.c_str(), client.data.size());
 	// client.data.clear();
-  	// return ;
+	// return ;
 
-	if (request_line(client) == false || headers(client, server) == false)
+	if (request_line(client, server) == false || headers(client, server) == false)
 		return;
+	client.isGet = false;
 	if (client.method == "GET")
 		client.isGet = true;
 	else
 		client.isGet = false;
-		// handleGetRequest(client, server);
+	// handleGetRequest(client, server);
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
-	else if (client.method == "POST") {
+	else if (client.method == "POST" && !client.bodyTaken)
+	{
 		if (takeBodyType(client) == false)
-      		return ;
+			return;
 		if (client.bodyTypeTaken == 1)
 			ChunkedFormData(client);
-		else if (client.bodyTypeTaken == 2) 
-	  		ChunkedOtherData(client);
-	} 
+		else if (client.bodyTypeTaken == 2)
+			ChunkedOtherData(client);
+		else if (client.bodyTypeTaken == 3)
+			FormData(client);
+	}
+
+	if (client.bodyTaken == true)
+	{
+		std::cerr << "data finished-------------------------------------------" << std::endl;
+	}
 }
+/*notes
+	set file descriptor to non-blocking mode
+	check the content length in config file with the content length in header
+*/

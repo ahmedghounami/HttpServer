@@ -19,7 +19,9 @@
 #include <signal.h>
 #include <algorithm>
 #include <arpa/inet.h>
-#define READ_BUFFER_SIZE 1024
+#include <dirent.h>
+
+#define READ_BUFFER_SIZE 10000
 struct location
 {
     std::string location_index;
@@ -67,6 +69,8 @@ struct client_info
     int bodyTypeTaken;//flag
     size_t chunkSize, pos;
     
+    bool ReadFlag;
+    bool autoindex;
     bool ReadSize;
     bool isChunked;
     bool bodyTaken;
@@ -83,7 +87,7 @@ struct client_info
     std::string query;
     std::map<std::string, std::string> headers;
     bool datafinished;
-
+    int error_code;
     std::string response;
     double bytes_sent;
     bool isGet;
@@ -124,6 +128,10 @@ void bad_request(client_info &client); // example: invalid or malformed HTTP ver
 void not_found(client_info &client); // example: file not found
 void forbidden(client_info &client); // example: you are not allowed to access the file
 void unknown_error(client_info &client); // example: unknown error
+void timeoutserver(client_info &client); // example: timeout error from server to backend
+
+void error_response(client_info &client, int error_code, std::string path);//this function can hndle all the errors
+//to add new error just add in it a condition to handle the error header
 
 
 // server
@@ -136,9 +144,14 @@ int somthing_after(std::istringstream &ss);
 void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 
-// parsing request
+//Parsing
 void parse_chunk(client_info &client, std::map<int, server_config> &server);
-bool request_line(client_info &client);
+
+bool takeBodyType(client_info& client);//     Taking body type
+void FormData(client_info& client);//         Raw/Binary data
+void ChunkedFormData(client_info &client);//  Chunked data -> Multipart/form-data
+void ChunkedOtherData(client_info &client);// Chunked data -> Raw/Binary data
+bool request_line(client_info &client, std::map<int, server_config> &server);
 bool headers(client_info &client);
 bool takeBodyType(client_info& client);
 void ChunkedFormData(client_info &client);//for chunked data / multipart/form-data
@@ -162,6 +175,10 @@ std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 bool isValidContentLength(const std::string &lengthStr);
 void writeToFile(std::string &body, int fd);
+void NewFileChunked(client_info &client);
+void NewFile(client_info &client);
+void ParseContentDisposition(client_info& client);
+void ParseContentType(client_info& client);
 
 //find which server config to use returns the server index
 int findMatchingServer(client_info &client, std::map<int, server_config> &server);
@@ -169,3 +186,16 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
 std::string getlocation(client_info &client, server_config &server); 
 //this function to get the path from the config file from location if she exists if not it return the server path
 std::string getcorectserver_path(client_info &client, std::map<int, server_config> &server);
+//this function to send the body of the file to the client part by part
+void sendbodypart(client_info &client, std::string path);
+std::string getContentType(const std::string &path);
+
+
+// autoindex
+void generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path);
+bool autoindex_server(client_info &client, server_config &loc);
+bool autoindex(client_info &client, location &loc);
+bool check_autoindex(client_info &client, std::map<int, server_config> &server);
+
+// redirect
+void redirect(client_info &client, std::pair<std::string, std::string> &redirect);
