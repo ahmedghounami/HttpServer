@@ -66,7 +66,7 @@ bool request_line(client_info &client) {
 		return false; // respond and clear client;
 	}
 
-	if (client.uri.empty() || client.uri[0] != '/' || parseRequestPath(client) == false)
+	if (client.uri.empty() || client.uri[0] != '/')
 	{
 		std::cerr << "Error: Invalid request-target (URI must start with '/')" << std::endl;
 		not_found(client);
@@ -79,6 +79,11 @@ bool request_line(client_info &client) {
 		http_version_not_supported(client);
 		return false; // respond and clear client;
 	}
+
+	client.isGet = false;
+	if (client.method == "GET")
+		client.isGet = true;
+
 	// std::cerr << "method '" << client.method << "'\nuri '" << client.uri << "'\nversion '" << client.version << "'\n" << std::endl;
 	return true;
 }
@@ -222,10 +227,6 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 
 	if (request_line(client) == false || headers(client, server) == false)
 		return;
-	if (client.method == "GET")
-		client.isGet = true;
-	else
-		client.isGet = false;
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
 	else if (client.method == "POST" && !client.bodyTaken) {
@@ -237,6 +238,5 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 	  		ChunkedOtherData(client);
 		// else if (client.bodyTypeTaken == 3)
 		// 	FormData(client);
-
 	} 
 }

@@ -135,14 +135,13 @@ int somthing_after(std::istringstream &ss);
 void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 
-// parsing request
+//Parsing
 void parse_chunk(client_info &client, std::map<int, server_config> &server);
-bool request_line(client_info &client);
-bool headers(client_info &client);
-bool takeBodyType(client_info& client);
-void ChunkedFormData(client_info &client);//for chunked data / multipart/form-data
-void ChunkedOtherData(client_info &client);//for chunked data / other data
-void FormData(client_info& client);//for normal data / multipart/form-data
+
+bool takeBodyType(client_info& client);//     Taking body type
+void FormData(client_info& client);//         Raw/Binary data
+void ChunkedFormData(client_info &client);//  Chunked data -> Multipart/form-data
+void ChunkedOtherData(client_info &client);// Chunked data -> Raw/Binary data
 
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);
