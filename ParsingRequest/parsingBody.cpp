@@ -120,6 +120,12 @@ void ChunkedFormData(client_info& client) {
       std::istringstream iss(ChunkSizeString);
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
+      if (client.chunkSize == 0) {
+        std::cerr << "end of form data" << std::endl;
+        client.bodyTaken = true;
+        close(client.file_fd);
+        return ;
+      }
     }
 
     if (client.chunkSize > 0) {
