@@ -159,6 +159,8 @@ void ParseContentDisposition(client_info& client) {
   std::string sub = client.data.substr(0, client.data.find("\""));
   client.data = client.data.substr(client.data.find("\"") + 3 , client.data.size());
   client.name = sub;
+  close(client.file_fd);
+  client.file_fd = -42;
 
   client.pos = client.data.find("filename=\"");
   if (client.pos == std::string::npos || client.pos != 0)//taha said : return bad request if filename is not found

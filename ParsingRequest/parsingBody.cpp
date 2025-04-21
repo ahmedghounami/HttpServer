@@ -6,38 +6,74 @@
 
 void ChunkedOtherData(client_info& client) {
 
-  if (client.ReadSize ==  true) {
-    client.ReadSize = false;
-    client.pos = client.data.find("\r\n");
-    std::string ChunkSizeString = client.data.substr(0, client.pos);
-    client.data = client.data.substr(client.pos + 2);
-    std::istringstream iss(ChunkSizeString);
-    client.chunkSize = 0;
-    iss >> std::hex >> client.chunkSize;
-    if (client.file_fd == -42) {
-      std::string fileName = "rawFile." + client.ContentType.substr(client.ContentType.find("/") + 1);
-      std::cerr << "fileName: " << fileName << std::endl;
-      client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-      if (client.file_fd == -1) {
-        std::cerr << "Error opening file" << std::endl;
-        return ;
+  while (!client.data.empty()) {
+
+    if (client.ReadSize ==  true) {
+      client.ReadSize = false;
+      client.pos = client.data.find("\r\n");
+      std::string ChunkSizeString = client.data.substr(0, client.pos);
+      client.data = client.data.substr(client.pos + 2);
+      std::istringstream iss(ChunkSizeString);
+      client.chunkSize = 0;
+      iss >> std::hex >> client.chunkSize;
+      if (client.file_fd == -42) {
+        std::string fileName = "raw-binary_File." + client.ContentType.substr(client.ContentType.find("/") + 1);
+        std::cerr << "fileName: " << fileName << std::endl;
+        client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (client.file_fd == -1) {
+          std::cerr << "Error opening file" << std::endl;
+          return ;
+        }
       }
     }
-  }
 
-  if (client.chunkSize > 0 && client.chunkSize + 2 > client.data.size()) {
-    if (!client.data.empty())
-      writeToFile(client.data, client.file_fd);
-    client.chunkSize -= client.data.size();
-    client.data.clear();
-  } else if (client.chunkSize > 0) {
-    client.chunkData = client.data.substr(0, client.chunkSize);
-    if (!client.chunkData.empty())
-      writeToFile(client.chunkData, client.file_fd);
-    client.data = client.data.substr(client.chunkSize + 2);
-    client.chunkSize = 0;
-    client.bodyTaken = true;
-    std::cerr << "Raw data " << std::endl;
+
+    if (client.chunkSize > 0) {
+      if (client.chunkSize + 2 > client.data.size()) {
+        if (!client.data.empty())
+          writeToFile(client.data, client.file_fd);
+        client.chunkSize -= client.data.size();
+        client.data.clear();
+      } else {
+        client.chunkData = client.data.substr(0, client.chunkSize);
+        if (!client.chunkData.empty())
+          writeToFile(client.chunkData, client.file_fd);
+        client.data = client.data.substr(client.chunkSize + 2);
+        client.chunkSize = 0;
+        client.ReadSize = true;
+
+        client.pos = client.data.find("0\r\n");
+        if (client.pos != std::string::npos) {
+          std::cerr << "end of Raw data |" << client.data << "|" << std::endl;
+          close(client.file_fd);
+          client.file_fd = -42;
+          client.bodyTaken = true;
+          client.data.clear();
+        }
+      }
+    }
+
+    // if (client.chunkSize > 0 && client.chunkSize + 2 > client.data.size()) {
+    //   if (!client.data.empty())
+    //     writeToFile(client.data, client.file_fd);
+    //   client.chunkSize -= client.data.size();
+    //   client.data.clear();
+    // } else if (client.chunkSize > 0) {
+    //   client.chunkData = client.data.substr(0, client.chunkSize);
+    //   if (!client.chunkData.empty())
+    //     writeToFile(client.chunkData, client.file_fd);
+    //   client.data = client.data.substr(client.chunkSize + 2);
+    //   client.chunkSize = 0;
+    //   client.ReadSize = true;
+    //   client.pos = client.data.find("0\r\n");
+    //   if (client.pos != std::string::npos) {
+    //     std::cerr << "end of Raw data |" << client.data << "|" << std::endl;
+    //     close(client.file_fd);
+    //     client.file_fd = -42;
+    //     client.bodyTaken = true;
+    //     client.data.clear();
+    //   }
+    // }
   }
 }
 
@@ -81,6 +117,8 @@ void ChunkedFormData(client_info& client) {
         client.pos = client.data.find(client.boundary + "--");
         if (client.pos != std::string::npos && client.data.find(client.boundary + "\r\n") == std::string::npos) {
           std::cerr << "end boundary found |" << client.data << "|" << std::endl;
+          close(client.file_fd);
+          client.file_fd = -42;
           client.bodyTaken = true;
           client.data.clear();
           return ;

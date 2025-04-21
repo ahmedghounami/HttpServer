@@ -240,6 +240,3 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 
 	} 
 }
-/* std::cout << "uri: " << uri << std::endl;
-    if (uri.size() == 1 && uri[0] == '/' && server.locations.find("/") != server.locations.end())
-        return "/";*/
