@@ -198,11 +198,9 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 		}
 	}
 
-	std::map<std::string, std::string>::iterator it;
-	for (it = client.headers.begin(); it != client.headers.end(); ++it)
-	{
-		std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
-	}
+	// std::map<std::string, std::string>::iterator it;
+	// for (it = client.headers.begin(); it != client.headers.end(); ++it)
+	// 	std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
 
 	client.chunkData = "";
 	client.ReadFlag = true;

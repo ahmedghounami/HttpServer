@@ -19,6 +19,9 @@ void FormData(client_info& client) {
       }
     }
 
+    // std::cerr << "data |" << client.data << "|" << std::endl;
+    // exit(0);
+
     //client.data filled with : only data or data with another boundary
     client.pos = client.data.find("\r\n");
     if (client.pos != std::string::npos) {
@@ -43,7 +46,6 @@ void FormData(client_info& client) {
       client.data.clear();
     }
   }
-  std::cerr << "the data is empty." << std::endl;
 }
 
 void ChunkedOtherData(client_info& client) {
