@@ -17,10 +17,7 @@ bool autoindex_server(client_info &client, server_config &loc)
 		return false; // respond and clear client;
 	}
 	if (loc.index.empty() == true && stat((loc.path + "/index.html").c_str(), &info) == 0 && access((loc.path + "/index.html").c_str(), R_OK) == 0)
-	{
-		std::cout << "autoindex_server-------------------------------" << std::endl;
 		client.uri = "/index.html";
-	}
 	if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == true)
 	{
 		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/direc.html");
@@ -144,7 +141,7 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 				}
 			}
 		}
-		else if (it->first == client.uri && it->second.redirect.first.empty() == false)
+		else if (it->first == client.uri && it->second.redirect.first.empty() == false && client.method == "GET")
 		{
 			redirect(client, it->second.redirect);
 			return false; // respond and clear client;
@@ -171,5 +168,6 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 		not_found(client);
 		return false; // respond and clear client;
 	}
+	std::cout << "----------------------------------autoindex_server-------------------------------" << client.method << std::endl;
 	return true;
 }
