@@ -249,7 +249,6 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 		else if (client.bodyTypeTaken == 3)
 			FormData(client);
 	}
-
 	if (client.bodyTaken == true)
 	{
 		std::string body = "<html><body><h1>Success</h1></body></html>";
