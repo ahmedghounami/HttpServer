@@ -19,8 +19,11 @@ void FormData(client_info& client) {
       }
     }
 
-    // std::cerr << "data |" << client.data << "|" << std::endl;
-    // exit(0);
+    if (!client.data.empty())
+      std::cerr << "data |" << client.data << "|" << std::endl;
+    else
+      std::cerr << "data is empty." << std::endl;
+    exit(0);
 
     //client.data filled with : only data or data with another boundary
     client.pos = client.data.find("\r\n");
