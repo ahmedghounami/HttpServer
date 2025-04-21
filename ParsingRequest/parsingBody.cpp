@@ -19,37 +19,30 @@ void FormData(client_info& client) {
       }
     }
 
-    if (!client.data.empty())
-      std::cerr << "data |" << client.data << "|" << std::endl;
-    else
-      std::cerr << "data is empty." << std::endl;
-    exit(0);
-
-    //client.data filled with : only data or data with another boundary
-    client.pos = client.data.find("\r\n");
+    client.pos = client.data.find("\r\n--" + client.boundary);
     if (client.pos != std::string::npos) {
+      client.ReadFlag = true;
       client.chunkData = client.data.substr(0, client.pos);
-      client.data = client.data.substr(client.pos + 2);
       if (!client.chunkData.empty())
         writeToFile(client.chunkData, client.file_fd);
-      client.chunkData.clear();
-      client.ReadFlag = true;
-
+      client.data = client.data.substr(client.pos + 4);
       client.pos = client.data.find(client.boundary + "--");
       if (client.pos != std::string::npos && client.pos == 0) {
-        std::cerr << "end boundary found " << std::endl;
+        std::cerr << "end boundary found |" << client.data << "|" << std::endl;
         close(client.file_fd);
         client.file_fd = -42;
         client.bodyTaken = true;
         client.data.clear();
-        std::cerr << "data cleared." << std::endl;  
         return ;
       }
     } else if (!client.data.empty()) {
-        writeToFile(client.data, client.file_fd);
+      writeToFile(client.data, client.file_fd);
       client.data.clear();
+      return ;
     }
+
   }
+
 }
 
 void ChunkedOtherData(client_info& client) {
@@ -211,3 +204,4 @@ bool takeBodyType(client_info& client) {
   }
   return true;
 }
+

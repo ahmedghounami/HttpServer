@@ -221,11 +221,12 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server)
 {
+
 	// int fd = open("data", O_WRONLY | O_APPEND);//append
 	// write(fd, client.data.c_str(), client.data.size());
 	// client.file_fd = open("data", O_WRONLY | O_APPEND); // append
-	// write(fd, client.data.c_str(), client.data.size());
-	// client.data.clear();
+
+	// int fd = open("data1", O_WRONLY | O_APPEND);//append
 	// return ;
 
 	if (request_line(client, server) == false || headers(client, server) == false)
@@ -253,6 +254,8 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 	{
 		std::string body = "<html><body><h1>Success</h1></body></html>";
 		post_success(client, body);
+		std::cerr << "data finished-------------------------------------------" << std::endl;
+
 	}
 }
 /*notes
