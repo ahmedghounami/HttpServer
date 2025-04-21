@@ -42,6 +42,7 @@ void FormData(client_info& client) {
         client.file_fd = -42;
         client.bodyTaken = true;
         client.data.clear();
+        std::cerr << "data cleared." << std::endl;  
         return ;
       }
     } else if (!client.data.empty()) {
@@ -95,6 +96,7 @@ void ChunkedOtherData(client_info& client) {
           client.file_fd = -42;
           client.bodyTaken = true;
           client.data.clear();
+        std::cerr << "data cleared." << std::endl;  
         }
       }
     }
@@ -153,6 +155,7 @@ void ChunkedFormData(client_info& client) {
           client.file_fd = -42;
           client.bodyTaken = true;
           client.data.clear();
+          
           return ;
         }
       }

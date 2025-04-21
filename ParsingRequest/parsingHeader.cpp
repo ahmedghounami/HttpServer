@@ -1,7 +1,8 @@
 #include "../server.hpp"
 
-bool request_line(client_info &client) {
-
+bool request_line(client_info &client, std::map<int, server_config> &server)
+{
+	(void)server;
 	if (client.method.empty() == false)
 		return true;
 
@@ -84,7 +85,8 @@ bool request_line(client_info &client) {
 	return true;
 }
 
-bool headers(client_info &client, std::map<int, server_config> &server) {
+bool headers(client_info &client, std::map<int, server_config> &server)
+{
 
 	if (client.headersTaken)
 		return true;
@@ -120,7 +122,7 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 		if (delimiterPos == std::string::npos)
 		{
 			std::cerr << "Error: Malformed header (missing ':'): " << line
-								<< std::endl;
+					  << std::endl;
 			bad_request(client);
 			return false; // respond and clear client;
 		}
@@ -192,10 +194,11 @@ bool headers(client_info &client, std::map<int, server_config> &server) {
 		}
 		else
 		{
-			std::cerr << "invalid host ------------------------------------" << std::endl;
 			bad_request(client);
 			return false; // respond and clear client;
 		}
+		if (check_autoindex(client, server) == false)
+			return false; // respond and clear client;
 	}
 
 	// std::map<std::string, std::string>::iterator it;
@@ -216,19 +219,25 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 {
   	// int fd = open("data", O_WRONLY | O_APPEND);//append
   	// write(fd, client.data.c_str(), client.data.size());
+	// client.file_fd = open("data", O_WRONLY | O_APPEND); // append
+	// write(fd, client.data.c_str(), client.data.size());
 	// client.data.clear();
-  	// return ;
+	// return ;
 
-	if (request_line(client) == false || headers(client, server) == false)
+	if (request_line(client, server) == false || headers(client, server) == false)
 		return;
 	client.isGet = false;
 	if (client.method == "GET")
 		client.isGet = true;
+	else
+		client.isGet = false;
+	// handleGetRequest(client, server);
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
-	else if (client.method == "POST" && !client.bodyTaken) {
+	else if (client.method == "POST" && !client.bodyTaken) 
+	{
 		if (takeBodyType(client) == false)
-      		return ;
+			return;
 		if (client.bodyTypeTaken == 1)
 			ChunkedFormData(client);
 		else if (client.bodyTypeTaken == 2) 
@@ -239,7 +248,7 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 
 	if (client.bodyTaken == true)
 	{
-		std::cerr << "data finished" << std::endl;
+		std::cerr << "data finished-------------------------------------------" << std::endl; 
 	}
 }
 /*notes
