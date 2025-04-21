@@ -19,6 +19,12 @@ void FormData(client_info& client) {
       }
     }
 
+    if (!client.data.empty())
+      std::cerr << "data |" << client.data << "|" << std::endl;
+    else
+      std::cerr << "data is empty." << std::endl;
+    exit(0);
+
     //client.data filled with : only data or data with another boundary
     client.pos = client.data.find("\r\n");
     if (client.pos != std::string::npos) {
@@ -44,7 +50,6 @@ void FormData(client_info& client) {
       client.data.clear();
     }
   }
-  std::cerr << "the data is empty." << std::endl;
 }
 
 void ChunkedOtherData(client_info& client) {
@@ -122,6 +127,12 @@ void ChunkedFormData(client_info& client) {
       std::istringstream iss(ChunkSizeString);
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
+      if (client.chunkSize == 0) {
+        std::cerr << "end of form data" << std::endl;
+        client.bodyTaken = true;
+        close(client.file_fd);
+        return ;
+      }
     }
 
     if (client.chunkSize > 0) {

@@ -204,6 +204,7 @@ void NewFileChunked(client_info &client) {
     client.data = client.data.substr(client.pos + 32, client.data.size());
     ParseContentDisposition(client);
   }
+
   client.pos = client.data.find("Content-Type:");
   if (client.pos != std::string::npos && client.pos == 0) {
     ParseContentType(client);
@@ -211,6 +212,7 @@ void NewFileChunked(client_info &client) {
 }
 
 void NewFile(client_info &client) {
+
   client.chunkData = "", client.chunkSize = 0;// close(client.file_fd);
   client.data = client.data.substr(client.boundary.size() + 2);
 
@@ -219,6 +221,7 @@ void NewFile(client_info &client) {
     client.data = client.data.substr(client.pos + 32, client.data.size());
     ParseContentDisposition(client);
   }
+
   client.pos = client.data.find("Content-Type:");
   if (client.pos != std::string::npos && client.pos == 0) {
     ParseContentType(client);
