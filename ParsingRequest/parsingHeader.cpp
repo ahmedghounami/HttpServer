@@ -197,8 +197,11 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 			bad_request(client);
 			return false; // respond and clear client;
 		}
-		if (check_autoindex(client, server) == false)
-			return false; // respond and clear client;
+	}
+	if (check_autoindex(client, server) == false)
+	{
+		std::cerr << "im in hte check_autoindex" << std::endl;
+		return false; // respond and clear client;
 	}
 
 	// std::map<std::string, std::string>::iterator it;
@@ -217,8 +220,8 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 
 void parse_chunk(client_info &client, std::map<int, server_config> &server)
 {
-  	// int fd = open("data", O_WRONLY | O_APPEND);//append
-  	// write(fd, client.data.c_str(), client.data.size());
+	// int fd = open("data", O_WRONLY | O_APPEND);//append
+	// write(fd, client.data.c_str(), client.data.size());
 	// client.file_fd = open("data", O_WRONLY | O_APPEND); // append
 	// write(fd, client.data.c_str(), client.data.size());
 	// client.data.clear();
@@ -234,21 +237,21 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 	// handleGetRequest(client, server);
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
-	else if (client.method == "POST" && !client.bodyTaken) 
+	else if (client.method == "POST" && !client.bodyTaken)
 	{
 		if (takeBodyType(client) == false)
 			return;
 		if (client.bodyTypeTaken == 1)
 			ChunkedFormData(client);
-		else if (client.bodyTypeTaken == 2) 
-	  		ChunkedOtherData(client);
+		else if (client.bodyTypeTaken == 2)
+			ChunkedOtherData(client);
 		else if (client.bodyTypeTaken == 3)
 			FormData(client);
 	}
 
 	if (client.bodyTaken == true)
 	{
-		std::cerr << "data finished-------------------------------------------" << std::endl; 
+		std::cerr << "data finished-------------------------------------------" << std::endl;
 	}
 }
 /*notes
