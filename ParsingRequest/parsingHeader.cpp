@@ -214,17 +214,8 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 			}
 			else if (it->first == client.uri && it->second.redirect.first.empty() == false)
 			{
-				throw std::runtime_error("Redirect not implemented yet");
-				// std::string location_url = location_config.redirect_url;
-
-				// std::stringstream response;
-				// response << "HTTP/1.1 301 Moved Permanently\r\n";
-				// response << "Location: " << location_url << "\r\n";
-				// response << "Content-Length: 0\r\n";
-				// response << "\r\n";
-
-				// send(client_socket, response.str().c_str(), response.str().size(), 0);
-				// return;
+				redirect(client, it->second.redirect);
+				return false; // respond and clear client;
 			}
 
 		}

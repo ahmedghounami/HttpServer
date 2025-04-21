@@ -167,8 +167,12 @@ void server::listen_for_connections()
     }
 }
 
+
+
 server::~server()
+
 {
+    
     for (unsigned int i = 0; i < clients_fds.size(); i++)
         close(clients_fds[i].fd);
 }

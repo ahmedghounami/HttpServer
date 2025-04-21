@@ -19,7 +19,7 @@ std::string getresponse(int error_code, std::string &path)
         response = "HTTP/1.1 505 HTTP Version Not Supported\r\n";
     else
         response = "HTTP/1.1 500 Internal Server Error\r\n", error_code = 500;
-    if(path == "")
+    if (path == "")
         path = "errors/" + std::to_string(error_code) + ".html";
     return response;
 }
@@ -31,8 +31,9 @@ void error_response(client_info &client, int error_code, std::string path = "")
     client.response.clear();
     client.error_code = error_code;
     client.poll_status = 1;
-    
-    if(client.bytes_sent <= 0 && client.bytes_sent != -1){
+
+    if (client.bytes_sent <= 0 && client.bytes_sent != -1)
+    {
 
         std::string conection = client.headers["connection"];
         client.response = response;
@@ -43,14 +44,15 @@ void error_response(client_info &client, int error_code, std::string path = "")
         client.response += std::to_string(file.tellg()) + "\r\n";
         client.response += "Connection: " + conection + "\r\n";
         client.response += "\r\n";
-        client.bytes_sent = ((double)client.response.size()  * -1) - 1;}
+        client.bytes_sent = ((double)client.response.size() * -1) - 1;
+    }
     else
         sendbodypart(client, path);
 }
 void not_allowed_method(client_info &client)
 {
     client.poll_status = 1;
-        client.datafinished = true;
+    client.datafinished = true;
     client.response = "HTTP/1.1 405 Method Not Allowed\r\nContent-Type: text/html\r\nContent-Length: ";
     std::ifstream file("errors/405.html");
     std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -60,7 +62,7 @@ void not_allowed_method(client_info &client)
 void not_implemented_method(client_info &client)
 {
     client.poll_status = 1;
-        client.datafinished = true;
+    client.datafinished = true;
     client.response = "HTTP/1.1 501 Not Implemented\r\nContent-Type: text/html\r\nContent-Length: ";
     std::ifstream file("errors/501.html");
     std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -71,18 +73,17 @@ void malformed_request(client_info &client)
 {
     std::cerr << "Malformed request" << std::endl;
     client.poll_status = 1;
-        client.datafinished = true;
+    client.datafinished = true;
     client.response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\nContent-Length: ";
     std::ifstream file("errors/400.html");
     std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
-    
 }
 
 void http_version_not_supported(client_info &client)
 {
     client.poll_status = 1;
-        client.datafinished = true;
+    client.datafinished = true;
     client.response = "HTTP/1.1 505 HTTP Version Not Supported\r\nContent-Type: text/html\r\nContent-Length: ";
     std::ifstream file("errors/505.html");
     std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -97,7 +98,6 @@ void bad_request(client_info &client)
     std::ifstream file("errors/400.html");
     std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
-    
 }
 
 void not_found(client_info &client)
@@ -115,4 +115,30 @@ void unknown_error(client_info &client)
 void timeoutserver(client_info &client)
 {
     error_response(client, 504, "errors/504.html");
+}
+
+void redirect(client_info &client, std::pair<std::string, std::string> &redirect)
+{
+    client.poll_status = 1;
+    client.datafinished = true;
+    std::string status_code = redirect.first;
+    std::string location_url = redirect.second;
+    client.response += "HTTP/1.1 " ;
+    client.response += status_code += " ";
+    if (status_code == "301")
+        client.response += "Moved Permanently";
+    else if (status_code == "302")
+        client.response += "Found";
+    else
+        client.response += "Redirect"; // fallback
+
+    client.response += "\r\n";
+    client.response += "Location: ";
+    client.response += location_url;
+    client.response += "\r\n";
+    client.response += "Content-Length: 0\r\n";
+    client.response += "Connection: close\r\n";
+    client.response += "\r\n";
+
+    // Send response to client
 }

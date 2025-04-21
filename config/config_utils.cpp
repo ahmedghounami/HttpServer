@@ -125,6 +125,8 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
             throw std::runtime_error("location: Invalid redirect");
         somthing_after(ss);
         loc.redirect.first = status;
+        if (std::atof(loc.redirect.first.c_str()) <= 300 || std::atof(loc.redirect.first.c_str()) >= 309)
+            throw std::runtime_error("location: Invalid redirect status code");
         loc.redirect.second = redirect_path;
     }
     else if (key == "upload_path")

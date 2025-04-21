@@ -184,3 +184,7 @@ std::string getContentType(const std::string &path);
 void generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path);
 bool autoindex_server(client_info &client, server_config &loc);
 bool autoindex(client_info &client, location &loc);
+
+
+// redirect
+void redirect(client_info &client, std::pair<std::string, std::string> &redirect);
