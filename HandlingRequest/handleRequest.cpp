@@ -219,16 +219,16 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
                 if (exitstatus != 0)
                 {
                     std::cerr << "CGI process exited with status: " << exitstatus << std::endl;
-                    unknown_error(client);
+                    error_response(client, server[client.index_server], 500, ""); // 500
                     return;
                 }
             } else if (WIFSIGNALED(status))
             {
                 int signal = WTERMSIG(status);
                 if(signal == SIGALRM)
-                    timeoutserver(client);
+                    error_response(client, server[client.index_server], 504, ""); // 505
                 else
-                    unknown_error(client);
+                    error_response(client, server[client.index_server], 500, ""); // 500
                 return;
             }
             success(client, body, true, path, content_type, body.size());
@@ -280,7 +280,7 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 {
     if(client.error_code != 0)
     {
-        error_response(client, client.error_code, "");
+        error_response(client, server[client.index_server], client.error_code, "");
         return;
     }
     std::cout << "in get funciton" << std::endl;
@@ -296,13 +296,13 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
         switch (errno)
         {
         case ENOENT:
-            error_response(client, 404, ""); // 404
+            error_response(client, server[client.index_server], 404, ""); // 404
             break;
         case EACCES:
-            error_response(client, 403, ""); // 403
+            error_response(client, server[client.index_server], 403, ""); // 403
             break;
         default:
-            error_response(client, 500, ""); // 500
+            error_response(client, server[client.index_server], 500, ""); // 500
             break;
         }
         return;
@@ -335,13 +335,13 @@ void handleDeleteRequest(client_info &client, std::map<int, server_config> &serv
         switch (errno)
         {
         case ENOENT:
-            not_found(client); // 404
+            error_response(client, server[client.index_server], 404, ""); // 404
             break;
         case EACCES:
-            forbidden(client); // 403
+            error_response(client, server[client.index_server], 403, ""); // 403
             break;
         default:
-            unknown_error(client); // 500
+            error_response(client, server[client.index_server], 500, ""); // 500
             break;
         }
     }
