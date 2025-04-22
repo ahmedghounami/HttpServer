@@ -255,8 +255,7 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 		std::string body = "<html><body><h1>Success</h1></body></html>";
 		post_success(client, body);
 		std::cerr << "data finished-------------------------------------------" << std::endl;
-
-	}
+	}	
 }
 /*notes
 	set file descriptor to non-blocking mode

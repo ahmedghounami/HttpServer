@@ -106,3 +106,4 @@ void post_success(client_info &client, std::string body)
     if (client.uri != "/")
         client.isGet = true;
 }
+

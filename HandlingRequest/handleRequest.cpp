@@ -305,7 +305,7 @@ void sendbodypart(client_info &client, std::string path)
     char *buffer = new char[READ_BUFFER_SIZE];
     file.seekg(0, std::ios::beg);                 // move to the beginning
     file.seekg(client.bytes_sent, std::ios::beg); // move to byte  from the beginning
-    std::cout << "client.bytes_sent: " << client.bytes_sent << std::endl;
+    // std::cout << "client.bytes_sent: " << client.bytes_sent << std::endl;
     file.read(buffer, READ_BUFFER_SIZE);
     if (file.eof())
     {
