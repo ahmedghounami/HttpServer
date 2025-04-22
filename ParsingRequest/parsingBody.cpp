@@ -1,6 +1,6 @@
 #include "../server.hpp"
 
-// void ChunkedBinaryData(client_info& clietn) {
+// void FormData(client_info& clietn) {
 
 // }
 
@@ -27,7 +27,6 @@ void ChunkedOtherData(client_info& client) {
       }
     }
 
-
     if (client.chunkSize > 0) {
       if (client.chunkSize + 2 > client.data.size()) {
         if (!client.data.empty())
@@ -52,28 +51,6 @@ void ChunkedOtherData(client_info& client) {
         }
       }
     }
-
-    // if (client.chunkSize > 0 && client.chunkSize + 2 > client.data.size()) {
-    //   if (!client.data.empty())
-    //     writeToFile(client.data, client.file_fd);
-    //   client.chunkSize -= client.data.size();
-    //   client.data.clear();
-    // } else if (client.chunkSize > 0) {
-    //   client.chunkData = client.data.substr(0, client.chunkSize);
-    //   if (!client.chunkData.empty())
-    //     writeToFile(client.chunkData, client.file_fd);
-    //   client.data = client.data.substr(client.chunkSize + 2);
-    //   client.chunkSize = 0;
-    //   client.ReadSize = true;
-    //   client.pos = client.data.find("0\r\n");
-    //   if (client.pos != std::string::npos) {
-    //     std::cerr << "end of Raw data |" << client.data << "|" << std::endl;
-    //     close(client.file_fd);
-    //     client.file_fd = -42;
-    //     client.bodyTaken = true;
-    //     client.data.clear();
-    //   }
-    // }
   }
 }
 
@@ -91,7 +68,7 @@ void ChunkedFormData(client_info& client) {
         break ;
     }
 
-    if (client.ReadSize ==  true) {//what if we take the multipart header data then data is empty??
+    if (client.ReadSize ==  true) {
       client.ReadSize = false;
       client.pos = client.data.find("\r\n");
       std::string ChunkSizeString = client.data.substr(0, client.pos);
@@ -129,6 +106,7 @@ void ChunkedFormData(client_info& client) {
 }
 
 bool takeBodyType(client_info& client) {
+
   if (client.method.empty() || !client.headersTaken || client.bodyTypeTaken)
     return true;
 
