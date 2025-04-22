@@ -189,12 +189,13 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         close(fd);
         std::vector<std::string> envStrings;
         
-        envStrings.push_back("REQUEST_METHOD=" + client.method);
+        // envStrings.push_back("REQUEST_METHOD=" + client.method);
+        envStrings.push_back("REQUEST_METHOD=GET");
         envStrings.push_back("SCRIPT_NAME=" + client.uri);
         envStrings.push_back("PATH_INFO=" + client.path_info);
         envStrings.push_back("QUERY_STRING=" + client.query);
-        envStrings.push_back("CONTENT_TYPE=" + client.ContentType);
-        envStrings.push_back("CONTENT_LENGTH=" + client.headers["content-length"]);
+        // envStrings.push_back("CONTENT_TYPE=" + client.ContentType);
+        // envStrings.push_back("CONTENT_LENGTH=" + client.headers["content-length"]);
         envStrings.push_back("SERVER_NAME=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
         envStrings.push_back("SERVER_PORT=" + client.headers["host"].substr(client.headers["host"].find(":") + 1));
         envStrings.push_back("SERVER_PROTOCOL=" + client.version);

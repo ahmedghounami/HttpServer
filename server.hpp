@@ -21,7 +21,7 @@
 #include <arpa/inet.h>
 #include <dirent.h>
 
-#define READ_BUFFER_SIZE 10000
+#define READ_BUFFER_SIZE 100000
 struct location
 {
     std::string location_index;
