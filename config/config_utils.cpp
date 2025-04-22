@@ -125,6 +125,8 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
             throw std::runtime_error("location: Invalid redirect");
         somthing_after(ss);
         loc.redirect.first = status;
+        if (std::atof(loc.redirect.first.c_str()) <= 300 || std::atof(loc.redirect.first.c_str()) >= 309)
+            throw std::runtime_error("location: Invalid redirect status code");
         loc.redirect.second = redirect_path;
     }
     else if (key == "upload_path")
@@ -163,14 +165,6 @@ void parse_key(std::istringstream &ss, std::string &key,
             throw std::runtime_error("Duplicate host");
         std::string host;
         ss >> host;
-        if (host != "localhost")
-        {
-            for (unsigned int i = 0; i < host.length(); i++)
-            {
-                if (!isdigit(host[i]) && host[i] != '.')
-                    throw std::runtime_error("Invalid host");
-            }
-        }
         somthing_after(ss);
         config.host = host;
     }

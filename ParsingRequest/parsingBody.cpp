@@ -1,15 +1,56 @@
 #include "../server.hpp"
 
-// void FormData(client_info& clietn) {
+void FormData(client_info& client) {
 
-// }
+  while (!client.data.empty()) {
+
+    client.pos = client.data.find(client.boundary + "\r\n");
+    if (client.pos != std::string::npos && client.ReadFlag == true) {
+      client.data = client.data.substr(client.pos);
+      if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
+        std::cerr << "breaking from loop : 'CRLF' found." << std::endl;
+        break;
+      }
+      NewFile(client);
+      client.ReadFlag = false;
+      if (client.data.empty()) {
+        std::cerr << "breaking from loop : data is empty." << std::endl;
+        break ;
+      }
+    }
+
+    client.pos = client.data.find("\r\n--" + client.boundary);
+    if (client.pos != std::string::npos) {
+      client.ReadFlag = true;
+      client.chunkData = client.data.substr(0, client.pos);
+      if (!client.chunkData.empty())
+        writeToFile(client.chunkData, client.file_fd);
+      client.data = client.data.substr(client.pos + 4);
+      client.pos = client.data.find(client.boundary + "--");
+      if (client.pos != std::string::npos && client.pos == 0) {
+        std::cerr << "end boundary found |" << client.data << "|" << std::endl;
+        close(client.file_fd);
+        client.file_fd = -42;
+        client.bodyTaken = true;
+        client.data.clear();
+        return ;
+      }
+    } else if (!client.data.empty()) {
+      writeToFile(client.data, client.file_fd);
+      client.data.clear();
+      return ;
+    }
+
+  }
+
+}
 
 void ChunkedOtherData(client_info& client) {
 
   while (!client.data.empty()) {
 
-    if (client.ReadSize ==  true) {
-      client.ReadSize = false;
+    if (client.ReadFlag ==  true) {//move this part to takeBodyType function
+      client.ReadFlag = false;
       client.pos = client.data.find("\r\n");
       std::string ChunkSizeString = client.data.substr(0, client.pos);
       client.data = client.data.substr(client.pos + 2);
@@ -39,7 +80,7 @@ void ChunkedOtherData(client_info& client) {
           writeToFile(client.chunkData, client.file_fd);
         client.data = client.data.substr(client.chunkSize + 2);
         client.chunkSize = 0;
-        client.ReadSize = true;
+        client.ReadFlag = true;
 
         client.pos = client.data.find("0\r\n");
         if (client.pos != std::string::npos) {
@@ -48,6 +89,7 @@ void ChunkedOtherData(client_info& client) {
           client.file_fd = -42;
           client.bodyTaken = true;
           client.data.clear();
+        std::cerr << "data cleared." << std::endl;  
         }
       }
     }
@@ -59,28 +101,36 @@ void ChunkedFormData(client_info& client) {
   while (!client.data.empty()) {
 
     client.pos = client.data.find(client.boundary + "\r\n");
-    if (client.pos != std::string::npos && client.ReadSize == true) {
+    if (client.pos != std::string::npos && client.ReadFlag == true) {
       client.data = client.data.substr(client.pos);
-      if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos)
+      if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
+        std::cerr << "breaking from loop." << std::endl;
         break;
-      NewFile(client);
+      }
+      NewFileChunked(client);
       if (client.data.empty())
         break ;
     }
 
-    if (client.ReadSize ==  true) {
-      client.ReadSize = false;
+    if (client.ReadFlag ==  true) {
+      client.ReadFlag = false;
       client.pos = client.data.find("\r\n");
       std::string ChunkSizeString = client.data.substr(0, client.pos);
       client.data = client.data.substr(client.pos + 2);
       std::istringstream iss(ChunkSizeString);
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
+      if (client.chunkSize == 0) {
+        std::cerr << "end of form data" << std::endl;
+        client.bodyTaken = true;
+        close(client.file_fd);
+        return ;
+      }
     }
 
     if (client.chunkSize > 0) {
       if (client.chunkSize + 2 > client.data.size()) {
-        client.ReadSize = false;
+        client.ReadFlag = false;
         break ;
       }
       else {
@@ -88,7 +138,7 @@ void ChunkedFormData(client_info& client) {
         if (!client.chunkData.empty())
           writeToFile(client.chunkData, client.file_fd);
         client.data = client.data.substr(client.chunkSize + 2);
-        client.ReadSize = true;
+        client.ReadFlag = true;
         client.chunkSize = 0;
 
         client.pos = client.data.find(client.boundary + "--");
@@ -98,6 +148,7 @@ void ChunkedFormData(client_info& client) {
           client.file_fd = -42;
           client.bodyTaken = true;
           client.data.clear();
+          
           return ;
         }
       }
@@ -105,7 +156,7 @@ void ChunkedFormData(client_info& client) {
   }
 }
 
-bool takeBodyType(client_info& client) {
+bool takeBodyType(client_info& client, server_config& server_index) {
 
   if (client.method.empty() || !client.headersTaken || client.bodyTypeTaken)
     return true;
@@ -119,7 +170,7 @@ bool takeBodyType(client_info& client) {
         client.boundary = getBoundary(client.ContentType);
         if (client.boundary.empty()) {
           client.boundary.clear();
-          bad_request(client);
+          error_response(client, server_index, 400); // 500
           return false;
         }
         client.bodyTypeTaken = 1;// formDataChunked(client);
@@ -127,7 +178,7 @@ bool takeBodyType(client_info& client) {
         client.bodyTypeTaken = 2;// otherDataChunked(client);
       }
     } else {
-      bad_request(client);
+      error_response(client, server_index, 400); // 500
       return false;
     }
   } else {
@@ -138,7 +189,7 @@ bool takeBodyType(client_info& client) {
         client.boundary = getBoundary(client.ContentType);
         if (client.boundary.empty()) {
           client.boundary.clear();
-          bad_request(client);
+          error_response(client, server_index, 400); // 500
           return false;
         }
         client.bodyTypeTaken = 3;// formData(client);
@@ -147,9 +198,10 @@ bool takeBodyType(client_info& client) {
         client.bodyTypeTaken = 4;// otherData(client);
       }
     } else {
-      bad_request(client);
+      error_response(client, server_index, 400); // 500
       return false;
     }
   }
   return true;
 }
+

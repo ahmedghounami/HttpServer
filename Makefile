@@ -2,7 +2,7 @@ NAME	=	webserv
 
 src		=	main.cpp server/server.cpp server/utils.cpp config/config.cpp config/config_utils.cpp \
 			ParsingRequest/parsingHeader.cpp ParsingRequest/parsingBody.cpp ParsingRequest/parsingUtils.cpp \
-			HandlingRequest/handleRequest.cpp response/response.cpp
+			HandlingRequest/handleRequest.cpp response/response.cpp ParsingRequest/parsingAutoindex.cpp
 
 OBJ = $(src:.cpp=.o)
 

@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/21 19:02:07 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/22 12:45:52 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,8 @@ std::string getContentType(const std::string &path)
         return "image/gif";
     else if (extension == "svg")
         return "image/svg+xml";
+    else if(extension == "ico")
+        return "image/x-icon";
     return "text/html"; // default to HTML if unknown
 }
 
@@ -211,9 +213,9 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         envp[i] = NULL;
         char *cgi_path;
         if (path.substr(path.find_last_of(".") + 1) == "php")
-            cgi_path = (char *)"/Users/mkibous/Desktop/webserver/CGI/php-cgi";
+            cgi_path = (char *)"CGI/php-cgi";
         else
-            cgi_path = (char *)"/Users/mkibous/Desktop/webserver/CGI/python-cgi";
+            cgi_path = (char *)"CGI/python-cgi";
         char *args[] = {cgi_path, (char *)path.c_str(), NULL};
         
         alarm(5);
@@ -233,7 +235,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             if (exitstatus != 0)
             {
                 std::cerr << "CGI process exited with status: " << exitstatus << std::endl;
-                unknown_error(client);
+                error_response(client, server[client.index_server], 500); // 500
                 close(fd);
                 unlink(filename);
                 return;
@@ -242,9 +244,9 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         {
             int signal = WTERMSIG(status);
             if(signal == SIGALRM)
-                timeoutserver(client);
+                error_response(client, server[client.index_server], 504); // 504
             else
-                unknown_error(client);
+                error_response(client, server[client.index_server], 500); // 500
             close(fd);
             unlink(filename);
             return;
@@ -298,10 +300,12 @@ void sendbodypart(client_info &client, std::string path)
     std::string body;
     if(client.bytes_sent == -1)
         client.bytes_sent = 0;
+    // std::cout << "path: " << path << std::endl;
     std::ifstream file(path.c_str());
     char *buffer = new char[READ_BUFFER_SIZE];
     file.seekg(0, std::ios::beg);                 // move to the beginning
     file.seekg(client.bytes_sent, std::ios::beg); // move to byte  from the beginning
+    std::cout << "client.bytes_sent: " << client.bytes_sent << std::endl;
     file.read(buffer, READ_BUFFER_SIZE);
     if (file.eof())
     {
@@ -339,13 +343,13 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 {
     if(client.error_code != 0)
     {
-        error_response(client, client.error_code, "");
+        error_response(client, server[client.index_server], client.error_code); // 500
         return;
     }
     std::cout << "in get funciton" << std::endl;
     client.response.clear();
     std::string content_type = "";
-
+    std::cout << "client.uri: " << client.uri << std::endl;
     long content_size = -1;
     handlepathinfo(client);
     // std::cout << "path info: " << client.path_info << std::endl;
@@ -358,20 +362,19 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
         switch (errno)
         {
         case ENOENT:
-            error_response(client, 404, ""); // 404
+            error_response(client, server[client.index_server], 404); // 404
             break;
         case EACCES:
-            error_response(client, 403, ""); // 403
+            error_response(client, server[client.index_server], 403); // 403
             break;
         default:
-            error_response(client, 500, ""); // 500
+            error_response(client, server[client.index_server], 500); // 500
             break;
         }
         return;
     }
     if(path.find_last_of(".") != std::string::npos)
     {
-        std::cout << "in php file" << std::endl;
         if(path.substr(path.find_last_of(".") + 1) == "php" || path.substr(path.find_last_of(".") + 1) == "py")
         {
             handleCgi(client, server, path);
@@ -397,13 +400,13 @@ void handleDeleteRequest(client_info &client, std::map<int, server_config> &serv
         switch (errno)
         {
         case ENOENT:
-            not_found(client); // 404
+            error_response(client, server[client.index_server], 404); // 404
             break;
         case EACCES:
-            forbidden(client); // 403
+            error_response(client, server[client.index_server], 403); // 403
             break;
         default:
-            unknown_error(client); // 500
+            error_response(client, server[client.index_server], 500); // 500
             break;
         }
     }
