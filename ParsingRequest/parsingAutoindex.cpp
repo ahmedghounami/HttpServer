@@ -163,11 +163,6 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 			return false; // respond and clear client;
 		}
 	}
-	else if (found == 0 && client.method == "POST")
-	{
-		error_response(client, server[client.index_server], 400, ""); // 400
-		return false; // respond and clear client;
-	}
 	std::cout << "----------------------------------autoindex_server-------------------------------" << client.method << std::endl;
 	return true;
 }

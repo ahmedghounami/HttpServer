@@ -166,39 +166,39 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 		error_response(client, server[client.index_server], 400, ""); // 500
 		return false; // respond and clear client;
 	}
-	else
-	{
-		std::string host;
-		std::string port;
-		int found = 0;
-		// split host by ':'
-		size_t pos = client.headers["host"].find(":");
-		if (pos != std::string::npos)
-		{
-			host = client.headers["host"].substr(0, pos);
-			port = client.headers["host"].substr(pos + 1);
-			for (unsigned int i = 0; i < server.size(); i++)
-			{
-				if (server[i].host == host && find(server[i].ports.begin(), server[i].ports.end(), std::atof(port.c_str())) != server[i].ports.end())
-				{
-					found = 1;
-					break;
-				}
-			}
-			if (found == 0)
-			{
-				std::cerr << "Error: Invalid host: " << host << ":" << port << std::endl;
-				error_response(client, server[client.index_server], 404, ""); // 404
-				return false; // respond and clear client;
-			}
-		}
-		else
-		{
-			std::cerr << "Error: Invalid host: " << client.headers["host"] << std::endl;
-			error_response(client, server[client.index_server], 400, ""); // 500
-			return false; // respond and clear client;
-		}
-	}
+	// else
+	// {
+	// 	std::string host;
+	// 	std::string port;
+	// 	int found = 0;
+	// 	// split host by ':'
+	// 	size_t pos = client.headers["host"].find(":");
+	// 	if (pos != std::string::npos)
+	// 	{
+	// 		host = client.headers["host"].substr(0, pos);
+	// 		port = client.headers["host"].substr(pos + 1);
+	// 		for (unsigned int i = 0; i < server.size(); i++)
+	// 		{
+	// 			if (server[i].host == host && find(server[i].ports.begin(), server[i].ports.end(), std::atof(port.c_str())) != server[i].ports.end())
+	// 			{
+	// 				found = 1;
+	// 				break;
+	// 			}
+	// 		}
+	// 		if (found == 0)
+	// 		{
+	// 			std::cerr << "Error: Invalid host: " << host << ":" << port << std::endl;
+	// 			error_response(client, server[client.index_server], 404, ""); // 404 not found
+	// 			return false; // respond and clear client;
+	// 		}
+	// 	}
+	// 	else
+	// 	{
+	// 		std::cerr << "Error: Invalid host: " << client.headers["host"] << std::endl;
+	// 		error_response(client, server[client.index_server], 400, ""); // 500 
+	// 		return false; // respond and clear client;
+	// 	}
+	// }
 	if (check_autoindex(client, server) == false)
 	{
 		std::cerr << "im in hte check_autoindex" << std::endl;

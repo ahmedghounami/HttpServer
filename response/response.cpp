@@ -89,4 +89,6 @@ void post_success(client_info &client, std::string body)
     client.response += "Connection: close\r\n";
     client.response += "\r\n";
     client.response += body;
+    if (client.uri != "/")
+        client.isGet = true;
 }

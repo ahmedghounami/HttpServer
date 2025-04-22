@@ -1,13 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Index</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee+Spice&family=Lilita+One&display=swap" rel="stylesheet">
+    <link href="file.css" rel="stylesheet">
 </head>
-<body>
-    
-    <h1>Welcome to the Index</h1>
-    <p>This is a simple Index page.</p>
-    
+
+<body
+    class="bg-gradient-to-br flex from-black via-[#02274a] to-[#021636] h-screen w-screen relative justify-center ">
+    <main class="w-[50%] flex-col relative">
+        <nav class="p-2 text-[white] bungee-spice-regular text-center "> Webserv Dashboard</nav>
+
+
+        <p class="p-2 text-[#d2d2d2] font-extralight text-center "> A simple web
+            server
+            written in C++ that serves static files.<br> built by Ahmed ghounami, mehdi kibous, and hamza boudar.
+        </p>⚙️
+        <div class="imges gap-2  flex justify-center items-center]">
+            <a class="img1 img w-[6rem] h-[6rem] border border-[#9d99a0] rounded-[50%]"
+                href="https://profile.intra.42.fr/users/aghounam"> </a>
+            <a class="img2 img w-[6rem] h-[6rem] border border-[#9d99a0] rounded-[50%]"
+                href="https://profile.intra.42.fr/users/mkibous"> </a>
+            <a class="img3 img w-[6rem] h-[6rem] border border-[#9d99a0] rounded-[50%]"
+                href="https://profile.intra.42.fr/users/hboudar"> </a>
+        </div>
+
+        <div class="flex gap-4 justify-center mt-4">
+
+            <div class="text-white flex flex-col justify-start items-start border border-[#ababab] p-4 rounded-2xl w-[300px] min-h-[200px]">
+              <h1 class="mb-2 font-semibold">⚙️Tech Stack</h1>
+              <ul class="list-disc pl-4">
+                <li>C++</li>
+                <li>HTTP/1.1 with GET, POST, DELETE methods</li>
+                <li>CGI (PHP, Python)</li>
+                <li>Session management & cookies</li>
+              </ul>
+            </div>
+          
+            <div class="text-white flex flex-col justify-start items-start border border-[#ababab] p-4 rounded-2xl w-[300px] min-h-[200px]">
+              <h1 class="mb-2 font-semibold">Endpoints Tests</h1>
+              <select class="bg-[#0f0f0f] text-white border border-[#ababab] p-2 rounded-2xl w-full bg-inherit" >
+                <option value=""> choose an option</option>
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+              <input type="text" class="bg-[#0f0f0f] text-white border border-[#ababab] p-2 rounded-2xl w-full bg-inherit mt-2" placeholder="Enter URL">
+              <button class="bg-[#125d5d] text-white border border-[#ffffff] p-2 rounded-3xl w-[8rem] self-center  mt-2">submit</button>
+            </div>
+          
+          </div>
+        <div class="flex gap-4 justify-center mt-4">
+
+           
+          
+          </div>
+          
+
+    </main>
 </body>
