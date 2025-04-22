@@ -156,7 +156,7 @@ void ChunkedFormData(client_info& client) {
   }
 }
 
-bool takeBodyType(client_info& client) {
+bool takeBodyType(client_info& client, server_config& server_index) {
 
   if (client.method.empty() || !client.headersTaken || client.bodyTypeTaken)
     return true;
@@ -170,7 +170,7 @@ bool takeBodyType(client_info& client) {
         client.boundary = getBoundary(client.ContentType);
         if (client.boundary.empty()) {
           client.boundary.clear();
-          bad_request(client);
+          error_response(client, server_index, 400); // 500
           return false;
         }
         client.bodyTypeTaken = 1;// formDataChunked(client);
@@ -178,7 +178,7 @@ bool takeBodyType(client_info& client) {
         client.bodyTypeTaken = 2;// otherDataChunked(client);
       }
     } else {
-      bad_request(client);
+      error_response(client, server_index, 400); // 500
       return false;
     }
   } else {
@@ -189,7 +189,7 @@ bool takeBodyType(client_info& client) {
         client.boundary = getBoundary(client.ContentType);
         if (client.boundary.empty()) {
           client.boundary.clear();
-          bad_request(client);
+          error_response(client, server_index, 400); // 500
           return false;
         }
         client.bodyTypeTaken = 3;// formData(client);
@@ -198,7 +198,7 @@ bool takeBodyType(client_info& client) {
         client.bodyTypeTaken = 4;// otherData(client);
       }
     } else {
-      bad_request(client);
+      error_response(client, server_index, 400); // 500
       return false;
     }
   }
