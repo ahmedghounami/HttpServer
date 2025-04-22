@@ -13,7 +13,7 @@ bool autoindex_server(client_info &client, server_config &loc)
 	}
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
-		error_response(client, loc, 404, ""); // 404
+		error_response(client, loc, 404); // 404
 		return false; // respond and clear client;
 	}
 	if (loc.index.empty() == true && stat((loc.path + "/index.html").c_str(), &info) == 0 && access((loc.path + "/index.html").c_str(), R_OK) == 0)
@@ -25,7 +25,7 @@ bool autoindex_server(client_info &client, server_config &loc)
 	}
 	else if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
-		error_response(client, loc, 404, ""); // 404
+		error_response(client, loc, 404); // 404
 		return false; // respond and clear client;
 	}
 	return true;
@@ -43,7 +43,7 @@ bool autoindex(client_info &client, location &loc, server_config &server)
 	}
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
-		error_response(client, server, 404, ""); // 404
+		error_response(client, server, 404); // 404
 		return false; // respond and clear client;
 	}
 	if (loc.index.empty() == true && stat((loc.path + "/index.html").c_str(), &info) == 0 && access((loc.path + "/index.html").c_str(), R_OK) == 0)
@@ -57,7 +57,7 @@ bool autoindex(client_info &client, location &loc, server_config &server)
 	}
 	else if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
-		error_response(client, server, 404, ""); // 404
+		error_response(client, server, 404); // 404
 		return false; // respond and clear client;
 	}
 	return true;
@@ -159,7 +159,7 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 	{
 		if (server[client.index_server].upload_path.empty())
 		{
-			error_response(client, server[client.index_server], 501, ""); // 501
+			error_response(client, server[client.index_server], 501); // 501
 			return false; // respond and clear client;
 		}
 	}

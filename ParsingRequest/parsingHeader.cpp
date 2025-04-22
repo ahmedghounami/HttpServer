@@ -17,7 +17,7 @@ bool request_line(client_info &client, std::map<int, server_config> &server)
 	if (requestLine.empty() || requestLine[0] == ' ')
 	{
 		std::cerr << "ERROR: Request line start with a space" << std::endl;
-		error_response(client, server[client.index_server], 400, ""); // 500
+		error_response(client, server[client.index_server], 400); // 500
 		return false; // respond and clear client;
 	}
 
@@ -26,14 +26,14 @@ bool request_line(client_info &client, std::map<int, server_config> &server)
 	if (end != requestLine.size() - 1)
 	{
 		std::cerr << "ERROR: Request line ends with extra character(s)" << std::endl;
-		error_response(client, server[client.index_server], 400, ""); // 500
+		error_response(client, server[client.index_server], 400); // 500
 		return false; // respond and clear client;
 	}
 
 	if (start == std::string::npos)
 	{
 		std::cerr << "ERROR: Empty request line" << std::endl;
-		error_response(client, server[client.index_server], 400, ""); // 500
+		error_response(client, server[client.index_server], 400); // 500
 		return false; // respond and clear client;
 	}
 
@@ -46,7 +46,7 @@ bool request_line(client_info &client, std::map<int, server_config> &server)
 	if (firstSP == 0 || firstSP == std::string::npos || secondSP == std::string::npos || thirdSP != std::string::npos)
 	{
 		std::cerr << "Error: Malformed request line (Incorrect spaces)" << std::endl;
-		error_response(client, server[client.index_server], 400, ""); // 500
+		error_response(client, server[client.index_server], 400); // 500
 		return false; // respond and clear client;
 	}
 
@@ -57,27 +57,27 @@ bool request_line(client_info &client, std::map<int, server_config> &server)
 	if (client.method != "GET" && client.method != "DELETE" && client.method != "POST" && client.method != "PUT" && client.method != "HEAD" && client.method != "CONNECT" && client.method != "OPTIONS" && client.method != "TRACE")
 	{
 		std::cerr << "Error: method: not allowed: " << client.method << std::endl;
-		error_response(client, server[client.index_server], 405, ""); // 405
+		error_response(client, server[client.index_server], 405); // 405
 		return false; // respond and clear client;
 	}
 	else if (client.method != "GET" && client.method != "POST" && client.method != "DELETE")
 	{
 		std::cerr << "Error: Method not implemented: " << client.method << std::endl;
-		error_response(client, server[client.index_server], 501, ""); // 501
+		error_response(client, server[client.index_server], 501); // 501
 		return false; // respond and clear client;
 	}
 
 	if (client.uri.empty() || client.uri[0] != '/')
 	{
 		std::cerr << "Error: Invalid request-target (URI must start with '/')" << std::endl;
-		error_response(client, server[client.index_server], 404, ""); // 404
+		error_response(client, server[client.index_server], 404); // 404
 		return false; // respond and clear client;
 	}
 
 	if (client.version != "HTTP/1.1" || client.version.find(' ') != std::string::npos)
 	{
 		std::cerr << "Error: Invalid or malformed HTTP version: " << client.version << std::endl;
-		error_response(client, server[client.index_server], 505, ""); // 505
+		error_response(client, server[client.index_server], 505); // 505
 		return false; // respond and clear client;
 	}
 
@@ -123,7 +123,7 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 		{
 			std::cerr << "Error: Malformed header (missing ':'): " << line
 					  << std::endl;
-			error_response(client, server[client.index_server], 400, ""); // 500
+			error_response(client, server[client.index_server], 400); // 500
 			return false; // respond and clear client;
 		}
 
@@ -133,7 +133,7 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 		if (key.empty() || value.empty())
 		{
 			std::cerr << "Error: Empty header name or value" << std::endl;
-			error_response(client, server[client.index_server], 400, ""); // 500
+			error_response(client, server[client.index_server], 400); // 500
 			return false; // respond and clear client;
 		}
 
@@ -141,13 +141,13 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 		if (!isValidHeaderKey(key))
 		{
 			std::cerr << "Error: Invalid header name: " << key << std::endl;
-			error_response(client, server[client.index_server], 400, ""); // 500
+			error_response(client, server[client.index_server], 400); // 500
 			return false; // respond and clear client;
 		}
 		if (!isValidHeaderValue(value))
 		{
 			std::cerr << "Error: Invalid header value: " << value << std::endl;
-			error_response(client, server[client.index_server], 400, ""); // 500
+			error_response(client, server[client.index_server], 400); // 500
 			return false; // respond and clear client;
 		}
 		if (client.headers.find(key) != client.headers.end())
@@ -163,7 +163,7 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 	if (client.headers.find("host") == client.headers.end())
 	{
 		std::cerr << "Error: Missing 'Host' header" << std::endl;
-		error_response(client, server[client.index_server], 400, ""); // 500
+		error_response(client, server[client.index_server], 400); // 500
 		return false; // respond and clear client;
 	}
 	// else

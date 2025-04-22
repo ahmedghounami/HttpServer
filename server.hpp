@@ -83,7 +83,7 @@ struct client_info
     std::string chunkData;
     std::vector<FormPart> formParts;
     std::string ContentType;
-    std::string method, uri, version;
+    std::string method, uri, version, path_info;
     std::string query;
     std::map<std::string, std::string> headers;
     bool datafinished;
@@ -122,7 +122,7 @@ class server
 
 
 void post_success(client_info &client, std::string body);
-void error_response(client_info &client, server_config& server, int error_code, std::string path);
+void error_response(client_info &client, server_config& server, int error_code);
 //to add new error just add in it a condition to handle the error header
 
 

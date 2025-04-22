@@ -170,7 +170,7 @@ bool takeBodyType(client_info& client, server_config& server_index) {
         client.boundary = getBoundary(client.ContentType);
         if (client.boundary.empty()) {
           client.boundary.clear();
-          error_response(client, server_index, 400, ""); // 500
+          error_response(client, server_index, 400); // 500
           return false;
         }
         client.bodyTypeTaken = 1;// formDataChunked(client);
@@ -178,7 +178,7 @@ bool takeBodyType(client_info& client, server_config& server_index) {
         client.bodyTypeTaken = 2;// otherDataChunked(client);
       }
     } else {
-      error_response(client, server_index, 400, ""); // 500
+      error_response(client, server_index, 400); // 500
       return false;
     }
   } else {
@@ -189,7 +189,7 @@ bool takeBodyType(client_info& client, server_config& server_index) {
         client.boundary = getBoundary(client.ContentType);
         if (client.boundary.empty()) {
           client.boundary.clear();
-          error_response(client, server_index, 400, ""); // 500
+          error_response(client, server_index, 400); // 500
           return false;
         }
         client.bodyTypeTaken = 3;// formData(client);
@@ -198,7 +198,7 @@ bool takeBodyType(client_info& client, server_config& server_index) {
         client.bodyTypeTaken = 4;// otherData(client);
       }
     } else {
-      error_response(client, server_index, 400, ""); // 500
+      error_response(client, server_index, 400); // 500
       return false;
     }
   }

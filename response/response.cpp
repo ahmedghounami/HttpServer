@@ -1,6 +1,6 @@
 #include "../server.hpp"
 #include <fstream>
-std::string getresponse(int error_code, std::string &path)
+std::string getresponse(int error_code, std::string &path, server_config &server)
 {
     std::string response;
     if (error_code == 400)
@@ -19,15 +19,29 @@ std::string getresponse(int error_code, std::string &path)
         response = "HTTP/1.1 505 HTTP Version Not Supported\r\n";
     else
         response = "HTTP/1.1 500 Internal Server Error\r\n", error_code = 500;
-    if (path == "")
-        path = "errors/" + std::to_string(error_code) + ".html";
+    if(server.error_pages.find(std::to_string(error_code)) != server.error_pages.end())
+        path = server.error_pages[std::to_string(error_code)];
+    if(path == "" || std::ifstream(path.c_str()).fail())
+    {
+        path = "./error_pages/" + std::to_string(error_code) + ".html";
+        if (std::ifstream(path.c_str()).fail())
+        {
+            path = "./error_pages/500.html";
+            if (std::ifstream(path.c_str()).fail())
+            {
+                path = "";
+                return response;
+            }
+        }
+    }
     return response;
 }
-void error_response(client_info &client, server_config& server, int error_code, std::string path)
+void error_response(client_info &client, server_config& server, int error_code)
 {
     (void)server;
+    std::string path = "";
     client.isGet = true;
-    std::string response = getresponse(error_code, path);
+    std::string response = getresponse(error_code, path, server);
     client.response.clear();
     client.error_code = error_code;
     client.poll_status = 1;
