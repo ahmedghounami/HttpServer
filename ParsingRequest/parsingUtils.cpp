@@ -78,7 +78,8 @@ static void ParseContentDisposition(client_info& client, std::map<int, server_co
     // close(client.file_fd);
     client.filename.clear();
     client.filename = nameGenerator();
-    client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    std::string filename = "www/" + client.filename;
+    client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (client.file_fd == -1) {
       std::cerr << "Error opening file" << std::endl;
       return ;//
@@ -91,7 +92,8 @@ static void ParseContentDisposition(client_info& client, std::map<int, server_co
     sub = client.data.substr(0, client.data.find("\""));
     client.data = client.data.substr(client.data.find("\"") + 3 , client.data.size());
     client.filename = sub;
-    client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    std::string filename = "www/" + client.filename;
+    client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (client.file_fd == -1) {
       std::cerr << "Error opening file" << std::endl;
       return ;//
@@ -133,3 +135,7 @@ void NewFile(client_info &client, std::map<int, server_config> &server) {
     ParseContentType(client);
   }
 }
+
+// bool handeUri(client_info &client) {//
+//   return true;
+// }

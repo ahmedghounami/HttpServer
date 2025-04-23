@@ -270,6 +270,12 @@ bool TakeBodyType(client_info& client, std::map<int, server_config>& server) {
 
 void ParseChunk(client_info &client, std::map<int, server_config> &server)
 {
+	//open file with append mode
+	// int fd = open("data.txt", O_WRONLY | O_APPEND | O_CREAT, 0644);
+	// write(fd, client.data.c_str(), client.data.size());
+	// client.data.clear();
+	// return;
+
 	if (RequestLine(client, server) == false || ParseHeaders(client, server) == false)
 		return;
 	client.isGet = false;

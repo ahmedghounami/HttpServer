@@ -4,7 +4,7 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
   while (!client.data.empty()) {
     if (client.ReadFlag == true) {
       client.ReadFlag = false;
-      client.file_fd = open("RB", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      client.file_fd = open("www/RB", O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         std::cerr << "Error opening file" << std::endl;
         return ;
@@ -44,7 +44,6 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
 
     client.pos = client.data.find(client.boundary + "\r\n");
     if (client.pos != std::string::npos && client.ReadFlag == true) {
-      client.data = client.data.substr(client.pos);
       if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
         std::cerr << "'CRLF' found." << std::endl;
         break;
@@ -95,7 +94,7 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
       std::istringstream iss(ChunkSizeString);
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
-      std::string fileName = "Chunked_RB." + client.ContentType.substr(client.ContentType.find("/") + 1);
+      std::string fileName = "www/Chunked_RB." + client.ContentType.substr(client.ContentType.find("/") + 1);
       std::cerr << "fileName: " << fileName << std::endl;
       client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
@@ -138,7 +137,8 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
   while (!client.data.empty()) {
 
     client.pos = client.data.find(client.boundary + "\r\n");
-    if (client.pos != std::string::npos && client.ReadFlag == true) {
+    if (client.pos != std::string::npos && client.pos <= 10 && client.ReadFlag == true) {//attention here
+      // std::cerr << "client.pos: " << client.pos << std::endl;
       client.data = client.data.substr(client.pos);
       if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
         std::cerr << "breaking from loop." << std::endl;
@@ -157,8 +157,13 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
       std::istringstream iss(ChunkSizeString);
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
-      if (client.chunkSize == 0) {
+      std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
+      if (client.chunkSize == 0
+        || ( client.data.find(client.boundary + "\r\n") == std::string::npos
+          && client.data.find(client.boundary + "--") != std::string::npos
+          && client.data.size() <= 65)) {
         std::cerr << "end of form data" << std::endl;
+        std::cerr << "data |" << client.data << "|, datasize-> " << client.data.size() << std::endl;
         client.bodyTaken = true;
         close(client.file_fd);
         return ;
@@ -178,14 +183,13 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
         client.ReadFlag = true;
         client.chunkSize = 0;
 
-        client.pos = client.data.find(client.boundary + "--");
-        if (client.pos != std::string::npos && client.data.find(client.boundary + "\r\n") == std::string::npos) {
+        std::cerr << "size of the data after writing to file: " << client.data.size() << std::endl;
+        if (client.data.find(client.boundary + "--") != std::string::npos && client.data.size() <= 69) {
           std::cerr << "end boundary found |" << client.data << "|" << std::endl;
           close(client.file_fd);
           client.file_fd = -42;
           client.bodyTaken = true;
           client.data.clear();
-          
           return ;
         }
       }
