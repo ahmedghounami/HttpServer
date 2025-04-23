@@ -146,9 +146,6 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 //Parsing
 void ParseChunk(client_info &client, std::map<int, server_config> &server);
-bool RequestLine(client_info &client, std::map<int, server_config> &server);
-bool ParseHeaders(client_info &client);
-bool TakeBodyType(client_info& client);//     Taking body type
 void FormData(client_info& client);//         Raw/Binary data
 void OtherData(client_info &client);//for other data
 void ChunkedFormData(client_info &client);//  Chunked data -> Multipart/form-data
