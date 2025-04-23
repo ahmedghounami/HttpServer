@@ -8,18 +8,6 @@ std::string trim(const std::string &str) {
   return str.substr(first, last - first + 1);
 }
 
-bool isMultiValueHeader(const std::string &header) {
-  static const char *multiHeader[] = {"set-cookie",          "www-authenticate",
-                                      "proxy-authenticate",  "authorization",
-                                      "proxy-authorization", "warning"};
-  for (size_t i = 0; i < sizeof(multiHeader) / sizeof(multiHeader[0]); ++i) {
-    if (header == multiHeader[i])
-      return true;
-  }
-
-  return false;
-}
-
 bool isValidHeaderKey(const std::string &key) {
   if (key.empty())
     return false;
@@ -52,84 +40,6 @@ std::string getBoundary(const std::string &contentType) {
   if (pos != std::string::npos)
     return contentType.substr(pos + 9);
   return "";
-}
-
-bool isValidContentLength(const std::string &lengthStr) {
-  std::string trlen = trim(lengthStr);
-  
-  for(size_t i = 0; i < trlen.length(); ++i) {
-    if (!std::isdigit(trlen[i]))
-      return false;
-  }
-  return true;
-}
-
-static std::string decodeURIComponent(const std::string& encoded) {
-    std::ostringstream decoded;
-    for (size_t i = 0; i < encoded.length(); ++i) {
-        if (encoded[i] == '%' && i + 2 < encoded.length()) {
-            char hex[3] = { encoded[i + 1], encoded[i + 2], '\0' };
-            if (isxdigit(hex[0]) && isxdigit(hex[1])) {
-                decoded << static_cast<char>(std::strtol(hex, nullptr, 16));
-                i += 2;
-            } else {
-                decoded << '%';
-            }
-        } else if (encoded[i] == '+') {
-            decoded << ' ';  // Optional: '+' as space (for query, not path)
-        } else {
-            decoded << encoded[i];
-        }
-    }
-    return decoded.str();
-}
-
-bool parseRequestPath(client_info& client) {
-    // Step 0: Decode URI
-    client.uri = decodeURIComponent(client.uri);
-    // Check if decoding was successful
-    if (client.uri.empty()) {
-        std::cerr << "❌ Failed to decode URI.\n";
-        return false; // response.error = 400;
-    }
-
-    // Step 1: Remove query and fragment
-    size_t fragPos = client.uri.find('#');
-    if (fragPos != std::string::npos)
-        client.uri = client.uri.substr(0, fragPos);
-
-    size_t qpos = client.uri.find('?');
-    if (qpos != std::string::npos) {
-      client.uri = client.uri.substr(0, qpos);
-      client.query = client.uri.substr(qpos + 1);
-    }
-
-    // Step 2: Split client.uri and validate components
-    std::istringstream ss(client.uri);
-    std::string segment;
-    std::vector<std::string> segments;
-
-    while (std::getline(ss, segment, '/')) {
-        if (segment.empty() || segment == ".")
-            continue;
-        if (segment == "..") {
-          std::cerr << "❌ Path contains '..' which is not allowed.\n";
-          return false;//response.error = 400;
-        }
-        segments.push_back(segment);
-    }
-
-    // Step 3: Reconstruct cleaned path
-    std::ostringstream cleanPath;
-    cleanPath << "/";
-    for (size_t i = 0; i < segments.size(); ++i) {
-        cleanPath << segments[i];
-        if (i != segments.size() - 1)
-            cleanPath << "/";
-    }
-
-    client.uri = cleanPath.str();
-    return true;
 }
 
 void writeToFile(std::string &body, int fd) {

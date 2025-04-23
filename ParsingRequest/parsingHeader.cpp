@@ -1,6 +1,6 @@
 #include "../server.hpp"
 
-bool request_line(client_info &client, std::map<int, server_config> &server)
+bool RequestLine(client_info &client, std::map<int, server_config> &server)
 {
 	(void)server;
 	if (client.method.empty() == false)
@@ -85,7 +85,7 @@ bool request_line(client_info &client, std::map<int, server_config> &server)
 	return true;
 }
 
-bool headers(client_info &client, std::map<int, server_config> &server)
+bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 {
 
 	if (client.headersTaken)
@@ -219,29 +219,67 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 	return true;
 }
 
-void parse_chunk(client_info &client, std::map<int, server_config> &server)
+bool TakeBodyType(client_info& client) {
+
+  if (client.method.empty() || !client.headersTaken || client.bodyTypeTaken)
+    return true;
+
+  std::map<std::string, std::string>::iterator it = client.headers.find("transfer-encoding");
+  if (it != client.headers.end() && it->second == "chunked") {
+    it = client.headers.find("content-type");
+    if (it != client.headers.end()) {
+      client.ContentType = it->second;
+      if (client.ContentType.find("multipart/form-data") != std::string::npos) {
+        client.boundary = getBoundary(client.ContentType);
+        if (client.boundary.empty()) {
+          client.boundary.clear();
+          bad_request(client);
+          return false;
+        }
+        client.bodyTypeTaken = 1;// formDataChunked(client);
+      } else {
+        client.bodyTypeTaken = 2;// otherDataChunked(client);
+      }
+    } else {
+      bad_request(client);
+      return false;
+    }
+  } else {
+    it = client.headers.find("content-type");
+    if (it != client.headers.end()) {
+      client.ContentType = it->second;
+      if (client.ContentType.find("multipart/form-data") != std::string::npos) {
+        client.boundary = getBoundary(client.ContentType);
+        if (client.boundary.empty()) {
+          client.boundary.clear();
+          bad_request(client);
+          return false;
+        }
+        client.bodyTypeTaken = 3;// formData(client);
+
+      } else {
+        client.bodyTypeTaken = 4;// otherData(client);
+      }
+    } else {
+      bad_request(client);
+      return false;
+    }
+  }
+  return true;
+}
+
+void ParseChunk(client_info &client, std::map<int, server_config> &server)
 {
-
-	// int fd = open("data", O_WRONLY | O_APPEND);//append
-	// write(fd, client.data.c_str(), client.data.size());
-	// client.file_fd = open("data", O_WRONLY | O_APPEND); // append
-
-	// int fd = open("data1", O_WRONLY | O_APPEND);//append
-	// return ;
-
-	if (request_line(client, server) == false || headers(client, server) == false)
+	if (RequestLine(client, server) == false || ParseHeaders(client, server) == false)
 		return;
 	client.isGet = false;
 	if (client.method == "GET")
 		client.isGet = true;
-	else
-		client.isGet = false;
-	// handleGetRequest(client, server);
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
 	else if (client.method == "POST" && !client.bodyTaken)
 	{
-		if (takeBodyType(client, server[client.index_server]) == false)
+		if (TakeBodyType(client) == false)
 			return;
 		if (client.bodyTypeTaken == 1)
 			ChunkedFormData(client);
@@ -249,6 +287,8 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 			ChunkedOtherData(client);
 		else if (client.bodyTypeTaken == 3)
 			FormData(client);
+		else if (client.bodyTypeTaken == 4)
+			OtherData(client);
 	}
 	if (client.bodyTaken == true)
 	{
@@ -260,4 +300,5 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 /*notes
 	set file descriptor to non-blocking mode
 	check the content length in config file with the content length in header
+	add the memtypes
 */
