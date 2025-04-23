@@ -1,6 +1,6 @@
 #include "../server.hpp"
 
-bool request_line(client_info &client, std::map<int, server_config> &server)
+bool RequestLine(client_info &client, std::map<int, server_config> &server)
 {
 	(void)server;
 	if (client.method.empty() == false)
@@ -85,7 +85,7 @@ bool request_line(client_info &client, std::map<int, server_config> &server)
 	return true;
 }
 
-bool headers(client_info &client, std::map<int, server_config> &server)
+bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 {
 
 	if (client.headersTaken)
@@ -218,26 +218,25 @@ bool headers(client_info &client, std::map<int, server_config> &server)
 	return true;
 }
 
-void parse_chunk(client_info &client, std::map<int, server_config> &server)
+void ParseChunk(client_info &client, std::map<int, server_config> &server)
 {
 	// int fd = open("data1", O_WRONLY | O_APPEND);//append
 	// write(fd, client.data.c_str(), client.data.size());
 	// client.data.clear();
 	// return ;
 
-	if (request_line(client, server) == false || headers(client, server) == false)
+	if (RequestLine(client, server) == false || ParseHeaders(client, server) == false)
 		return;
 	client.isGet = false;
 	if (client.method == "GET")
 		client.isGet = true;
 	else
 		client.isGet = false;
-	// handleGetRequest(client, server);
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
 	else if (client.method == "POST" && !client.bodyTaken)
 	{
-		if (takeBodyType(client) == false)
+		if (TakeBodyType(client) == false)
 			return;
 		if (client.bodyTypeTaken == 1)
 			ChunkedFormData(client);
@@ -245,6 +244,8 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 			ChunkedOtherData(client);
 		else if (client.bodyTypeTaken == 3)
 			FormData(client);
+		else if (client.bodyTypeTaken == 4)
+			OtherData(client);
 	}
 
 	if (client.bodyTaken == true)

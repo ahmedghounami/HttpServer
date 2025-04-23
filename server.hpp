@@ -145,17 +145,24 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 
 //Parsing
-void parse_chunk(client_info &client, std::map<int, server_config> &server);
-
-bool takeBodyType(client_info& client);//     Taking body type
+void ParseChunk(client_info &client, std::map<int, server_config> &server);
+bool RequestLine(client_info &client, std::map<int, server_config> &server);
+bool ParseHeaders(client_info &client);
+bool TakeBodyType(client_info& client);//     Taking body type
 void FormData(client_info& client);//         Raw/Binary data
+void OtherData(client_info &client);//for other data
 void ChunkedFormData(client_info &client);//  Chunked data -> Multipart/form-data
 void ChunkedOtherData(client_info &client);// Chunked data -> Raw/Binary data
-bool request_line(client_info &client, std::map<int, server_config> &server);
-bool headers(client_info &client);
-bool takeBodyType(client_info& client);
-void ChunkedFormData(client_info &client);//for chunked data / multipart/form-data
-void ChunkedOtherData(client_info &client);//for chunked data / other data
+
+//Parsing Utils
+std::string trim(const std::string &str);
+bool isMultiValueHeader(const std::string &header);
+bool isValidHeaderKey(const std::string &key);
+bool isValidHeaderValue(const std::string &value);
+std::string toLower(const std::string& str);
+std::string getBoundary(const std::string &contentType);
+void writeToFile(std::string &body, int fd);
+void NewFileChunked(client_info &client);
 void NewFile(client_info &client);
 void ParseContentDisposition(client_info& client);
 void ParseContentType(client_info& client);
@@ -163,22 +170,6 @@ void ParseContentType(client_info& client);
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);
 void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
-// void handlePostRequest(client_info &client, std::map<int, server_config> &server);
-
-// parsing utils
-bool parseRequestPath(client_info& client);
-std::string trim(const std::string &str);
-bool isMultiValueHeader(const std::string &header);
-bool isValidHeaderKey(const std::string &key);
-bool isValidHeaderValue(const std::string &value);
-std::string toLower(const std::string& str);
-std::string getBoundary(const std::string &contentType);
-bool isValidContentLength(const std::string &lengthStr);
-void writeToFile(std::string &body, int fd);
-void NewFileChunked(client_info &client);
-void NewFile(client_info &client);
-void ParseContentDisposition(client_info& client);
-void ParseContentType(client_info& client);
 
 //find which server config to use returns the server index
 int findMatchingServer(client_info &client, std::map<int, server_config> &server);

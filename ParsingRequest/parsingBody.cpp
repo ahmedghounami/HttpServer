@@ -1,5 +1,9 @@
 #include "../server.hpp"
 
+void OtherData(client_info &client) {
+  (void)client;
+}
+
 void FormData(client_info& client) {
 
   while (!client.data.empty()) {
@@ -8,13 +12,13 @@ void FormData(client_info& client) {
     if (client.pos != std::string::npos && client.ReadFlag == true) {
       client.data = client.data.substr(client.pos);
       if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
-        std::cerr << "breaking from loop : 'CRLF' found." << std::endl;
+        std::cerr << "'CRLF' found." << std::endl;
         break;
       }
       NewFile(client);
       client.ReadFlag = false;
       if (client.data.empty()) {
-        std::cerr << "breaking from loop : data is empty." << std::endl;
+        std::cerr << "data is empty." << std::endl;
         break ;
       }
     }
@@ -156,7 +160,7 @@ void ChunkedFormData(client_info& client) {
   }
 }
 
-bool takeBodyType(client_info& client) {
+bool TakeBodyType(client_info& client) {
 
   if (client.method.empty() || !client.headersTaken || client.bodyTypeTaken)
     return true;
