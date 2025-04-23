@@ -58,7 +58,7 @@ std::string nameGenerator() {
     int index = rand() % (sizeof(charset) - 1);
     name += charset[index];
   }
-  name += ".txt";
+  name += ".txt";//memtypes
   return name;
 }
 

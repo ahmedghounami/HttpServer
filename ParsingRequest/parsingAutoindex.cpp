@@ -91,7 +91,7 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 	while ((entry = readdir(dir)) != NULL)
 	{
 		std::string name = entry->d_name;
-		std::cout << "name: " << name << std::endl;
+		// std::cout << "name: " << name << std::endl;
 		if (name == ".")
 			continue;
 
@@ -163,6 +163,6 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 			return false; // respond and clear client;
 		}
 	}
-	std::cout << "----------------------------------autoindex_server-------------------------------" << client.method << std::endl;
+	// std::cout << "----------------------------------autoindex_server-------------------------------" << client.method << std::endl;
 	return true;
 }

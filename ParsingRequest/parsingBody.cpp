@@ -166,10 +166,10 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
 
 void ChunkedFormData(client_info& client, std::map<int, server_config> &server) {
   
-  // if (handlepathinfo(client, server) == true) {
+  // if (handlepathinfo(client)) {
   //   if (client.data.find("0\r\n\r\n") != std::string::npos)
   //     client.bodyTaken = true;
-  //   //3amer lfile
+      
   // }
 
   while (!client.data.empty()) {
