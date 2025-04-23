@@ -337,8 +337,8 @@ void handlepathinfo(client_info &client){
             client.path_info = client.path_info.substr(0, client.path_info.find("?"));
         }
     }
-    // else
-    //     client.path_info = "";
+    else
+        client.path_info = "";
 }
 void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 {

@@ -108,7 +108,7 @@ void server::listen_for_connections()
         check_timeout(clients_fds, clients);
         if (ret == 0)
         {
-            std::cerr << "No data, timeout\n";
+            // std::cerr << "No data, timeout\n";
             continue;
         }
         for (unsigned int i = 0; i < clients_fds.size(); i++)
@@ -135,6 +135,7 @@ void server::listen_for_connections()
                     clients[clients_fds[i].fd].last_time = time(NULL);
                     buffer[data] = '\0';
                     clients[clients_fds[i].fd].data.append(buffer, data);
+                    
                     parse_chunk(clients[clients_fds[i].fd], servers);
                     if (clients[clients_fds[i].fd].isGet == true)
                         clients_fds[i].events = POLLOUT;
