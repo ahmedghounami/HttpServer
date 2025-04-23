@@ -21,7 +21,7 @@
 #include <arpa/inet.h>
 #include <dirent.h>
 
-#define READ_BUFFER_SIZE 10000
+#define READ_BUFFER_SIZE 100000
 struct location
 {
     std::string location_index;
@@ -68,7 +68,7 @@ struct client_info
     int poll_status;
     int bodyTypeTaken;//flag
     size_t chunkSize, pos;
-    
+    int index_server;
     bool ReadFlag;
     bool autoindex;
     bool ReadSize;
@@ -83,7 +83,7 @@ struct client_info
     std::string chunkData;
     std::vector<FormPart> formParts;
     std::string ContentType;
-    std::string method, uri, version;
+    std::string method, uri, version, path_info;
     std::string query;
     std::map<std::string, std::string> headers;
     bool datafinished;
@@ -119,18 +119,10 @@ class server
 };
 
 // response
-void not_allowed_method(client_info &client);
-void not_implemented_method(client_info &client);
-void malformed_request(client_info &client);
-void http_version_not_supported(client_info &client);
-void invalid_uri(client_info &client); // example: uri must start with '/'
-void bad_request(client_info &client); // example: invalid or malformed HTTP version
-void not_found(client_info &client); // example: file not found
-void forbidden(client_info &client); // example: you are not allowed to access the file
-void unknown_error(client_info &client); // example: unknown error
-void timeoutserver(client_info &client); // example: timeout error from server to backend
 
-void error_response(client_info &client, int error_code, std::string path);//this function can hndle all the errors
+
+void post_success(client_info &client, std::string body);
+void error_response(client_info &client, server_config& server, int error_code);
 //to add new error just add in it a condition to handle the error header
 
 
@@ -163,6 +155,11 @@ void NewFileChunked(client_info &client);
 void NewFile(client_info &client);
 void ParseContentDisposition(client_info& client);
 void ParseContentType(client_info& client);
+
+//handling methods
+void handleGetRequest(client_info &client, std::map<int, server_config> &server);
+void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
+// void handlePostRequest(client_info &client, std::map<int, server_config> &server);
 
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);
