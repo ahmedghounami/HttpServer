@@ -228,9 +228,11 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 
 	// int fd = open("data1", O_WRONLY | O_APPEND);//append
 	// return ;
-
 	if (request_line(client, server) == false || headers(client, server) == false)
 		return;
+	if (client.method == "POST")
+		std::cerr << "------------------------------------the method is " << client.method << std::endl;
+
 	client.isGet = false;
 	if (client.method == "GET")
 		client.isGet = true;
@@ -241,6 +243,7 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 		handleDeleteRequest(client, server);
 	else if (client.method == "POST" && !client.bodyTaken)
 	{
+		std::cout << "POST request" << std::endl;
 		if (takeBodyType(client, server[client.index_server]) == false)
 			return;
 		if (client.bodyTypeTaken == 1)
@@ -252,7 +255,7 @@ void parse_chunk(client_info &client, std::map<int, server_config> &server)
 	}
 	if (client.bodyTaken == true)
 	{
-		std::string body = "<html><body><h1>Success</h1></body></html>";
+		std::string body = "<html><body><h1>File uploaded successfully!</h1></body></html>";
 		post_success(client, body);
 		std::cerr << "data finished-------------------------------------------" << std::endl;
 	}	
