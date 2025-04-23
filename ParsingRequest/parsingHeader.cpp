@@ -275,8 +275,6 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 	client.isGet = false;
 	if (client.method == "GET")
 		client.isGet = true;
-	else
-		client.isGet = false;
 	if (client.method == "DELETE")
 		handleDeleteRequest(client, server);
 	else if (client.method == "POST" && !client.bodyTaken)
