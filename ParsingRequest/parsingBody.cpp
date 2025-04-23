@@ -1,6 +1,6 @@
 #include "../server.hpp"
 
-void OtherData(client_info &client) {
+void OtherData(client_info &client, std::map<int, server_config> &server) {
   while (!client.data.empty()) {
     if (client.ReadFlag == true) {
       client.ReadFlag = false;
@@ -16,7 +16,7 @@ void OtherData(client_info &client) {
         std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
       } else {
         std::cerr << "content-length not found" << std::endl;
-        bad_request(client);
+        error_response(client, server[client.index_server], 411);//is it 411?
         return ;
       }
     }
@@ -38,7 +38,7 @@ void OtherData(client_info &client) {
   }
 }
 
-void FormData(client_info& client) {
+void FormData(client_info& client, std::map<int, server_config> &server) {
 
   while (!client.data.empty()) {
 
@@ -49,7 +49,7 @@ void FormData(client_info& client) {
         std::cerr << "'CRLF' found." << std::endl;
         break;
       }
-      NewFile(client);
+      NewFile(client, server);
       client.ReadFlag = false;
       if (client.data.empty()) {
         std::cerr << "data is empty." << std::endl;
@@ -83,7 +83,7 @@ void FormData(client_info& client) {
 
 }
 
-void ChunkedOtherData(client_info& client) {
+void ChunkedOtherData(client_info& client, std::map<int, server_config> &server) {
 
   while (!client.data.empty()) {
 
@@ -95,14 +95,13 @@ void ChunkedOtherData(client_info& client) {
       std::istringstream iss(ChunkSizeString);
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
-      if (client.file_fd == -42) {
-        std::string fileName = "Chunked_RB." + client.ContentType.substr(client.ContentType.find("/") + 1);
-        std::cerr << "fileName: " << fileName << std::endl;
-        client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (client.file_fd == -1) {
-          std::cerr << "Error opening file" << std::endl;
-          return ;
-        }
+      std::string fileName = "Chunked_RB." + client.ContentType.substr(client.ContentType.find("/") + 1);
+      std::cerr << "fileName: " << fileName << std::endl;
+      client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (client.file_fd == -1) {
+        std::cerr << "Error opening file" << std::endl;
+        return ;//
+        error_response(client, server[client.index_server], 500);//is it 500?
       }
     }
 
@@ -134,7 +133,7 @@ void ChunkedOtherData(client_info& client) {
   }
 }
 
-void ChunkedFormData(client_info& client) {
+void ChunkedFormData(client_info& client, std::map<int, server_config> &server) {
 
   while (!client.data.empty()) {
 
@@ -145,7 +144,7 @@ void ChunkedFormData(client_info& client) {
         std::cerr << "breaking from loop." << std::endl;
         break;
       }
-      NewFileChunked(client);
+      NewFile(client, server);
       if (client.data.empty())
         break ;
     }
