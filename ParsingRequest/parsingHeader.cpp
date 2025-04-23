@@ -256,7 +256,7 @@ bool TakeBodyType(client_info& client, std::map<int, server_config>& server) {
           return false;
         }
         client.bodyTypeTaken = 3;// formData(client);
-
+		client.boundary = "--" + client.boundary;
       } else {
         client.bodyTypeTaken = 4;// otherData(client);
       }
@@ -270,8 +270,7 @@ bool TakeBodyType(client_info& client, std::map<int, server_config>& server) {
 
 void ParseChunk(client_info &client, std::map<int, server_config> &server)
 {
-	//open file with append mode
-	// int fd = open("data.txt", O_WRONLY | O_APPEND | O_CREAT, 0644);
+	// int fd = open("form.txt", O_WRONLY | O_APPEND | O_CREAT, 0644);
 	// write(fd, client.data.c_str(), client.data.size());
 	// client.data.clear();
 	// return;

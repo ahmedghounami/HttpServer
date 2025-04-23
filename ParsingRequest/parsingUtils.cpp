@@ -63,7 +63,7 @@ std::string nameGenerator() {
 }
 
 static void ParseContentDisposition(client_info& client, std::map<int, server_config>& server) {
-  std::cerr << "-------------ParseContentDisposition------------" << std::endl;
+  // std::cerr << "-------------ParseContentDisposition------------" << std::endl;
   client.pos = client.data.find("name=\"");
   client.data = client.data.substr(client.pos + 6, client.data.size());//problem
   std::string sub = client.data.substr(0, client.data.find("\""));
@@ -100,13 +100,13 @@ static void ParseContentDisposition(client_info& client, std::map<int, server_co
       error_response(client, server[client.index_server], 500);//is it 500?
     }
   }
-  std::cerr << "name: |" << client.name << "|" << std::endl;
-  std::cerr << "filename: |" << client.filename << "|" << std::endl;
-  std::cerr << "-------------End ParseContentDisposition--------" << std::endl;
+  // std::cerr << "name: |" << client.name << "|" << std::endl;
+  // std::cerr << "filename: |" << client.filename << "|" << std::endl;
+  // std::cerr << "-------------End ParseContentDisposition--------" << std::endl;
 }
 
 static void ParseContentType(client_info& client) {
-  std::cerr << "--------------ParseContentType----------------" << std::endl;
+  // std::cerr << "--------------ParseContentType----------------" << std::endl;
   client.data = client.data.substr(client.pos + 14, client.data.size());
   client.pos = client.data.find("/");
   client.data = client.data.substr(client.pos + 1, client.data.size());
@@ -116,14 +116,14 @@ static void ParseContentType(client_info& client) {
   else
     client.data = client.data.substr(client.data.find("\r\n") + 4, client.data.size());
 
-  std::cerr << "Content-Type: |" << client.contentTypeform << "|" << std::endl;
-  std::cerr << "--------------End ParseContentType-------------" << std::endl;
+  // std::cerr << "Content-Type: |" << client.contentTypeform << "|" << std::endl;
+  // std::cerr << "--------------End ParseContentType-------------" << std::endl;
 }
 
 void NewFile(client_info &client, std::map<int, server_config> &server) {
   client.chunkData = "", client.chunkSize = 0;// close(client.file_fd);
-  client.data = client.data.substr(client.boundary.size() + 2);
 
+  client.data = client.data.substr(client.boundary.size() + 2);
   client.pos = client.data.find("Content-Disposition: form-data;");
   if (client.pos != std::string::npos && client.pos == 0) {
     client.data = client.data.substr(client.pos + 32, client.data.size());
@@ -135,7 +135,3 @@ void NewFile(client_info &client, std::map<int, server_config> &server) {
     ParseContentType(client);
   }
 }
-
-// bool handeUri(client_info &client) {//
-//   return true;
-// }
