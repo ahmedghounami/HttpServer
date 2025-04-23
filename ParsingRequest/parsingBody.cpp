@@ -1,7 +1,41 @@
 #include "../server.hpp"
 
 void OtherData(client_info &client) {
-  (void)client;
+  while (!client.data.empty()) {
+    if (client.ReadFlag == true) {
+      client.ReadFlag = false;
+      client.file_fd = open("RB", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (client.file_fd == -1) {
+        std::cerr << "Error opening file" << std::endl;
+        return ;
+      }
+      std::map<std::string, std::string>::iterator it = client.headers.find("content-length");
+      if (it != client.headers.end()) {
+        std::istringstream iss(it->second);
+        iss >> client.chunkSize;
+        std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
+      } else {
+        std::cerr << "content-length not found" << std::endl;
+        bad_request(client);
+        return ;
+      }
+    }
+    
+    //keep reading from client.data until we reach the content-length
+    if (client.chunkSize > 0) {
+      if (!client.data.empty())
+        writeToFile(client.data, client.file_fd);
+      client.chunkSize -= client.data.size();
+      client.data.clear();
+    }
+    if (client.chunkSize == 0) {
+      std::cerr << "data cleared." << std::endl;
+      client.bodyTaken = true;
+      client.data.clear();
+      return ;
+    }
+    
+  }
 }
 
 void FormData(client_info& client) {
@@ -62,7 +96,7 @@ void ChunkedOtherData(client_info& client) {
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
       if (client.file_fd == -42) {
-        std::string fileName = "raw-binary_File." + client.ContentType.substr(client.ContentType.find("/") + 1);
+        std::string fileName = "Chunked_RB." + client.ContentType.substr(client.ContentType.find("/") + 1);
         std::cerr << "fileName: " << fileName << std::endl;
         client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (client.file_fd == -1) {
