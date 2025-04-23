@@ -190,4 +190,4 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server);
 
 // redirect
 void redirect(client_info &client, std::pair<std::string, std::string> &redirect);
-void handlepathinfo(client_info &client);
+bool handlepathinfo(client_info &client);

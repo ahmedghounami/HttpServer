@@ -100,8 +100,8 @@ void server::parse_config(std::string config_file)
 		for (std::map<std::string, location>::iterator it = servers[i].locations.begin();
 		     it != servers[i].locations.end(); it++)
 		{
-		  std::cout << "path: " << it->second.path << std::endl;
-		  std::cout << "upload path: " << it->second.upload_path << std::endl;
+		//   std::cout << "path: " << it->second.path << std::endl;
+		//   std::cout << "upload path: " << it->second.upload_path << std::endl;
 		}
 		// // std::cout << "-------------------" << std::endl;
 	}
