@@ -50,10 +50,9 @@ void server::parse_config(std::string config_file)
 			}
 			if (stack.top() == "server")
 				i++;
-			else if (stack.top() == "location" && servers[i].locations[location_index].path.empty())
-				servers[i].locations[location_index].path = servers[i].path;
-			if (stack.top() == "location" && servers[i].locations[location_index].upload_path.empty())
+			if (stack.top() == "location")
 			{
+				servers[i].locations[location_index].path = servers[i].path;
 				servers[i].locations[location_index].upload_path = servers[i].upload_path;
 				if (servers[i].locations[location_index].upload_path.empty() && find(servers[i].locations[location_index].allowed_methods.begin(), servers[i].locations[location_index].allowed_methods.end(), "POST") != servers[i].locations[location_index].allowed_methods.end())
 					throw std::runtime_error("upload path missing in location block");
