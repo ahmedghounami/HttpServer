@@ -6,10 +6,12 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
     if (client.ReadFlag == true) {
       client.ReadFlag = false;
       std::string filename;
-      if (client.isCgi)
-        filename = "forcgi-"+ nameGenerator(client.ContentType);
+      if (client.isCgi) {
+        client.upload_path += "/forcgi-";
+        filename = nameGenerator(client.ContentType, client.upload_path);
+      }
       else
-        filename = nameGenerator(client.ContentType);//don't forget to change the name
+        filename = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         std::cerr << "Error opening file" << std::endl;
@@ -48,7 +50,8 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
 
   if (client.isCgi) {
     if (client.file_fd == -42) {
-      std::string fileName = "forcgi-" + nameGenerator(client.ContentType);
+      client.upload_path += "/forcgi-";
+      std::string fileName = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         std::cerr << "Error opening file" << std::endl;
@@ -77,7 +80,7 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
       iss >> std::hex >> client.chunkSize;
       std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
       if (client.file_fd == -42) {
-        std::string fileName = nameGenerator(client.ContentType);
+        std::string fileName = nameGenerator(client.ContentType, client.upload_path);
         client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (client.file_fd == -1) {
           std::cerr << "Error opening file" << std::endl;
@@ -117,7 +120,8 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
   
   if (handlepathinfo(client)) {
     if (client.file_fd == -42) {
-      std::string fileName = "www/forcgi";
+      client.upload_path += "/forcgi-";
+      std::string fileName = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         std::cerr << "Error opening file" << std::endl;
@@ -194,7 +198,8 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
 
   if (client.isCgi) {
     if (client.file_fd == -42) {
-      std::string filename = "forcgi-"+ nameGenerator(client.ContentType);
+      client.upload_path += "/forcgi-";
+      std::string filename = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         std::cerr << "Error opening file" << std::endl;

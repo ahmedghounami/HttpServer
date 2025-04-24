@@ -50,7 +50,7 @@ void writeToFile(std::string &body, int fd) {
   }
 }
 
-std::string nameGenerator(std::string MimeType) {
+std::string nameGenerator(std::string MimeType, std::string path) {
 
   std::cerr << "-------------nameGenerator----------------" << std::endl;
   std::map<std::string, std::string> MimeTypeMap;
@@ -95,17 +95,17 @@ std::string nameGenerator(std::string MimeType) {
 
   std::string name;
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  name += "file_";
+  //if path is ending with "/" remove it (instead of removing it from the end of the string) don't add it
+  name = path + "/file_";
   for (int i = 0; i < 5; ++i) {
     int index = rand() % (sizeof(charset) - 1);
     name += charset[index];
   }
-  std::cerr << "generated name: " << name << std::endl;
-  std::cerr << "MimeType: " << MimeType << std::endl;
   if (MimeTypeMap.find(MimeType) != MimeTypeMap.end()) {
-    std::cerr << "found mime type: " << MimeType << std::endl;
+    std::cerr << "name generated : " << name + MimeTypeMap[MimeType] << std::endl;
     return name + MimeTypeMap[MimeType];
   }
+  std::cerr << "name generated : " << name + ".bin" << std::endl;
   return name + ".bin";
 }
 
@@ -123,7 +123,7 @@ static void ParseContentDisposition(client_info& client, std::map<int, server_co
   {
     close(client.file_fd);
     client.filename.clear();
-    client.filename = nameGenerator(client.contentTypeform);
+    client.filename = nameGenerator(client.contentTypeform, client.upload_path);
     std::string filename = client.filename;
     client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (client.file_fd == -1) {
@@ -135,7 +135,7 @@ static void ParseContentDisposition(client_info& client, std::map<int, server_co
   } else if (client.pos != std::string::npos) {
     close(client.file_fd);
     client.data = client.data.substr(client.pos + 10, client.data.size());
-    client.filename = client.data.substr(0, client.data.find("\""));
+    client.filename = client.upload_path + "/" + client.data.substr(0, client.data.find("\""));
     std::cerr << "filename: " << client.filename << std::endl;
     client.data = client.data.substr(client.data.find("\"") + 3 , client.data.size());
     client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
