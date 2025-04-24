@@ -1,7 +1,6 @@
 #include "../server.hpp"
 
 void FormData(client_info& client) {
-
   while (!client.data.empty()) {
 
     client.pos = client.data.find(client.boundary + "\r\n");
