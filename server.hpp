@@ -95,6 +95,7 @@ struct client_info
     std::string response;
     double bytes_sent;
     bool isGet;
+    std::string upload_path;
   time_t last_time;
 };
 

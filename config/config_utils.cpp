@@ -34,19 +34,19 @@ void path_checker(std::string path)
 void parse_location(std::istringstream &ss, std::string &key, location &loc)
 {
 
-    // if (key == "path")
-    // {
-    //     std::string path;
-    //     ss >> path;
-    //     if (loc.path != "")
-    //         throw std::runtime_error("location: Duplicate path ");
-    //     else if (path.empty())
-    //         throw std::runtime_error("location: emtpy path");
-    //     path_checker(path);
-    //     somthing_after(ss);
-    //     loc.path = path;
-    // }
-    if (key == "index")
+    if (key == "path")
+    {
+        std::string path;
+        ss >> path;
+        if (loc.path != "")
+            throw std::runtime_error("location: Duplicate path ");
+        else if (path.empty())
+            throw std::runtime_error("location: emtpy path");
+        path_checker(path);
+        somthing_after(ss);
+        loc.path = path;
+    }
+    else if (key == "index")
     {
         if (loc.index.size() != 0)
             throw std::runtime_error("location: Duplicate index");
@@ -129,16 +129,16 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
             throw std::runtime_error("location: Invalid redirect status code");
         loc.redirect.second = redirect_path;
     }
-    // else if (key == "upload_path")
-    // {
-    //     if (loc.upload_path != "")
-    //         throw std::runtime_error("location: Duplicate path");
-    //     std::string upload_path;
-    //     ss >> upload_path;
-    //     path_checker(upload_path);
-    //     somthing_after(ss);
-    //     loc.upload_path = upload_path;
-    // }
+    else if (key == "upload_path")
+    {
+        if (loc.upload_path != "")
+            throw std::runtime_error("location: Duplicate path");
+        std::string upload_path;
+        ss >> upload_path;
+        path_checker(upload_path);
+        somthing_after(ss);
+        loc.upload_path = upload_path;
+    }
 
     else if (key.empty())
         return;
