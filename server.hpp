@@ -69,6 +69,7 @@ struct client_info
     int bodyTypeTaken;//flag
     size_t chunkSize, pos;
     int index_server;
+    bool isCgi;
     bool ReadFlag;
     bool autoindex;
     bool ReadSize;
@@ -76,6 +77,7 @@ struct client_info
     bool bodyTaken;
     bool bodyReached;
     bool headersTaken;
+    std::map<std::string, std::string>  MimeTypeMap;
 
     bool file_opened;
 
@@ -154,6 +156,7 @@ std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 void writeToFile(std::string &body, int fd);
 void NewFile(client_info &client, std::map<int, server_config> &server);
+std::string nameGenerator();
 
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);
@@ -181,5 +184,5 @@ void redirect(client_info &client, std::pair<std::string, std::string> &redirect
 
 
 // handle path info
-void handlepathinfo(client_info &client);
+bool handlepathinfo(client_info &client);
 void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path);

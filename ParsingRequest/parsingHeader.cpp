@@ -166,39 +166,6 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 		error_response(client, server[client.index_server], 400); // 500
 		return false;											  // respond and clear client;
 	}
-	// else
-	// {
-	// 	std::string host;
-	// 	std::string port;
-	// 	int found = 0;
-	// 	// split host by ':'
-	// 	size_t pos = client.headers["host"].find(":");
-	// 	if (pos != std::string::npos)
-	// 	{
-	// 		host = client.headers["host"].substr(0, pos);
-	// 		port = client.headers["host"].substr(pos + 1);
-	// 		for (unsigned int i = 0; i < server.size(); i++)
-	// 		{
-	// 			if (server[i].host == host && find(server[i].ports.begin(), server[i].ports.end(), std::atof(port.c_str())) != server[i].ports.end())
-	// 			{
-	// 				found = 1;
-	// 				break;
-	// 			}
-	// 		}
-	// 		if (found == 0)
-	// 		{
-	// 			std::cerr << "Error: Invalid host: " << host << ":" << port << std::endl;
-	// 			error_response(client, server[client.index_server], 404, ""); // 404 not found
-	// 			return false; // respond and clear client;
-	// 		}
-	// 	}
-	// 	else
-	// 	{
-	// 		std::cerr << "Error: Invalid host: " << client.headers["host"] << std::endl;
-	// 		error_response(client, server[client.index_server], 400, ""); // 500
-	// 		return false; // respond and clear client;
-	// 	}
-	// }
 	if (check_autoindex(client, server) == false)
 	{
 		std::cerr << "im in hte check_autoindex" << std::endl;
@@ -215,8 +182,46 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	client.bodyTypeTaken = 0;
 	client.headersTaken = true;
 	client.file_fd = -42;
+	// client.isCgi = handlepathinfo(client);
+	client.isCgi = true;
 
-	// check if the method is post but is a cgi request to make the data store a file and forward it to the cgi
+	// // Mime Type Map
+    // client.MimeTypeMap["application/octet-stream"] = ".bin";
+    // client.MimeTypeMap["application/json"] = ".json";
+    // client.MimeTypeMap["application/xml"] = ".xml";
+    // client.MimeTypeMap["application/zip"] = ".zip";
+    // client.MimeTypeMap["application/gzip"] = ".gz";
+    // client.MimeTypeMap["application/x-tar"] = ".tar";
+    // client.MimeTypeMap["application/x-7z-compressed"] = ".7z";
+    // client.MimeTypeMap["application/pdf"] = ".pdf";
+    // client.MimeTypeMap["application/x-www-form-urlencoded"] = ".txt";
+    // client.MimeTypeMap["application/x-bzip"] = ".bz";
+    // client.MimeTypeMap["application/x-bzip2"] = ".bz2";
+    // client.MimeTypeMap["application/x-rar-compressed"] = ".rar";
+    // client.MimeTypeMap["application/x-msdownload"] = ".exe";
+    // client.MimeTypeMap["application/vnd.ms-excel"] = ".xls";
+    // client.MimeTypeMap["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] = ".xlsx";
+    // client.MimeTypeMap["text/plain"] = ".txt";
+    // client.MimeTypeMap["text/html"] = ".html";
+    // client.MimeTypeMap["text/css"] = ".css";
+    // client.MimeTypeMap["text/csv"] = ".csv";
+    // client.MimeTypeMap["text/javascript"] = ".js";
+    // client.MimeTypeMap["application/javascript"] = ".js";
+    // client.MimeTypeMap["image/jpeg"] = ".jpg";
+    // client.MimeTypeMap["image/png"] = ".png";
+    // client.MimeTypeMap["image/gif"] = ".gif";
+    // client.MimeTypeMap["image/svg+xml"] = ".svg";
+    // client.MimeTypeMap["image/webp"] = ".webp";
+    // client.MimeTypeMap["image/bmp"] = ".bmp";
+    // client.MimeTypeMap["audio/mpeg"] = ".mp3";
+    // client.MimeTypeMap["audio/wav"] = ".wav";
+    // client.MimeTypeMap["audio/ogg"] = ".ogg";
+    // client.MimeTypeMap["video/mp4"] = ".mp4";
+    // client.MimeTypeMap["video/x-msvideo"] = ".avi";
+    // client.MimeTypeMap["video/webm"] = ".webm";
+    // client.MimeTypeMap["video/quicktime"] = ".mov";
+    // client.MimeTypeMap["video/x-flv"] = ".flv";
+
 	return true;
 }
 
@@ -271,15 +276,13 @@ bool TakeBodyType(client_info& client, std::map<int, server_config>& server) {
 
 void ParseChunk(client_info &client, std::map<int, server_config> &server)
 {
-	// int fd = open("form.txt", O_WRONLY | O_APPEND | O_CREAT, 0644);
+	// int fd = open("data.txt", O_WRONLY | O_APPEND | O_CREAT, 0644);
 	// write(fd, client.data.c_str(), client.data.size());
 	// client.data.clear();
 	// return;
 
 	if (RequestLine(client, server) == false || ParseHeaders(client, server) == false)
 		return;
-	if (client.method == "POST")
-		std::cerr << "------------------------------------the method is " << client.method << std::endl;
 
 	client.isGet = false;
 	if (client.method == "GET")
@@ -301,14 +304,20 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 	}
 	if (client.bodyTaken == true)
 	{
+		if (client.isCgi == true) {
+			std::cerr << "it is cgi : ana dayr exit f ParsChunk mhm nta hna dir shi funciton ola khdem hna nit" << std::endl;
+			exit(0);// l file li fih data smito : www/forcgi o fd dyalo kayn f client.file_fd
+			//test raw o lbinary 'form data baqi kanqadha'
+		}
 		std::string body = "<html><body><h1>File uploaded successfully!</h1></body></html>";
 		post_success(client, body);
 		std::cerr << "data finished-------------------------------------------" << std::endl;
 	}
 }
 /*notes
+	add the upload path for new created files
 	set file descriptor to non-blocking mode
 	check the content length in config file with the content length in header
-	add the memtypes
+	add the mimtypes
 	close file descriptor
 */
