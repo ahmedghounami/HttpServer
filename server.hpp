@@ -71,7 +71,6 @@ struct client_info
     int index_server;
     bool isCgi;
     bool ReadFlag;
-    bool autoindex;
     bool ReadSize;
     bool isChunked;
     bool bodyTaken;

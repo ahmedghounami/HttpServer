@@ -183,8 +183,6 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	client.headersTaken = true;
 	client.file_fd = -42;
 	client.isCgi = handlepathinfo(client);
-	client.isCgi = true;
-
 
 	return true;
 }
@@ -265,6 +263,7 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 			FormData(client,server);
 		else if (client.bodyTypeTaken == 4)
 			OtherData(client, server);
+		// std::cerr << "config size :" << server[client.index_server].max_body_size << std::endl;
 	}
 	if (client.bodyTaken == true)
 	{
@@ -279,8 +278,6 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 	}
 }
 /*notes
-	add the upload path for new created files
 	check the content length in config file with the content length in header
-	add the mimtypes
 	close file descriptor
 */
