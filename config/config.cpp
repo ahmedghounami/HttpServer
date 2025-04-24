@@ -75,35 +75,5 @@ void server::parse_config(std::string config_file)
 	else if (servers.empty())
 		throw std::runtime_error("no server block found");
 	file.close();
-	std::cout << "config file parsed" << std::endl;
-	for (unsigned int i = 0; i < servers.size(); i++)
-	{
-		//     std::cout << "host: " << servers[i].host << std::endl;
-		//     for (unsigned int j = 0; j < servers[i].server_names.size(); j++)
-		//       std::cout << "server_name: " << servers[i].server_names[j] <<
-		//       std::endl;
-		//     for (unsigned int j = 0; j < servers[i].ports.size(); j++)
-		//       std::cout << "port: " << servers[i].ports[j] << std::endl;
-		//     std::cout << "path: " << servers[i].path << std::endl;
-		//     std::cout << "upload_path: " << servers[i].upload_path << std::endl;
-		//     for (unsigned int j = 0; j < servers[i].index.size(); j++)
-		//       std::cout << "index: " << servers[i].index[j] << std::endl;
-		//     std::cout << "autoindex: " << servers[i].autoindex << std::endl;
-		//     std::cout << "max_body_size: " << servers[i].max_body_size <<
-		//     std::endl; std::cout << "upload_max_size: " <<
-		//     servers[i].upload_max_size << std::endl; for (std::map<std::string,
-		//     std::string>::iterator it =
-		//              servers[i].error_pages.begin();
-		//          it != servers[i].error_pages.end(); it++)
-		//       std::cout << "error_page: " << it->first << " " << it->second
-		//                 << std::endl;
-		for (std::map<std::string, location>::iterator it = servers[i].locations.begin();
-		     it != servers[i].locations.end(); it++)
-		{
-		//   std::cout << "path: " << it->second.path << std::endl;
-		//   std::cout << "upload path: " << it->second.upload_path << std::endl;
-		}
-		// // std::cout << "-------------------" << std::endl;
-	}
-
+	std::cout << "------------config file parsed------------" << std::endl;
 }
