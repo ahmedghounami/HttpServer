@@ -56,13 +56,6 @@ server::server(std::string &config_file)
             server_fd.fd = start_connection;
             server_fd.events = POLLIN;
             clients_fds.push_back(server_fd);
-
-            // port_used port;
-            // port.port = servers[i].ports[j];
-            // port.server_name = servers[i].server_name;
-            // ports_used.push_back(port);
-
-            // std::cout << "Server started on port " << servers[i].ports[j] << std::endl;
         }
     }
 }
@@ -85,18 +78,6 @@ void server::check_timeout(std::vector<pollfd> &clients_fds, std::map<int, clien
 
 void server::listen_for_connections()
 {
-
-    ///////////////////////////////////////////////
-    // std::string filename = "data";
-    // std::ofstream file(filename);
-    // if (file.good())
-    //     std::cerr << "File opened successfully\n";
-    // else
-    // {
-    //     std::cerr << "File open failed\n";
-    //     throw std::runtime_error("File open failed");
-    // }
-    ///////////////////////////////////////////////
     while (true)
     {
         int ret = poll(&clients_fds[0], clients_fds.size(), 5000);
@@ -108,7 +89,7 @@ void server::listen_for_connections()
         check_timeout(clients_fds, clients);
         if (ret == 0)
         {
-            std::cerr << "No data, timeout\n";
+            // std::cerr << "No data, timeout\n";
             continue;
         }
         for (unsigned int i = 0; i < clients_fds.size(); i++)
@@ -135,6 +116,7 @@ void server::listen_for_connections()
                     clients[clients_fds[i].fd].last_time = time(NULL);
                     buffer[data] = '\0';
                     clients[clients_fds[i].fd].data.append(buffer, data);
+                    
                     parse_chunk(clients[clients_fds[i].fd], servers);
                     if (clients[clients_fds[i].fd].isGet == true)
                         clients_fds[i].events = POLLOUT;

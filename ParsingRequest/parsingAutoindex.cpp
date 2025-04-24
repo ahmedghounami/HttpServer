@@ -155,13 +155,11 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 			return false; // respond and clear client;
 		}
 	}
-	else if (found == 0 && client.uri == "/" && client.method == "POST")
+	else if (client.method == "POST" && server[client.index_server].upload_path.empty())
 	{
-		if (server[client.index_server].upload_path.empty())
-		{
-			error_response(client, server[client.index_server], 501); // 501
-			return false; // respond and clear client;
-		}
+		error_response(client, server[client.index_server], 501); // 501
+		return false; // respond and clear client;
 	}
+	std::cerr << "all good---------------------" << std::endl;
 	return true;
 }
