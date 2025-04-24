@@ -50,7 +50,7 @@ void writeToFile(std::string &body, int fd) {
   }
 }
 
-std::string nameGenerator(std::string MimeType, std::string path) {
+std::string nameGenerator(std::string MimeType, std::string upload_path) {
 
   std::cerr << "-------------nameGenerator----------------" << std::endl;
   std::map<std::string, std::string> MimeTypeMap;
@@ -96,7 +96,7 @@ std::string nameGenerator(std::string MimeType, std::string path) {
   std::string name;
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   //if path is ending with "/" remove it (instead of removing it from the end of the string) don't add it
-  name = path + "/file_";
+  name = upload_path + "/file_";
   for (int i = 0; i < 5; ++i) {
     int index = rand() % (sizeof(charset) - 1);
     name += charset[index];
@@ -152,6 +152,7 @@ static void ParseContentType(client_info& client) {
   client.pos = client.data.find("/");
   client.data = client.data.substr(client.pos + 1, client.data.size());
   client.contentTypeform = client.data.substr(0, client.data.find("\r\n"));
+  std::cerr << "contentTypeform: " << client.contentTypeform << std::endl;
   if (client.bodyTypeTaken == 1 || client.bodyTypeTaken == 2)
     client.data = client.data.substr(client.data.find("\r\n") + 6, client.data.size());
   else

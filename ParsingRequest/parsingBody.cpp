@@ -5,13 +5,7 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
   while (!client.data.empty()) {
     if (client.ReadFlag == true) {
       client.ReadFlag = false;
-      std::string filename;
-      if (client.isCgi) {
-        client.upload_path += "/forcgi-";
-        filename = nameGenerator(client.ContentType, client.upload_path);
-      }
-      else
-        filename = nameGenerator(client.ContentType, client.upload_path);
+      std::string filename = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         std::cerr << "Error opening file" << std::endl;
@@ -50,7 +44,6 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
 
   if (client.isCgi) {
     if (client.file_fd == -42) {
-      client.upload_path += "/forcgi-";
       std::string fileName = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
@@ -118,10 +111,10 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
 
 void ChunkedFormData(client_info& client, std::map<int, server_config> &server) {
   
-  if (handlepathinfo(client)) {
+  if (client.isCgi) {
     if (client.file_fd == -42) {
-      client.upload_path += "/forcgi-";
       std::string fileName = nameGenerator(client.ContentType, client.upload_path);
+      std::cerr << "fileName: " << fileName << std::endl;
       client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         std::cerr << "Error opening file" << std::endl;
@@ -198,7 +191,6 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
 
   if (client.isCgi) {
     if (client.file_fd == -42) {
-      client.upload_path += "/forcgi-";
       std::string filename = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
