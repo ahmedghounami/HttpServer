@@ -182,8 +182,7 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	client.bodyTypeTaken = 0;
 	client.headersTaken = true;
 	client.file_fd = -42;
-	// client.isCgi = handlepathinfo(client);
-	client.isCgi = true;
+	client.isCgi = handlepathinfo(client);
 
 	// // Mime Type Map
     // client.MimeTypeMap["application/octet-stream"] = ".bin";
