@@ -18,7 +18,7 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 	{
 		std::cerr << "ERROR: Request line start with a space" << std::endl;
 		error_response(client, server[client.index_server], 400); // 500
-		return false; // respond and clear client;
+		return false;											  // respond and clear client;
 	}
 
 	size_t start = requestLine.find_first_not_of(" ");
@@ -27,14 +27,14 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 	{
 		std::cerr << "ERROR: Request line ends with extra character(s)" << std::endl;
 		error_response(client, server[client.index_server], 400); // 500
-		return false; // respond and clear client;
+		return false;											  // respond and clear client;
 	}
 
 	if (start == std::string::npos)
 	{
 		std::cerr << "ERROR: Empty request line" << std::endl;
 		error_response(client, server[client.index_server], 400); // 500
-		return false; // respond and clear client;
+		return false;											  // respond and clear client;
 	}
 
 	requestLine = requestLine.substr(start, end - start + 1);
@@ -47,7 +47,7 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 	{
 		std::cerr << "Error: Malformed request line (Incorrect spaces)" << std::endl;
 		error_response(client, server[client.index_server], 400); // 500
-		return false; // respond and clear client;
+		return false;											  // respond and clear client;
 	}
 
 	client.method = requestLine.substr(0, firstSP);
@@ -58,27 +58,27 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 	{
 		std::cerr << "Error: method: not allowed: " << client.method << std::endl;
 		error_response(client, server[client.index_server], 405); // 405
-		return false; // respond and clear client;
+		return false;											  // respond and clear client;
 	}
 	else if (client.method != "GET" && client.method != "POST" && client.method != "DELETE")
 	{
 		std::cerr << "Error: Method not implemented: " << client.method << std::endl;
 		error_response(client, server[client.index_server], 501); // 501
-		return false; // respond and clear client;
+		return false;											  // respond and clear client;
 	}
 
 	if (client.uri.empty() || client.uri[0] != '/')
 	{
 		std::cerr << "Error: Invalid request-target (URI must start with '/')" << std::endl;
 		error_response(client, server[client.index_server], 404); // 404
-		return false; // respond and clear client;
+		return false;											  // respond and clear client;
 	}
 
 	if (client.version != "HTTP/1.1" || client.version.find(' ') != std::string::npos)
 	{
 		std::cerr << "Error: Invalid or malformed HTTP version: " << client.version << std::endl;
 		error_response(client, server[client.index_server], 505); // 505
-		return false; // respond and clear client;
+		return false;											  // respond and clear client;
 	}
 
 	// std::cerr << "method '" << client.method << "'\nuri '" << client.uri << "'\nversion '" << client.version << "'\n" << std::endl;
@@ -124,7 +124,7 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 			std::cerr << "Error: Malformed header (missing ':'): " << line
 					  << std::endl;
 			error_response(client, server[client.index_server], 400); // 500
-			return false; // respond and clear client;
+			return false;											  // respond and clear client;
 		}
 
 		std::string key = trim(line.substr(0, delimiterPos));
@@ -134,7 +134,7 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 		{
 			std::cerr << "Error: Empty header name or value" << std::endl;
 			error_response(client, server[client.index_server], 400); // 500
-			return false; // respond and clear client;
+			return false;											  // respond and clear client;
 		}
 
 		std::transform(key.begin(), key.end(), key.begin(), ::tolower);
@@ -142,13 +142,13 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 		{
 			std::cerr << "Error: Invalid header name: " << key << std::endl;
 			error_response(client, server[client.index_server], 400); // 500
-			return false; // respond and clear client;
+			return false;											  // respond and clear client;
 		}
 		if (!isValidHeaderValue(value))
 		{
 			std::cerr << "Error: Invalid header value: " << value << std::endl;
 			error_response(client, server[client.index_server], 400); // 500
-			return false; // respond and clear client;
+			return false;											  // respond and clear client;
 		}
 		if (client.headers.find(key) != client.headers.end())
 		{
@@ -164,7 +164,7 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	{
 		std::cerr << "Error: Missing 'Host' header" << std::endl;
 		error_response(client, server[client.index_server], 400); // 500
-		return false; // respond and clear client;
+		return false;											  // respond and clear client;
 	}
 	// else
 	// {
@@ -195,7 +195,7 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	// 	else
 	// 	{
 	// 		std::cerr << "Error: Invalid host: " << client.headers["host"] << std::endl;
-	// 		error_response(client, server[client.index_server], 400, ""); // 500 
+	// 		error_response(client, server[client.index_server], 400, ""); // 500
 	// 		return false; // respond and clear client;
 	// 	}
 	// }
@@ -216,6 +216,7 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	client.headersTaken = true;
 	client.file_fd = -42;
 
+	// check if the method is post but is a cgi request to make the data store a file and forward it to the cgi
 	return true;
 }
 
@@ -277,6 +278,9 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 
 	if (RequestLine(client, server) == false || ParseHeaders(client, server) == false)
 		return;
+	if (client.method == "POST")
+		std::cerr << "------------------------------------the method is " << client.method << std::endl;
+
 	client.isGet = false;
 	if (client.method == "GET")
 		client.isGet = true;
@@ -297,10 +301,10 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 	}
 	if (client.bodyTaken == true)
 	{
-		std::string body = "<html><body><h1>Success</h1></body></html>";
+		std::string body = "<html><body><h1>File uploaded successfully!</h1></body></html>";
 		post_success(client, body);
 		std::cerr << "data finished-------------------------------------------" << std::endl;
-	}	
+	}
 }
 /*notes
 	set file descriptor to non-blocking mode

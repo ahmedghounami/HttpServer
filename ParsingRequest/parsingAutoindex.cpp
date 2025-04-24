@@ -163,6 +163,5 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 			return false; // respond and clear client;
 		}
 	}
-	// std::cout << "----------------------------------autoindex_server-------------------------------" << client.method << std::endl;
 	return true;
 }

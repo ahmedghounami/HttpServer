@@ -77,6 +77,8 @@ struct client_info
     bool bodyReached;
     bool headersTaken;
 
+    bool file_opened;
+
     std::string name, filename, contentTypeform;
     std::string data;
     std::string boundary;
@@ -176,4 +178,8 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server);
 
 // redirect
 void redirect(client_info &client, std::pair<std::string, std::string> &redirect);
-bool handlepathinfo(client_info &client);
+
+
+// handle path info
+void handlepathinfo(client_info &client);
+void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path);
