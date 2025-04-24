@@ -23,7 +23,7 @@ std::string getresponse(int error_code, std::string &path, server_config &server
         path = server.error_pages[std::to_string(error_code)];
     if(path == "" || std::ifstream(path.c_str()).fail())
     {
-        path = "./error_pages/" + std::to_string(error_code) + ".html";
+        path = "./errors/" + std::to_string(error_code) + ".html";
         if (std::ifstream(path.c_str()).fail())
         {
             path = "./error_pages/500.html";

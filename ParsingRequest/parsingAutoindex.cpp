@@ -91,7 +91,7 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 	while ((entry = readdir(dir)) != NULL)
 	{
 		std::string name = entry->d_name;
-		std::cout << "name: " << name << std::endl;
+		// std::cout << "name: " << name << std::endl;
 		if (name == ".")
 			continue;
 
@@ -160,6 +160,13 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 		error_response(client, server[client.index_server], 501); // 501
 		return false; // respond and clear client;
 	}
-	std::cerr << "all good---------------------" << std::endl;
+	if (client.method == "GET" && (client.uri == "/upload.html" || client.uri == "/upload.php"))
+	{
+		if (server[client.index_server].upload_path.empty())
+		{
+			error_response(client, server[client.index_server], 501); // 501
+			return false; // respond and clear client;
+		}
+	}
 	return true;
 }
