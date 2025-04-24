@@ -280,7 +280,6 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 }
 /*notes
 	add the upload path for new created files
-	set file descriptor to non-blocking mode
 	check the content length in config file with the content length in header
 	add the mimtypes
 	close file descriptor
