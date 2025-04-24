@@ -174,20 +174,13 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 			return false; // respond and clear client;
 		}
 	}
-	else if (client.method == "POST" && server[client.index_server].upload_path.empty())
-	{
-		error_response(client, server[client.index_server], 501); // 501
-		return false; // respond and clear client;
-	}
 	else if (client.method == "POST" && found == 0)
 		client.upload_path = server[client.index_server].upload_path;
-	if (client.method == "GET" && (client.uri == "/upload.html" || client.uri == "/upload.php"))
+	if (client.method == "POST" && client.upload_path.empty() == true)
 	{
-		if (server[client.index_server].upload_path.empty())
-		{
-			error_response(client, server[client.index_server], 501); // 501
-			return false; // respond and clear client;
-		}
+		std::cerr << "Error: Invalid uri: " << client.uri << std::endl;
+		error_response(client, server[client.index_server], 405); // 405
+		return false; // respond and clear client;
 	}
 	return true;
 }
