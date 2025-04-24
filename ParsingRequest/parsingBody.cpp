@@ -115,11 +115,23 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
 
 void ChunkedFormData(client_info& client, std::map<int, server_config> &server) {
   
-  // if (handlepathinfo(client)) {
-  //   if (client.data.find("0\r\n\r\n") != std::string::npos)
-  //     client.bodyTaken = true;
-      
-  // }
+  if (handlepathinfo(client)) {
+    if (client.file_fd == -42) {
+      std::string fileName = "www/forcgi";
+      client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (client.file_fd == -1) {
+        std::cerr << "Error opening file" << std::endl;
+        error_response(client, server[client.index_server], 500);//is it 500?
+        return ;
+      }
+    }
+    if (client.data.find(client.boundary + "--") != std::string::npos)
+      client.bodyTaken = true;
+    if (!client.data.empty())
+      writeToFile(client.data, client.file_fd);
+    client.data.clear();
+    return ;
+  }
 
   while (!client.data.empty()) {
 
@@ -180,11 +192,24 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
 
 void FormData(client_info& client, std::map<int, server_config> &server) {
 
-  // if (handlepathinfo(client, server) == true) {
-  //   if (client.data.find("0\r\n\r\n") != std::string::npos)
-  //     client.bodyTaken = true;
-  //   //3amer lfile
-  // }
+  if (client.isCgi) {
+    if (client.file_fd == -42) {
+      std::string filename = "www/forcgi";
+      client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (client.file_fd == -1) {
+        std::cerr << "Error opening file" << std::endl;
+        error_response(client, server[client.index_server], 500);//is it 500?
+        return ;
+      }
+    }
+    if (client.data.find(client.boundary + "--") != std::string::npos)
+      client.bodyTaken = true;
+    if (!client.data.empty())
+      writeToFile(client.data, client.file_fd);
+    client.data.clear();
+    return ;
+  }
+
   while (!client.data.empty()) {
 
     client.pos = client.data.find(client.boundary + "\r\n");
