@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/25 09:43:57 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/25 11:58:13 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -253,7 +253,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         envStrings.push_back("PATH_INFO=" + client.path_info);
         envStrings.push_back("QUERY_STRING=" + client.query);
         envStrings.push_back("CONTENT_TYPE=" + client.ContentType);
-        envStrings.push_back("CONTENT_LENGTH=" + std::to_string(client.chunkData.size()));
+        envStrings.push_back("CONTENT_LENGTH=" + client.headers["content-length"]);
         envStrings.push_back("SERVER_NAME=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
         envStrings.push_back("SERVER_PORT=" + client.headers["host"].substr(client.headers["host"].find(":") + 1));
         envStrings.push_back("SERVER_PROTOCOL=" + client.version);
@@ -303,6 +303,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         int status;
         waitpid(pid, &status, 0);
         alarm(0);
+        client.isGet = 1;
         if (WIFEXITED(status))
         {
             int exitstatus = WEXITSTATUS(status);
@@ -324,6 +325,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             }
         }else if (WIFSIGNALED(status))
         {
+            std::cerr << "CGI process killed by signal: " << WTERMSIG(status) << std::endl;
             int signal = WTERMSIG(status);
             if(signal == SIGALRM)
                 error_response(client, server[client.index_server], 504); // 504

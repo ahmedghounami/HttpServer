@@ -304,9 +304,22 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 	if (client.bodyTaken == true)
 	{
 		if (client.isCgi == true) {
-			// std::cerr << "it is cgi : ana dayr exit f ParsChunk mhm nta hna dir shi funciton ola khdem hna nit" << std::endl;
+			std::cout << "handle post cgi" << std::endl;
+			std::ifstream file("www/forcgi");
+			if (!file.is_open()) {
+				std::cerr << "Error opening file" << std::endl;
+				return;
+			}
+			std::string line;
+			while (std::getline(file, line)) {
+				std::cout << line << std::endl;
+			}
+			file.close();
+			// std::remove("www/forcgi");
+			std::cerr << "cgi started-------------------------------------------" << std::endl;
 			exit(0);
 			handleCgi(client, server, client.uri);
+			std::cerr << "cgi finished-------------------------------------------" << std::endl;
 			return;
 			// exit(0);// l file li fih data smito : www/forcgi o fd dyalo kayn f client.file_fd
 			//test raw o lbinary 'form data baqi kanqadha'
