@@ -71,7 +71,6 @@ struct client_info
     int index_server;
     bool isCgi;
     bool ReadFlag;
-    bool autoindex;
     bool ReadSize;
     bool isChunked;
     bool bodyTaken;
@@ -96,6 +95,7 @@ struct client_info
     std::string cgi_output;
     double bytes_sent;
     bool isGet;
+    std::string upload_path;
   time_t last_time;
 };
 
@@ -157,7 +157,7 @@ std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 void writeToFile(std::string &body, int fd);
 void NewFile(client_info &client, std::map<int, server_config> &server);
-std::string nameGenerator();
+std::string nameGenerator(std::string MimeType, std::string path);
 
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);
@@ -182,8 +182,4 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server);
 
 // redirect
 void redirect(client_info &client, std::pair<std::string, std::string> &redirect);
-
-
-// handle path info
 bool handlepathinfo(client_info &client);
-void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path);

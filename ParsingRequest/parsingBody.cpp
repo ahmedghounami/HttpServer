@@ -5,11 +5,7 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
   while (!client.data.empty()) {
     if (client.ReadFlag == true) {
       client.ReadFlag = false;
-      std::string filename;
-      if (client.isCgi)
-        filename = "www/forcgi";
-      else
-        filename = "www/RB-" + nameGenerator();
+      std::string filename = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         std::cerr << "Error opening file" << std::endl;
@@ -48,7 +44,7 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
 
   if (client.isCgi) {
     if (client.file_fd == -42) {
-      std::string fileName = "www/forcgi";
+      std::string fileName = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         std::cerr << "Error opening file" << std::endl;
@@ -77,7 +73,7 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
       iss >> std::hex >> client.chunkSize;
       std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
       if (client.file_fd == -42) {
-        std::string fileName = "Chunked_RB." + client.ContentType.substr(client.ContentType.find("/") + 1);
+        std::string fileName = nameGenerator(client.ContentType, client.upload_path);
         client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (client.file_fd == -1) {
           std::cerr << "Error opening file" << std::endl;
@@ -115,11 +111,24 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
 
 void ChunkedFormData(client_info& client, std::map<int, server_config> &server) {
   
-  // if (handlepathinfo(client)) {
-  //   if (client.data.find("0\r\n\r\n") != std::string::npos)
-  //     client.bodyTaken = true;
-      
-  // }
+  if (client.isCgi) {
+    if (client.file_fd == -42) {
+      std::string fileName = nameGenerator(client.ContentType, client.upload_path);
+      std::cerr << "fileName: " << fileName << std::endl;
+      client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (client.file_fd == -1) {
+        std::cerr << "Error opening file" << std::endl;
+        error_response(client, server[client.index_server], 500);//is it 500?
+        return ;
+      }
+    }
+    if (client.data.find(client.boundary + "--") != std::string::npos)
+      client.bodyTaken = true;
+    if (!client.data.empty())
+      writeToFile(client.data, client.file_fd);
+    client.data.clear();
+    return ;
+  }
 
   while (!client.data.empty()) {
 
@@ -180,11 +189,24 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
 
 void FormData(client_info& client, std::map<int, server_config> &server) {
 
-  // if (handlepathinfo(client, server) == true) {
-  //   if (client.data.find("0\r\n\r\n") != std::string::npos)
-  //     client.bodyTaken = true;
-  //   //3amer lfile
-  // }
+  if (client.isCgi) {
+    if (client.file_fd == -42) {
+      std::string filename = nameGenerator(client.ContentType, client.upload_path);
+      client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (client.file_fd == -1) {
+        std::cerr << "Error opening file" << std::endl;
+        error_response(client, server[client.index_server], 500);//is it 500?
+        return ;
+      }
+    }
+    if (client.data.find(client.boundary + "--") != std::string::npos)
+      client.bodyTaken = true;
+    if (!client.data.empty())
+      writeToFile(client.data, client.file_fd);
+    client.data.clear();
+    return ;
+  }
+
   while (!client.data.empty()) {
 
     client.pos = client.data.find(client.boundary + "\r\n");

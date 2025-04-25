@@ -177,6 +177,8 @@ void parse_key(std::istringstream &ss, std::string &key,
             int ports = std::atof(port.c_str());
             if (ports <= 0 || ports > 65535 || !is_digit(port))
                 throw std::runtime_error("Invalid port number");
+            if (std::find(config.ports.begin(), config.ports.end(), ports) != config.ports.end())
+                throw std::runtime_error("Duplicate port number : " + port);
             config.ports.push_back(std::atof(port.c_str()));
         }
     }

@@ -184,43 +184,6 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	client.file_fd = -42;
 	client.isCgi = handlepathinfo(client);
 
-	// // Mime Type Map
-    // client.MimeTypeMap["application/octet-stream"] = ".bin";
-    // client.MimeTypeMap["application/json"] = ".json";
-    // client.MimeTypeMap["application/xml"] = ".xml";
-    // client.MimeTypeMap["application/zip"] = ".zip";
-    // client.MimeTypeMap["application/gzip"] = ".gz";
-    // client.MimeTypeMap["application/x-tar"] = ".tar";
-    // client.MimeTypeMap["application/x-7z-compressed"] = ".7z";
-    // client.MimeTypeMap["application/pdf"] = ".pdf";
-    // client.MimeTypeMap["application/x-www-form-urlencoded"] = ".txt";
-    // client.MimeTypeMap["application/x-bzip"] = ".bz";
-    // client.MimeTypeMap["application/x-bzip2"] = ".bz2";
-    // client.MimeTypeMap["application/x-rar-compressed"] = ".rar";
-    // client.MimeTypeMap["application/x-msdownload"] = ".exe";
-    // client.MimeTypeMap["application/vnd.ms-excel"] = ".xls";
-    // client.MimeTypeMap["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] = ".xlsx";
-    // client.MimeTypeMap["text/plain"] = ".txt";
-    // client.MimeTypeMap["text/html"] = ".html";
-    // client.MimeTypeMap["text/css"] = ".css";
-    // client.MimeTypeMap["text/csv"] = ".csv";
-    // client.MimeTypeMap["text/javascript"] = ".js";
-    // client.MimeTypeMap["application/javascript"] = ".js";
-    // client.MimeTypeMap["image/jpeg"] = ".jpg";
-    // client.MimeTypeMap["image/png"] = ".png";
-    // client.MimeTypeMap["image/gif"] = ".gif";
-    // client.MimeTypeMap["image/svg+xml"] = ".svg";
-    // client.MimeTypeMap["image/webp"] = ".webp";
-    // client.MimeTypeMap["image/bmp"] = ".bmp";
-    // client.MimeTypeMap["audio/mpeg"] = ".mp3";
-    // client.MimeTypeMap["audio/wav"] = ".wav";
-    // client.MimeTypeMap["audio/ogg"] = ".ogg";
-    // client.MimeTypeMap["video/mp4"] = ".mp4";
-    // client.MimeTypeMap["video/x-msvideo"] = ".avi";
-    // client.MimeTypeMap["video/webm"] = ".webm";
-    // client.MimeTypeMap["video/quicktime"] = ".mov";
-    // client.MimeTypeMap["video/x-flv"] = ".flv";
-
 	return true;
 }
 
@@ -300,6 +263,7 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 			FormData(client,server);
 		else if (client.bodyTypeTaken == 4)
 			OtherData(client, server);
+		// std::cerr << "config size :" << server[client.index_server].max_body_size << std::endl;
 	}
 	if (client.bodyTaken == true)
 	{
@@ -330,9 +294,6 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 	}
 }
 /*notes
-	add the upload path for new created files
-	set file descriptor to non-blocking mode
 	check the content length in config file with the content length in header
-	add the mimtypes
 	close file descriptor
 */
