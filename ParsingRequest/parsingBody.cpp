@@ -11,6 +11,7 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
         std::cerr << "Error opening file" << std::endl;
         return ;
       }
+      client.post_cgi_filename = filename;
       std::map<std::string, std::string>::iterator it = client.headers.find("content-length");
       if (it != client.headers.end()) {
         std::istringstream iss(it->second);
@@ -81,6 +82,7 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
           error_response(client, server[client.index_server], 500);//is it 500?
           return ;
         }
+      client.post_cgi_filename = fileName;
       }
       client.ReadFlag = false;
     }

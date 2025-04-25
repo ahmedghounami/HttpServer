@@ -166,11 +166,11 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 		error_response(client, server[client.index_server], 400); // 500
 		return false;											  // respond and clear client;
 	}
-	if (check_autoindex(client, server) == false)
-	{
-		std::cerr << "im in hte check_autoindex" << std::endl;
-		return false; // respond and clear client;
-	}
+	// if (check_autoindex(client, server) == false)
+	// {
+	// 	std::cerr << "im in hte check_autoindex" << std::endl;
+	// 	return false; // respond and clear client;
+	// }
 
 	// std::map<std::string, std::string>::iterator it;
 	// for (it = client.headers.begin(); it != client.headers.end(); ++it)
@@ -281,8 +281,11 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 			// file.close();
 			// // std::remove("www/forcgi");
 			// std::cerr << "cgi started-------------------------------------------" << std::endl;
+			// std::cerr << "client.post_cgi_filename: " << client.post_cgi_filename << std::endl;
 			// exit(0);
 			handleCgi(client, server, client.uri);
+			// if(client.datafinished)
+				// std::remove(client.post_cgi_filename.c_str());
 			std::cerr << "cgi finished-------------------------------------------" << std::endl;
 			return;
 			// exit(0);// l file li fih data smito : www/forcgi o fd dyalo kayn f client.file_fd

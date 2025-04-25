@@ -96,7 +96,8 @@ std::string nameGenerator(std::string MimeType, std::string upload_path) {
   std::string name;
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   //if path is ending with "/" remove it (instead of removing it from the end of the string) don't add it
-  name = upload_path + "/file_";
+  name = "tmp/file_";
+  (void)upload_path;
   for (int i = 0; i < 5; ++i) {
     int index = rand() % (sizeof(charset) - 1);
     name += charset[index];
@@ -131,6 +132,7 @@ static void ParseContentDisposition(client_info& client, std::map<int, server_co
       return ;//
       error_response(client, server[client.index_server], 500);//is it 500?
     }
+      client.post_cgi_filename = filename;
     client.data = client.data.substr(2 + (client.pos != 0 && client.bodyTypeTaken != 3) * 2, client.data.size());
   } else if (client.pos != std::string::npos) {
     close(client.file_fd); 

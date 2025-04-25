@@ -1,31 +1,49 @@
 
 #include "../server.hpp"
 
-bool autoindex_server(client_info &client, server_config &loc)
+bool autoindex_server(client_info &client, server_config &server)
 {
 	struct stat info;
-	if (loc.index.empty() == false && stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) == 0 && access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) == 0)
-		client.uri = "/" + loc.index[0];
-	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == true)
+	if (server.index.empty() == false && stat((server.path + "/" + server.index[0].c_str()).c_str(), &info) == 0 && access((server.path + "/" + server.index[0].c_str()).c_str(), R_OK) == 0)
 	{
-		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/direc.html");
+		if (stat((server.path + "/" + server.index[0].c_str()).c_str(), &info) == 0 && access((server.path + "/" + server.index[0].c_str()).c_str(), R_OK) == 0)
+			client.uri = "/" + server.index[0];
+		else
+		{
+			generateAutoindexToFile(client.uri, server.path, server.path + "/direc.html");
+			client.uri = "/direc.html";
+		}
+	}
+
+	else if (server.index.empty() == false && (stat((server.path + "/" + server.index[0].c_str()).c_str(), &info) != 0 || access((server.path + "/" + server.index[0].c_str()).c_str(), R_OK) != 0) && server.autoindex == true)
+	{
+		generateAutoindexToFile(client.uri, server.path, server.path + "/direc.html");
 		client.uri = "/direc.html";
 	}
-	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == false)
+	else if (server.index.empty() == false && (stat((server.path + "/" + server.index[0].c_str()).c_str(), &info) != 0 || access((server.path + "/" + server.index[0].c_str()).c_str(), R_OK) != 0) && server.autoindex == false)
 	{
-		error_response(client, loc, 404); // 404
+		error_response(client, server, 404); // 404
 		return false; // respond and clear client;
 	}
-	if (loc.index.empty() == true && stat((loc.path + "/index.html").c_str(), &info) == 0 && access((loc.path + "/index.html").c_str(), R_OK) == 0)
-		client.uri = "/index.html";
-	if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == true)
+	if (server.index.empty() == true && stat((server.path + "/index.html").c_str(), &info) == 0 && access((server.path + "/index.html").c_str(), R_OK) == 0)
 	{
-		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/direc.html");
+		client.uri = "/index.html";
+		if (stat((server.path + "/index.html").c_str(), &info) == 0 && access((server.path + "/index.html").c_str(), R_OK) == 0)
+			client.uri = "/index.html";
+		else
+		{
+			generateAutoindexToFile(client.uri, server.path, server.path + "/direc.html");
+			client.uri = "/direc.html";
+		}
+	}
+	if (server.index.empty() == true && (stat((server.path + "/index.html").c_str(), &info) != 0 || access((server.path + "/index.html").c_str(), R_OK) != 0) && server.autoindex == true)
+	{
+		generateAutoindexToFile(client.uri, server.path, server.path + "/direc.html");
 		client.uri = "/direc.html";
 	}
-	else if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == false)
+	else if (server.index.empty() == true && (stat((server.path + "/index.html").c_str(), &info) != 0 || access((server.path + "/index.html").c_str(), R_OK) != 0) && server.autoindex == false)
 	{
-		error_response(client, loc, 404); // 404
+		error_response(client, server, 404); // 404
 		return false; // respond and clear client;
 	}
 	return true;
@@ -160,7 +178,7 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 				client.upload_path = it->second.upload_path;
 			break;
 		}
-		else if (it->first == client.uri && it->second.redirect.first.empty() == false && client.method == "GET")
+		else if (it->first == client.uri && it->second.redirect.first.empty() == false )
 		{
 			redirect(client, it->second.redirect);
 			return false; // respond and clear client;
@@ -174,20 +192,12 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 			return false; // respond and clear client;
 		}
 	}
-	else if (client.method == "POST" && server[client.index_server].upload_path.empty())
-	{
-		error_response(client, server[client.index_server], 501); // 501
-		return false; // respond and clear client;
-	}
 	else if (client.method == "POST" && found == 0)
 		client.upload_path = server[client.index_server].upload_path;
-	if (client.method == "GET" && (client.uri == "/upload.html" || client.uri == "/upload.php"))
+	if (client.method == "POST" && client.upload_path.empty() == true)
 	{
-		if (server[client.index_server].upload_path.empty())
-		{
-			error_response(client, server[client.index_server], 501); // 501
-			return false; // respond and clear client;
-		}
+		error_response(client, server[client.index_server], 405); // 405
+		return false; // respond and clear client;
 	}
 	return true;
 }

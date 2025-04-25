@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/25 19:36:36 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/25 20:09:56 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,13 +193,16 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
     // char filein[] = "cgi_inputXXXXXX";
     // fdin = client.file_fd;
     close(client.file_fd);
-    if(client.method.find("POST") != std::string::npos){
-    fdin = open(client.post_cgi_filename.c_str(), O_RDWR);
+    if(!client.isGet && client.method.find("POST") != std::string::npos){
+    std::cerr << "in post" << std::endl;
+    std::cerr << "client.post_cgi_filename: " << client.post_cgi_filename << std::endl;
+    fdin = open(client.post_cgi_filename.c_str(), O_RDWR , 0666);
     if (fdin == -1)
     {
         std::cerr << "open failed" << std::endl;
         return;
     }}
+    client.isGet = 1;
     if(client.cgi_output != "")
     {
         fd = open(client.cgi_output.c_str(), O_RDWR , 0666);
@@ -304,7 +307,6 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         int status;
         waitpid(pid, &status, 0);
         alarm(0);
-        client.isGet = 1;
         if (WIFEXITED(status))
         {
             int exitstatus = WEXITSTATUS(status);
@@ -322,6 +324,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
                 // }
                 // unlink(filein);
                 std::remove(client.cgi_output.c_str());
+				std::remove(client.post_cgi_filename.c_str());
                 return;
             }
         }else if (WIFSIGNALED(status))
@@ -336,6 +339,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             // std::remove(client.cgi_output.c_str());
             close(fdin);
             std::remove(client.cgi_output.c_str());
+			std::remove(client.post_cgi_filename.c_str());
             // if(client.datafinished == 1)
             // {
             //     std::remove(client.cgi_output.c_str());
@@ -397,6 +401,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         {
             client.datafinished = 1;
             std::remove(client.cgi_output.c_str());
+            std::remove(client.post_cgi_filename.c_str());
             client.cgi_output = "";
         }
         alarm(0);
