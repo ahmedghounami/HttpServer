@@ -51,6 +51,7 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
         error_response(client, server[client.index_server], 500);//is it 500?
         return ;
       }
+      client.post_cgi_filename = fileName;
     }
     if (client.data.find("0\r\n\r\n") != std::string::npos) {
       std::cerr << "ending for cgi was found" << std::endl;
@@ -121,6 +122,7 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
         error_response(client, server[client.index_server], 500);//is it 500?
         return ;
       }
+      client.post_cgi_filename = fileName;
     }
     if (client.data.find(client.boundary + "--") != std::string::npos)
       client.bodyTaken = true;
@@ -198,6 +200,7 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
         error_response(client, server[client.index_server], 500);//is it 500?
         return ;
       }
+      client.post_cgi_filename = filename;
     }
     if (client.data.find(client.boundary + "--") != std::string::npos)
       client.bodyTaken = true;

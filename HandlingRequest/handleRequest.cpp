@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/25 19:12:41 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/25 19:36:36 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,12 +193,13 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
     // char filein[] = "cgi_inputXXXXXX";
     // fdin = client.file_fd;
     close(client.file_fd);
-    fdin = open("www/forcgi", O_RDWR );
+    if(client.method.find("POST") != std::string::npos){
+    fdin = open(client.post_cgi_filename.c_str(), O_RDWR);
     if (fdin == -1)
     {
         std::cerr << "open failed" << std::endl;
         return;
-    }
+    }}
     if(client.cgi_output != "")
     {
         fd = open(client.cgi_output.c_str(), O_RDWR , 0666);
