@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/24 16:37:01 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/25 09:43:57 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,11 +187,26 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
     int fd;
     std::string body;
     std::string content_type = "";
-    char filename[] = "cgi_outputXXXXXX";
+    char filename[] = "tmp/cgi_outputXXXXXX";
+    bool already = false;
     int fdin ;
-    char filein[] = "cgi_inputXXXXXX";
-    fdin = mkstemp(filein);
-    fd = mkstemp(filename);// create a temporary file whit unique name
+    // char filein[] = "cgi_inputXXXXXX";
+    // fdin = client.file_fd;
+    close(client.file_fd);
+    fdin = open("www/forcgi", O_RDWR );
+    if (fdin == -1)
+    {
+        std::cerr << "open failed" << std::endl;
+        return;
+    }
+    if(client.cgi_output != "")
+    {
+        fd = open(client.cgi_output.c_str(), O_RDWR , 0666);
+        already = true;
+    }
+    else{
+        fd = mkstemp(filename);// create a temporary file whit unique name
+        client.cgi_output = filename;}
     if (fd == -1)
     {
         std::cerr << "mkstemp failed" << std::endl;
@@ -205,6 +220,10 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
     }
     else if (pid == 0)
     {
+        if(already)
+        {
+            exit(0);
+        }
         dup2(fd, STDOUT_FILENO);
         close(fd);
         if(client.method.find("POST") != std::string::npos)
@@ -216,7 +235,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             // std::cerr << "client.data: " << client.chunkData << std::endl;
             std::string content = client.chunkData;
             // std::cerr << "content_length: " << content.size() << std::endl;
-            write(fdin, content.c_str(), content.size());
+            // write(fdin, content.c_str(), content.size());
             // std::ofstream file("test.txt");
             // file.write(content.c_str(), content.size());
             // file.close();
@@ -250,7 +269,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             envStrings.push_back("HTTP_" + header + "=" + it->second);
         }
         
-        // std::cerr << "HTTP_COOKIE: " << client.headers["cookie"] << std::endl;
+        std::cerr << "content_length: " << std::to_string(client.chunkData.size()) << std::endl;
         envStrings.push_back("REDIRECT_STATUS=200");
         if (client.method.find("POST") != std::string::npos)
         {
@@ -292,9 +311,15 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
                 std::cerr << "CGI process exited with status: " << exitstatus << std::endl;
                 error_response(client, server[client.index_server], 500); // 500
                 close(fd);
-                unlink(filename);
+                // std::remove(client.cgi_output.c_str());
                 close(fdin);
-                unlink(filein);
+                // if(client.datafinished == 1)
+                // {
+                //     std::remove(client.cgi_output.c_str());
+                //     client.cgi_output = "";
+                // }
+                // unlink(filein);
+                std::remove(client.cgi_output.c_str());
                 return;
             }
         }else if (WIFSIGNALED(status))
@@ -305,9 +330,15 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             else
                 error_response(client, server[client.index_server], 500); // 500
             close(fd);
-            unlink(filename);
+            // std::remove(client.cgi_output.c_str());
             close(fdin);
-            unlink(filein);
+            std::remove(client.cgi_output.c_str());
+            // if(client.datafinished == 1)
+            // {
+            //     std::remove(client.cgi_output.c_str());
+            //     client.cgi_output = "";
+            // }
+            // unlink(filein);
             return;
         }
         lseek(fd, 0, SEEK_SET);
@@ -333,10 +364,18 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             // exit(0);
             //get child process exit status
             close(fd);
-            unlink(filename);
+            // std::remove(client.cgi_output.c_str());
             close(fdin);
-            unlink(filein);
+            // unlink(filein);
             success(client, body, true, path, content_type, body.size());
+            // client.bytes_sent = -1;
+            // handleCgi(client, server, path);
+
+            // if(client.datafinished == 1)
+            // {
+            //     std::remove(client.cgi_output.c_str());
+            //     client.cgi_output = "";
+            // }
             return;
         }
         else if(client.bytes_sent == -1)
@@ -354,19 +393,33 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         if(read(fd, buffer, sizeof(buffer)) == 0)
         {
             client.datafinished = 1;
+            std::remove(client.cgi_output.c_str());
+            client.cgi_output = "";
         }
         alarm(0);
         close(fd);
-        unlink(filename);
+        // std::remove(client.cgi_output.c_str());
         close(fdin);
-        unlink(filein);
+        // unlink(filein);
         success(client, body, false, path, content_type);
+        
+        // if(client.datafinished == 1)
+        // {
+        //     std::remove(client.cgi_output.c_str());
+        //     client.cgi_output = "";
+        // }
         return;
     }
     close(fd);
-    unlink(filename);
+    // std::remove(client.cgi_output.c_str());
     close(fdin);
-    unlink(filein);
+
+    // if(client.datafinished == 1)
+    // {
+    //     std::remove(client.cgi_output.c_str());
+    //     client.cgi_output = "";
+    // }
+    // unlink(filein);
     (void)server;
 }
 void sendbodypart(client_info &client, std::string path)

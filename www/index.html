@@ -12,57 +12,116 @@
     <link href="file.css" rel="stylesheet">
 </head>
 
-<body
-    class="bg-gradient-to-br flex from-black via-[#02274a] to-[#021636] h-screen w-screen relative justify-center ">
+<body class="bg-gradient-to-br flex from-black via-[#02274a] to-[#021636] h-[100vh] w-screen relative justify-center ">
     <main class="w-[50%] flex-col relative">
-        <nav class="p-2 text-[white] bungee-spice-regular text-center "> Webserv Dashboard</nav>
+        <nav class="p-2 text-[#7580d3] bungee-spice-regular text-center mt-[4rem]"> Webserv Dashboard</nav>
 
 
-        <p class="p-2 text-[#d2d2d2] font-extralight text-center "> A simple web
+        <p class="p-2 text-[#d2d2d2] font-extralight text-center mt-[4rem]"> A simple web
             server
-            written in C++ that serves static files.<br> built by Ahmed ghounami, mehdi kibous, and hamza boudar.
-        </p>
+            written in C++ that implements the HTTP/1.1 protocol. <br>The project is a great opportunity to learn about
+            the inner workings of web
+            servers <br>and how they handle requests and responses.</p>
+        <h1 class="p-2 text-[#d2d2d2] font-bold text-[1.3rem] text-center mt-[4rem]"> team members:</h1>
         <div class="imges gap-2  flex justify-center items-center]">
-            <a class="img1 img w-[6rem] h-[6rem] border border-[#9d99a0] rounded-[50%]"
+
+            <a class="img1 img w-[6rem] h-[6rem] border border-[#9d99a0] rounded-[50%] transition duration-300 ease-in-out hover:scale-105"
                 href="https://profile.intra.42.fr/users/aghounam"> </a>
-            <a class="img2 img w-[6rem] h-[6rem] border border-[#9d99a0] rounded-[50%]"
+            <a class="img2 img w-[6rem] h-[6rem] border border-[#9d99a0] rounded-[50%] transition duration-300 ease-in-out hover:scale-105"
                 href="https://profile.intra.42.fr/users/mkibous"> </a>
-            <a class="img3 img w-[6rem] h-[6rem] border border-[#9d99a0] rounded-[50%]"
+            <a class="img3 img w-[6rem] h-[6rem] border border-[#9d99a0] rounded-[50%] transition duration-300 ease-in-out hover:scale-105"
                 href="https://profile.intra.42.fr/users/hboudar"> </a>
         </div>
 
-        <div class="flex gap-4 justify-center mt-4">
-
-            <div class="text-white flex flex-col justify-start items-start border border-[#ababab] p-4 rounded-2xl w-[300px] min-h-[200px]">
-              <h1 class="mb-2 font-semibold">⚙️Tech Stack</h1>
-              <ul class="list-disc pl-4">
-                <li>C++</li>
-                <li>HTTP/1.1 with GET, POST, DELETE methods</li>
-                <li>CGI (PHP, Python)</li>
-                <li>Session management & cookies</li>
-              </ul>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-[4rem] px-4">
+            <!-- Tech Stack Card -->
+            <div
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105 ">
+                <h1 class="mb-3 font-bold text-lg text-blue-400">⚙️ Tech Stack:</h1>
+                <ul class="list-disc list-inside text-gray-300 space-y-1">
+                    <li>C++</li>
+                    <li>HTTP/1.1 with GET, POST, DELETE methods</li>
+                    <li>CGI (PHP, Python)</li>
+                    <li>Session management & cookies</li>
+                </ul>
             </div>
-          
-            <div class="text-white flex flex-col justify-start items-start border border-[#ababab] p-4 rounded-2xl w-[300px] min-h-[200px]">
-              <h1 class="mb-2 font-semibold">Endpoints Tests</h1>
-              <select class="bg-[#0f0f0f] text-white border border-[#ababab] p-2 rounded-2xl w-full bg-inherit" >
-                <option value=""> choose an option</option>
-                <option value="GET">GET</option>
-                <option value="POST" id="#upload.html">POST</option>
-                <option value="DELETE">DELETE</option>
-            </select>
-            <a href="upload.html">upload</a>
-              <input type="text" class="bg-[#0f0f0f] text-white border border-[#ababab] p-2 rounded-2xl w-full bg-inherit mt-2" placeholder="Enter URL">
-              <button class="bg-[#125d5d] text-white border border-[#ffffff] p-2 rounded-3xl w-[8rem] self-center  mt-2">submit</button>
-            </div>
-          
-          </div>
-        <div class="flex gap-4 justify-center mt-4">
 
-           
-          
-          </div>
-          
+            <!-- Features Card -->
+            <div
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105">
+                <h1 class="mb-3 font-bold text-lg text-green-400">🧰 Features:</h1>
+                <ul class="list-disc list-inside text-gray-300 space-y-1">
+                    <li>File upload & download</li>
+                    <li>File deletion</li>
+                    <li>Directory listing</li>
+                    <li>Custom error pages</li>
+                    <li>Session management</li>
+                    <li>CGI support (PHP, Python)</li>
+                </ul>
+            </div>
+            <!-- PHP FORM Card -->
+            <a href="php.html"
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105 no-underline  ">
+                <h1 class="mb-3 font-bold text-lg text-pink-400">🖥️ PHP FORM:</h1>
+                <p class="text-gray-300">A simple form to demonstrate CGI with PHP.</p>
+            </a>
+            <!-- Python FORM Card -->
+            <a href="python.html"
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105 no-underline ">
+                <h1 class="mb-3 font-bold text-lg text-teal-400">🐍 Python FORM:</h1>
+                <p class="text-gray-300">A simple form to demonstrate CGI with Python.</p>
+            </a>
+            <!-- File Upload Card -->
+            <a href="upload.html"
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105 no-underline ">
+                <h1 class="mb-3 font-bold text-lg text-pink-400">📤 File Upload:</h1>
+                <p class="text-gray-300">Upload files directly to the server through the web interface.</p>
+            </a>
+            <!-- File Upload Card with CGI PHP -->
+            <a href="upload_cgi.php"
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105 no-underline">
+                <h1 class="mb-3 font-bold text-lg text-teal-400">📤 File Upload (CGI):</h1>
+                <p class="text-gray-300">Upload files using CGI scripts for enhanced functionality.</p>
+            </a>
+            <!-- File Upload Card with CGI Python -->
+            <a href="upload_cgi_python.py"
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105 no-underline ">
+                <h1 class="mb-3 font-bold text-lg text-cyan-400">📤 File Upload (CGI Python):</h1>
+                <p class="text-gray-300">Upload files using CGI scripts in Python for enhanced functionality.</p>
+            </a>
+            <!-- File Deletion Card -->
+            <a href="delete.html"
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105 no-underline ">
+                <h1 class="mb-3 font-bold text-lg text-red-400">🗑️ File Deletion:</h1>
+                <p class="text-gray-300">Easily delete files from the server.</p>
+            </a>
+            <!-- Directory Listing Card -->
+            <a href="direc.html"
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105 no-underline">
+                <h1 class="mb-3 font-bold text-lg text-purple-400">📂 Directory Listing:</h1>
+                <p class="text-gray-300">View the contents of directories on the server.</p>
+            </a>
+            <!-- Custom Error Pages Card -->
+            <a href="../errors/404.html"
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105 no-underline ">
+                <h1 class="mb-3 font-bold text-lg text-orange-400">🚫 Custom Error Pages:</h1>
+                <p class="text-gray-300">Custom error pages for better user experience.</p>
+            </a>
+            <!-- 100 images Card -->
+            <a href="1000images.html"
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105 no-underline ">
+                <h1 class="mb-3 font-bold text-lg text-yellow-400">🖼️ 1000 Images:</h1>
+                <p class="text-gray-300">A collection of 100 images to demonstrate file handling.</p>
+            </a>
+            <!-- 30 videos Card -->
+            <a href="30videos.html"
+                class="text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl w-full max-w-[350px] shadow-lg hover:shadow-xl transition-transform duration-300 hover:scale-105 no-underline ">
+                <h1 class="mb-3 font-bold text-lg text-blue-400">📹 30 Videos:</h1>
+                <p class="text-gray-300">A collection of 100 videos to demonstrate file handling.</p>
+            </a>
+        </div>
+
 
     </main>
 </body>
+

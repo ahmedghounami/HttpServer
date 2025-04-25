@@ -1,70 +1,91 @@
 #include "../server.hpp"
 
-void FormData(client_info& client) {
+void OtherData(client_info &client, std::map<int, server_config> &server) {
+
   while (!client.data.empty()) {
-
-    client.pos = client.data.find(client.boundary + "\r\n");
-    if (client.pos != std::string::npos && client.ReadFlag == true) {
-      client.data = client.data.substr(client.pos);
-      if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
-        std::cerr << "breaking from loop : 'CRLF' found." << std::endl;
-        break;
-      }
-      NewFile(client);
+    if (client.ReadFlag == true) {
       client.ReadFlag = false;
-      if (client.data.empty()) {
-        std::cerr << "breaking from loop : data is empty." << std::endl;
-        break ;
-      }
-    }
-
-    client.pos = client.data.find("\r\n--" + client.boundary);
-    if (client.pos != std::string::npos) {
-      client.ReadFlag = true;
-      client.chunkData = client.data.substr(0, client.pos);
-      if (!client.chunkData.empty())
-        writeToFile(client.chunkData, client.file_fd);
-      client.data = client.data.substr(client.pos + 4);
-      client.pos = client.data.find(client.boundary + "--");
-      if (client.pos != std::string::npos && client.pos == 0) {
-        std::cerr << "end boundary found |" << client.data << "|" << std::endl;
-        close(client.file_fd);
-        client.file_fd = -42;
-        client.bodyTaken = true;
-        client.data.clear();
+      std::string filename;
+      if (client.isCgi)
+        filename = "www/forcgi";
+      else
+        filename = "www/RB-" + nameGenerator();
+      client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (client.file_fd == -1) {
+        std::cerr << "Error opening file" << std::endl;
         return ;
       }
-    } else if (!client.data.empty()) {
-      writeToFile(client.data, client.file_fd);
+      std::map<std::string, std::string>::iterator it = client.headers.find("content-length");
+      if (it != client.headers.end()) {
+        std::istringstream iss(it->second);
+        iss >> client.chunkSize;
+        std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
+      } else {
+        std::cerr << "content-length not found" << std::endl;
+        error_response(client, server[client.index_server], 411);//is it 411?
+        return ;
+      }
+    }
+    
+    //keep reading from client.data until we reach the content-length
+    if (client.chunkSize > 0) {
+      if (!client.data.empty())
+        writeToFile(client.data, client.file_fd);
+      client.chunkSize -= client.data.size();
+      std::cerr << "after reading chunkSize: " << client.chunkSize << std::endl;
+      client.data.clear();
+    }
+    if (client.chunkSize == 0) {
+      std::cerr << "data cleared." << std::endl;
+      client.bodyTaken = true;
       client.data.clear();
       return ;
     }
-
   }
-
 }
 
-void ChunkedOtherData(client_info& client) {
+void ChunkedOtherData(client_info& client, std::map<int, server_config> &server) {
+
+  if (client.isCgi) {
+    if (client.file_fd == -42) {
+      std::string fileName = "www/forcgi";
+      client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (client.file_fd == -1) {
+        std::cerr << "Error opening file" << std::endl;
+        error_response(client, server[client.index_server], 500);//is it 500?
+        return ;
+      }
+    }
+    if (client.data.find("0\r\n\r\n") != std::string::npos) {
+      std::cerr << "ending for cgi was found" << std::endl;
+      client.bodyTaken = true;
+    }
+    if (!client.data.empty())
+      writeToFile(client.data, client.file_fd);
+    client.data.clear();
+    return ;
+  }
 
   while (!client.data.empty()) {
 
-    if (client.ReadFlag ==  true) {//move this part to takeBodyType function
-      client.ReadFlag = false;
+    if (client.ReadFlag ==  true) {
       client.pos = client.data.find("\r\n");
       std::string ChunkSizeString = client.data.substr(0, client.pos);
       client.data = client.data.substr(client.pos + 2);
       std::istringstream iss(ChunkSizeString);
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
+      std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
       if (client.file_fd == -42) {
-        std::string fileName = "raw-binary_File." + client.ContentType.substr(client.ContentType.find("/") + 1);
-        std::cerr << "fileName: " << fileName << std::endl;
+        std::string fileName = "Chunked_RB." + client.ContentType.substr(client.ContentType.find("/") + 1);
         client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (client.file_fd == -1) {
           std::cerr << "Error opening file" << std::endl;
+          error_response(client, server[client.index_server], 500);//is it 500?
           return ;
         }
       }
+      client.ReadFlag = false;
     }
 
     if (client.chunkSize > 0) {
@@ -81,32 +102,33 @@ void ChunkedOtherData(client_info& client) {
         client.chunkSize = 0;
         client.ReadFlag = true;
 
-        client.pos = client.data.find("0\r\n");
-        if (client.pos != std::string::npos) {
-          std::cerr << "end of Raw data |" << client.data << "|" << std::endl;
-          close(client.file_fd);
-          client.file_fd = -42;
+        if (client.data.find("0\r\n\r\n") != std::string::npos && client.data.size() <= 5) {
+          std::cerr << "the ending was found of Raw data |" << client.data << "|" << std::endl;
+          close(client.file_fd), client.file_fd = -42;
           client.bodyTaken = true;
           client.data.clear();
-        std::cerr << "data cleared." << std::endl;  
         }
       }
     }
   }
 }
 
-void ChunkedFormData(client_info& client) {
+void ChunkedFormData(client_info& client, std::map<int, server_config> &server) {
+  
+  // if (handlepathinfo(client)) {
+  //   if (client.data.find("0\r\n\r\n") != std::string::npos)
+  //     client.bodyTaken = true;
+      
+  // }
 
   while (!client.data.empty()) {
 
     client.pos = client.data.find(client.boundary + "\r\n");
-    if (client.pos != std::string::npos && client.ReadFlag == true) {
+    if (client.pos != std::string::npos && client.pos <= 10 && client.ReadFlag == true) {//attention here
       client.data = client.data.substr(client.pos);
-      if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
-        std::cerr << "breaking from loop." << std::endl;
+      if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos)
         break;
-      }
-      NewFileChunked(client);
+      NewFile(client, server);
       if (client.data.empty())
         break ;
     }
@@ -119,8 +141,11 @@ void ChunkedFormData(client_info& client) {
       std::istringstream iss(ChunkSizeString);
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
-      if (client.chunkSize == 0) {
-        std::cerr << "end of form data" << std::endl;
+      // std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
+      if (client.data.find(client.boundary + "\r\n") == std::string::npos
+          && client.data.find(client.boundary + "--") != std::string::npos
+          && client.data.size() <= 65) {
+        std::cerr << "data ended |" << client.data << "|" << std::endl;
         client.bodyTaken = true;
         close(client.file_fd);
         return ;
@@ -140,14 +165,12 @@ void ChunkedFormData(client_info& client) {
         client.ReadFlag = true;
         client.chunkSize = 0;
 
-        client.pos = client.data.find(client.boundary + "--");
-        if (client.pos != std::string::npos && client.data.find(client.boundary + "\r\n") == std::string::npos) {
-          std::cerr << "end boundary found |" << client.data << "|" << std::endl;
+        if (client.data.find(client.boundary + "--") != std::string::npos && client.data.size() <= 69) {
+          std::cerr << "clean ending |" << client.data << "|" << std::endl;
           close(client.file_fd);
           client.file_fd = -42;
           client.bodyTaken = true;
           client.data.clear();
-          
           return ;
         }
       }
@@ -155,52 +178,52 @@ void ChunkedFormData(client_info& client) {
   }
 }
 
-bool takeBodyType(client_info& client, server_config& server_index) {
+void FormData(client_info& client, std::map<int, server_config> &server) {
 
-  if (client.method.empty() || !client.headersTaken || client.bodyTypeTaken)
-    return true;
+  // if (handlepathinfo(client, server) == true) {
+  //   if (client.data.find("0\r\n\r\n") != std::string::npos)
+  //     client.bodyTaken = true;
+  //   //3amer lfile
+  // }
+  while (!client.data.empty()) {
 
-  std::map<std::string, std::string>::iterator it = client.headers.find("transfer-encoding");
-  if (it != client.headers.end() && it->second == "chunked") {
-    it = client.headers.find("content-type");
-    if (it != client.headers.end()) {
-      client.ContentType = it->second;
-      if (client.ContentType.find("multipart/form-data") != std::string::npos) {
-        client.boundary = getBoundary(client.ContentType);
-        if (client.boundary.empty()) {
-          client.boundary.clear();
-          error_response(client, server_index, 400); // 500
-          return false;
-        }
-        client.bodyTypeTaken = 1;// formDataChunked(client);
-      } else {
-        client.bodyTypeTaken = 2;// otherDataChunked(client);
+    client.pos = client.data.find(client.boundary + "\r\n");
+    if (client.pos != std::string::npos && client.ReadFlag == true) {
+      if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
+        std::cerr << "'CRLF' found." << std::endl;
+        break;
       }
-    } else {
-      error_response(client, server_index, 400); // 500
-      return false;
-    }
-  } else {
-    it = client.headers.find("content-type");
-    if (it != client.headers.end()) {
-      client.ContentType = it->second;
-      if (client.ContentType.find("multipart/form-data") != std::string::npos) {
-        client.boundary = getBoundary(client.ContentType);
-        if (client.boundary.empty()) {
-          client.boundary.clear();
-          error_response(client, server_index, 400); // 500
-          return false;
-        }
-        client.bodyTypeTaken = 3;// formData(client);
-
-      } else {
-        client.bodyTypeTaken = 4;// otherData(client);
+      NewFile(client, server);
+      client.ReadFlag = false;
+      if (client.data.empty()) {
+        std::cerr << "data is empty." << std::endl;
+        break ;
       }
-    } else {
-      error_response(client, server_index, 400); // 500
-      return false;
     }
+
+    client.pos = client.data.find("\r\n" + client.boundary);
+    if (client.pos != std::string::npos) {
+      client.ReadFlag = true;
+      client.chunkData = client.data.substr(0, client.pos);
+      if (!client.chunkData.empty())
+        writeToFile(client.chunkData, client.file_fd);
+      client.data = client.data.substr(client.pos + 2);
+
+      
+      client.pos = client.data.find(client.boundary + "--");
+      if (client.pos != std::string::npos && client.pos == 0) {
+        std::cerr << "end boundary found |" << client.data << "|" << std::endl;
+        close(client.file_fd);
+        client.file_fd = -42;
+        client.bodyTaken = true;
+        client.data.clear();
+        return ;
+      }
+    } else if (!client.data.empty()) {
+      writeToFile(client.data, client.file_fd);
+      client.data.clear();
+      return ;
+    }
+
   }
-  return true;
 }
-

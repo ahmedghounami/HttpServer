@@ -105,5 +105,6 @@ void post_success(client_info &client, std::string body)
     client.response += body;
     if (client.uri != "/")
         client.isGet = true;
+    std::cout << "------------------------------------POST SUCCESS------------------------------------" << std::endl;
 }
 

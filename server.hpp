@@ -21,7 +21,7 @@
 #include <arpa/inet.h>
 #include <dirent.h>
 
-#define READ_BUFFER_SIZE 10000
+#define READ_BUFFER_SIZE 100000
 struct location
 {
     std::string location_index;
@@ -69,6 +69,7 @@ struct client_info
     int bodyTypeTaken;//flag
     size_t chunkSize, pos;
     int index_server;
+    bool isCgi;
     bool ReadFlag;
     bool autoindex;
     bool ReadSize;
@@ -76,6 +77,9 @@ struct client_info
     bool bodyTaken;
     bool bodyReached;
     bool headersTaken;
+    std::map<std::string, std::string>  MimeTypeMap;
+
+    bool file_opened;
 
     std::string name, filename, contentTypeform;
     std::string data;
@@ -89,6 +93,7 @@ struct client_info
     bool datafinished;
     int error_code;
     std::string response;
+    std::string cgi_output;
     double bytes_sent;
     bool isGet;
   time_t last_time;
@@ -137,39 +142,26 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 
 //Parsing
-void parse_chunk(client_info &client, std::map<int, server_config> &server);
+void ParseChunk(client_info &client, std::map<int, server_config> &server);
+void FormData(client_info& client, std::map<int, server_config> &server);// Multipart/form-data
+void OtherData(client_info &client, std::map<int, server_config> &server);// Raw/Binary data
+void ChunkedFormData(client_info &client, std::map<int, server_config> &server);// Chunked data -> Multipart/form-data
+void ChunkedOtherData(client_info &client, std::map<int, server_config> &server);// Chunked data -> Raw/Binary data
 
-void FormData(client_info& client);//         Raw/Binary data
-void ChunkedFormData(client_info &client);//  Chunked data -> Multipart/form-data
-void ChunkedOtherData(client_info &client);// Chunked data -> Raw/Binary data
-bool request_line(client_info &client, std::map<int, server_config> &server);
-bool headers(client_info &client);
-bool takeBodyType(client_info& client, server_config& server);
-void ChunkedFormData(client_info &client);//for chunked data / multipart/form-data
-void ChunkedOtherData(client_info &client);//for chunked data / other data
-void NewFile(client_info &client);
-void ParseContentDisposition(client_info& client);
-void ParseContentType(client_info& client);
-
-//handling methods
-void handleGetRequest(client_info &client, std::map<int, server_config> &server);
-void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
-// void handlePostRequest(client_info &client, std::map<int, server_config> &server);
-
-// parsing utils
-bool parseRequestPath(client_info& client);
+//Parsing Utils
 std::string trim(const std::string &str);
 bool isMultiValueHeader(const std::string &header);
 bool isValidHeaderKey(const std::string &key);
 bool isValidHeaderValue(const std::string &value);
 std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
-bool isValidContentLength(const std::string &lengthStr);
 void writeToFile(std::string &body, int fd);
-void NewFileChunked(client_info &client);
-void NewFile(client_info &client);
-void ParseContentDisposition(client_info& client);
-void ParseContentType(client_info& client);
+void NewFile(client_info &client, std::map<int, server_config> &server);
+std::string nameGenerator();
+
+//handling methods
+void handleGetRequest(client_info &client, std::map<int, server_config> &server);
+void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
 
 //find which server config to use returns the server index
 int findMatchingServer(client_info &client, std::map<int, server_config> &server);
@@ -190,4 +182,8 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server);
 
 // redirect
 void redirect(client_info &client, std::pair<std::string, std::string> &redirect);
+
+
+// handle path info
 bool handlepathinfo(client_info &client);
+void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path);
