@@ -166,11 +166,11 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 		error_response(client, server[client.index_server], 400); // 500
 		return false;											  // respond and clear client;
 	}
-	if (check_autoindex(client, server) == false)
-	{
-		std::cerr << "im in hte check_autoindex" << std::endl;
-		return false; // respond and clear client;
-	}
+	// if (check_autoindex(client, server) == false)
+	// {
+	// 	std::cerr << "im in hte check_autoindex" << std::endl;
+	// 	return false; // respond and clear client;
+	// }
 
 	// std::map<std::string, std::string>::iterator it;
 	// for (it = client.headers.begin(); it != client.headers.end(); ++it)
@@ -263,8 +263,27 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 	if (client.bodyTaken == true)
 	{
 		if (client.isCgi == true) {
-			std::cerr << "it is cgi : ana dayr exit f ParsChunk mhm nta hna dir shi funciton ola khdem hna nit" << std::endl;
-			exit(0);// l file li fih data smito : www/forcgi o fd dyalo kayn f client.file_fd
+			// std::cout << "handle post cgi" << std::endl;
+			// std::ifstream file("www/forcgi");
+			// if (!file.is_open()) {
+			// 	std::cerr << "Error opening file" << std::endl;
+			// 	return;
+			// }
+			// std::string line;
+			// while (std::getline(file, line)) {
+			// 	std::cout << line << std::endl;
+			// }
+			// file.close();
+			// // std::remove("www/forcgi");
+			// std::cerr << "cgi started-------------------------------------------" << std::endl;
+			// std::cerr << "client.post_cgi_filename: " << client.post_cgi_filename << std::endl;
+			// exit(0);
+			handleCgi(client, server, client.uri);
+			// if(client.datafinished)
+				// std::remove(client.post_cgi_filename.c_str());
+			std::cerr << "cgi finished-------------------------------------------" << std::endl;
+			return;
+			// exit(0);// l file li fih data smito : www/forcgi o fd dyalo kayn f client.file_fd
 			//test raw o lbinary 'form data baqi kanqadha'
 		}
 		std::string body = "<html><body><h1>File uploaded successfully!</h1></body></html>";

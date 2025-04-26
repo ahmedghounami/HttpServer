@@ -12,6 +12,7 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
         error_response(client, server[client.index_server], 500);//server error
         return ;
       }
+      client.post_cgi_filename = filename;
       std::map<std::string, std::string>::iterator it = client.headers.find("content-length");
       if (it != client.headers.end()) {
         std::istringstream iss(it->second);
@@ -59,6 +60,7 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
         error_response(client, server[client.index_server], 500);// server error
         return ;
       }
+      client.post_cgi_filename = fileName;
     }
     if (client.data.find("0\r\n\r\n") != std::string::npos) {
       std::cerr << "ending for cgi was found" << std::endl;
@@ -82,6 +84,7 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
           error_response(client, server[client.index_server], 500);//is it 500?
           return ;
         }
+      client.post_cgi_filename = fileName;
       }
       client.pos = client.data.find("\r\n");//check wether it is found or not
       std::string ChunkSizeString = client.data.substr(0, client.pos);
@@ -137,6 +140,7 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
         error_response(client, server[client.index_server], 500);//is it 500?
         return ;
       }
+      client.post_cgi_filename = fileName;
     }
     if (client.data.find(client.boundary + "--") != std::string::npos)
       client.bodyTaken = true;
@@ -225,6 +229,7 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
         error_response(client, server[client.index_server], 500);//is it 500?
         return ;
       }
+      client.post_cgi_filename = filename;
     }
     if (client.data.find(client.boundary + "--") != std::string::npos)
       client.bodyTaken = true;

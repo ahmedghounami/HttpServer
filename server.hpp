@@ -90,9 +90,11 @@ struct client_info
     bool datafinished;
     int error_code;
     std::string response;
+    std::string cgi_output;
     double bytes_sent;
     bool isGet;
     std::string upload_path;
+    std::string post_cgi_filename;
   time_t last_time;
 };
 
@@ -180,3 +182,4 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server);
 // redirect
 void redirect(client_info &client, std::pair<std::string, std::string> &redirect);
 bool handlepathinfo(client_info &client);
+void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path);
