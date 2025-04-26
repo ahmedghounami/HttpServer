@@ -96,7 +96,7 @@ std::string nameGenerator(std::string MimeType, std::string upload_path) {
   std::string name;
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   //if path is ending with "/" remove it (instead of removing it from the end of the string) don't add it
-  name = "tmp/file_";
+  name = "/tmp/file_";
   (void)upload_path;
   for (int i = 0; i < 5; ++i) {
     int index = rand() % (sizeof(charset) - 1);

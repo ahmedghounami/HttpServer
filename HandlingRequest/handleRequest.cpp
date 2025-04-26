@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/25 20:09:56 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/26 10:18:01 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,7 +187,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
     int fd;
     std::string body;
     std::string content_type = "";
-    char filename[] = "tmp/cgi_outputXXXXXX";
+    char filename[] = "/tmp/cgi_outputXXXXXX";
     bool already = false;
     int fdin ;
     // char filein[] = "cgi_inputXXXXXX";
@@ -253,6 +253,12 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         envStrings.push_back("REQUEST_METHOD=" + client.method);
         // envStrings.push_back("REQUEST_URI=" + client.uri);
         // envStrings.push_back("HTTP_USER_AGENT=" + client.headers["user-agent"]);
+        if(client.headers["authorization"].find("Basic") != std::string::npos)
+            envStrings.push_back("AUTH_TYPE=Basic");
+        else if (client.headers["authorization"].find("Digest") != std::string::npos)
+            envStrings.push_back("AUTH_TYPE=Digest");
+        else
+            envStrings.push_back("AUTH_TYPE=");
         envStrings.push_back("SCRIPT_NAME=" + client.uri);
         envStrings.push_back("PATH_INFO=" + client.path_info);
         envStrings.push_back("QUERY_STRING=" + client.query);
@@ -263,6 +269,10 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         envStrings.push_back("SERVER_PROTOCOL=" + client.version);
         envStrings.push_back("GATEWAY_INTERFACE=CGI/1.1");
         envStrings.push_back("REMOTE_ADDR=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
+        envStrings.push_back("REMOTE_HOST=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
+        envStrings.push_back("REMOTE_IDENT=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
+        envStrings.push_back("REMOTE_USER=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
+        envStrings.push_back("SERVER_SOFTWARE=webserv/1.0");
         envStrings.push_back("PATH_TRANSLATED=" + getcorectserver_path(client, server) + client.uri);
         // if(client.headers["cookie"] != "")
             // envStrings.push_back("HTTP_COOKIE=" + client.headers["cookie"]);
