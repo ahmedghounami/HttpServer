@@ -55,19 +55,19 @@ struct server_config
 
 class server;
 
-struct FormPart {
-    std::string name;
-    std::string filename;
-    std::string contentType;
-    std::string data;
-};
+// struct FormPart {
+//     std::string name;
+//     std::string filename;
+//     std::string contentType;
+//     std::string data;
+// };
 
 struct client_info
 {
     int file_fd;
     int poll_status;
     int bodyTypeTaken;//flag
-    size_t chunkSize, pos;
+    size_t FileSize, chunkSize, pos;
     int index_server;
     bool isCgi;
     bool ReadFlag;
@@ -76,15 +76,13 @@ struct client_info
     bool bodyTaken;
     bool bodyReached;
     bool headersTaken;
-    std::map<std::string, std::string>  MimeTypeMap;
 
     bool file_opened;
-
     std::string name, filename, contentTypeform;
     std::string data;
     std::string boundary;
     std::string chunkData;
-    std::vector<FormPart> formParts;
+    // std::vector<FormPart> formParts;
     std::string ContentType;
     std::string method, uri, version, path_info;
     std::string query;

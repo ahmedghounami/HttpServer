@@ -8,22 +8,26 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
       std::string filename = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
-        std::cerr << "Error opening file" << std::endl;
+        error_response(client, server[client.index_server], 500);//server error
         return ;
       }
       std::map<std::string, std::string>::iterator it = client.headers.find("content-length");
       if (it != client.headers.end()) {
         std::istringstream iss(it->second);
         iss >> client.chunkSize;
-        std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
+        if (client.chunkSize > server[client.index_server].max_body_size) {
+          std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
+          std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
+          error_response(client, server[client.index_server], 413);//payload too large
+          return ;
+        }
       } else {
         std::cerr << "content-length not found" << std::endl;
-        error_response(client, server[client.index_server], 411);//is it 411?
+        error_response(client, server[client.index_server], 411); //length required
         return ;
       }
     }
     
-    //keep reading from client.data until we reach the content-length
     if (client.chunkSize > 0) {
       if (!client.data.empty())
         writeToFile(client.data, client.file_fd);
@@ -38,6 +42,7 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
       return ;
     }
   }
+
 }
 
 void ChunkedOtherData(client_info& client, std::map<int, server_config> &server) {
@@ -47,8 +52,7 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
       std::string fileName = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
-        std::cerr << "Error opening file" << std::endl;
-        error_response(client, server[client.index_server], 500);//is it 500?
+        error_response(client, server[client.index_server], 500);// server error
         return ;
       }
     }
@@ -71,12 +75,17 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
       std::istringstream iss(ChunkSizeString);
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
-      std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
+      client.FileSize += client.chunkSize;
+      if (client.FileSize > server[client.index_server].max_body_size) {
+        std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
+        std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        error_response(client, server[client.index_server], 413);//payload too large
+        return ;
+      }
       if (client.file_fd == -42) {
         std::string fileName = nameGenerator(client.ContentType, client.upload_path);
         client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (client.file_fd == -1) {
-          std::cerr << "Error opening file" << std::endl;
           error_response(client, server[client.index_server], 500);//is it 500?
           return ;
         }
@@ -117,7 +126,6 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
       std::cerr << "fileName: " << fileName << std::endl;
       client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
-        std::cerr << "Error opening file" << std::endl;
         error_response(client, server[client.index_server], 500);//is it 500?
         return ;
       }
@@ -150,7 +158,13 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
       std::istringstream iss(ChunkSizeString);
       client.chunkSize = 0;
       iss >> std::hex >> client.chunkSize;
-      // std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
+      client.FileSize += client.chunkSize;
+      if (client.FileSize > server[client.index_server].max_body_size) {
+        std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
+        std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        error_response(client, server[client.index_server], 413);//payload too large
+        return ;
+      }
       if (client.data.find(client.boundary + "\r\n") == std::string::npos
           && client.data.find(client.boundary + "--") != std::string::npos
           && client.data.size() <= 65) {
@@ -212,13 +226,13 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
     client.pos = client.data.find(client.boundary + "\r\n");
     if (client.pos != std::string::npos && client.ReadFlag == true) {
       if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
-        std::cerr << "'CRLF' found." << std::endl;
+        // std::cerr << "'CRLF' found." << std::endl;
         break;
       }
       NewFile(client, server);
       client.ReadFlag = false;
       if (client.data.empty()) {
-        std::cerr << "data is empty." << std::endl;
+        // std::cerr << "data is empty." << std::endl;
         break ;
       }
     }
@@ -227,10 +241,16 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
     if (client.pos != std::string::npos) {
       client.ReadFlag = true;
       client.chunkData = client.data.substr(0, client.pos);
+      client.FileSize += client.chunkData.size();
+      if (client.FileSize > server[client.index_server].max_body_size) {
+        std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
+        std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        error_response(client, server[client.index_server], 413);//payload too large
+        return ;
+      }
       if (!client.chunkData.empty())
         writeToFile(client.chunkData, client.file_fd);
       client.data = client.data.substr(client.pos + 2);
-
       
       client.pos = client.data.find(client.boundary + "--");
       if (client.pos != std::string::npos && client.pos == 0) {
@@ -242,6 +262,13 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
         return ;
       }
     } else if (!client.data.empty()) {
+      client.FileSize += client.data.size();
+      if (client.FileSize > server[client.index_server].max_body_size) {
+        std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
+        std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        error_response(client, server[client.index_server], 413);//payload too large
+        return ;
+      }
       writeToFile(client.data, client.file_fd);
       client.data.clear();
       return ;

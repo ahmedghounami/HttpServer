@@ -180,6 +180,7 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	client.ReadFlag = true;
 	client.bodyTaken = false;
 	client.bodyTypeTaken = 0;
+	client.FileSize = 0;
 	client.headersTaken = true;
 	client.file_fd = -42;
 	client.isCgi = handlepathinfo(client);
@@ -278,6 +279,5 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 	}
 }
 /*notes
-	check the content length in config file with the content length in header
 	close file descriptor
 */
