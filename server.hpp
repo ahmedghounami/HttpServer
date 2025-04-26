@@ -156,7 +156,7 @@ std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 void writeToFile(std::string &body, int fd);
 bool NewFile(client_info &client, std::map<int, server_config> &server);
-std::string nameGenerator(std::string MimeType, std::string path);
+std::string nameGenerator(std::string MimeType, std::string upload_path, bool isCgi);
 
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);

@@ -50,7 +50,7 @@ void writeToFile(std::string &body, int fd) {
   }
 }
 
-std::string nameGenerator(std::string MimeType, std::string upload_path) {
+std::string nameGenerator(std::string MimeType, std::string upload_path, bool isCgi) {
 
   std::cerr << "-------------nameGenerator----------------" << std::endl;
   std::map<std::string, std::string> MimeTypeMap;
@@ -97,7 +97,8 @@ std::string nameGenerator(std::string MimeType, std::string upload_path) {
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   //if path is ending with "/" remove it (instead of removing it from the end of the string) don't add it
   name = "/tmp/file_";
-  (void)upload_path;
+  if (!isCgi)
+    name = upload_path + "/file_";
   for (int i = 0; i < 5; ++i) {
     int index = rand() % (sizeof(charset) - 1);
     name += charset[index];
@@ -122,26 +123,24 @@ static bool ParseContentDisposition(client_info& client, std::map<int, server_co
   if (client.pos == std::string::npos || client.pos != 0)
   {
     client.filename.clear();
-    client.filename = nameGenerator(client.contentTypeform, client.upload_path);
-    std::string filename = client.filename;
-    client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    client.filename = nameGenerator(client.contentTypeform, client.upload_path, client.isCgi);
+    client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (client.file_fd == -1) {
       error_response(client, server[client.index_server], 500);//is it 500?
-      return true;//here we need to exit the client
+      return true;
     }
-      client.post_cgi_filename = filename;
     client.data = client.data.substr(2 + (client.pos != 0 && client.bodyTypeTaken != 3) * 2, client.data.size());
   } else if (client.pos != std::string::npos) {
     client.data = client.data.substr(client.pos + 10, client.data.size());
     client.filename = client.upload_path + "/" + client.data.substr(0, client.data.find("\""));
-    std::cerr << "filename: " << client.filename << std::endl;
     client.data = client.data.substr(client.data.find("\"") + 3 , client.data.size());
     client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (client.file_fd == -1) {
       error_response(client, server[client.index_server], 500);//is it 500?
-      return true;//here we need to exit the client
+      return true;
     }
   }
+  client.post_cgi_filename = client.filename;
   return false;
 }
 

@@ -6,13 +6,13 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
   while (!client.data.empty()) {
     if (client.ReadFlag == true) {
       client.ReadFlag = false;
-      std::string filename = nameGenerator(client.ContentType, client.upload_path);
-      client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      client.filename = nameGenerator(client.ContentType, client.upload_path, client.isCgi);
+      client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         error_response(client, server[client.index_server], 500);//server error
         return ;
       }
-      client.post_cgi_filename = filename;
+      client.post_cgi_filename = client.filename;
       std::map<std::string, std::string>::iterator it = client.headers.find("content-length");
       if (it != client.headers.end()) {
         std::istringstream iss(it->second);
@@ -54,13 +54,13 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
 
   if (client.isCgi) {
     if (client.file_fd == -42) {
-      std::string fileName = nameGenerator(client.ContentType, client.upload_path);
-      client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      client.filename = nameGenerator(client.ContentType, client.upload_path, client.isCgi);
+      client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         error_response(client, server[client.index_server], 500);// server error
         return ;
       }
-      client.post_cgi_filename = fileName;
+      client.post_cgi_filename = client.filename;
     }
     if (client.data.find("0\r\n\r\n") != std::string::npos) {
       std::cerr << "ending for cgi was found" << std::endl;
@@ -78,13 +78,13 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
 
     if (client.ReadFlag ==  true) {
       if (client.file_fd == -42) {
-        std::string fileName = nameGenerator(client.ContentType, client.upload_path);
-        client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        client.filename = nameGenerator(client.ContentType, client.upload_path, client.isCgi);
+        client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (client.file_fd == -1) {
           error_response(client, server[client.index_server], 500);//is it 500?
           return ;
         }
-      client.post_cgi_filename = fileName;
+      client.post_cgi_filename = client.filename;
       }
       client.pos = client.data.find("\r\n");//check wether it is found or not
       std::string ChunkSizeString = client.data.substr(0, client.pos);
@@ -133,14 +133,13 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
   
   if (client.isCgi) {
     if (client.file_fd == -42) {
-      std::string fileName = nameGenerator(client.ContentType, client.upload_path);
-      std::cerr << "fileName: " << fileName << std::endl;
-      client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      client.filename = nameGenerator(client.ContentType, client.upload_path, client.isCgi);
+      client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         error_response(client, server[client.index_server], 500);//is it 500?
         return ;
       }
-      client.post_cgi_filename = fileName;
+      client.post_cgi_filename = client.filename;
     }
     if (client.data.find(client.boundary + "--") != std::string::npos)
       client.bodyTaken = true;
@@ -223,13 +222,13 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
 
   if (client.isCgi) {
     if (client.file_fd == -42) {
-      std::string filename = nameGenerator(client.ContentType, client.upload_path);
-      client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      client.filename = nameGenerator(client.ContentType, client.upload_path, client.isCgi);
+      client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
         error_response(client, server[client.index_server], 500);//is it 500?
         return ;
       }
-      client.post_cgi_filename = filename;
+      client.post_cgi_filename = client.filename;
     }
     if (client.data.find(client.boundary + "--") != std::string::npos)
       client.bodyTaken = true;
