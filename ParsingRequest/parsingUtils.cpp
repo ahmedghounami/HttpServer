@@ -50,7 +50,7 @@ void writeToFile(std::string &body, int fd) {
   }
 }
 
-std::string nameGenerator(std::string MimeType, std::string upload_path) {
+std::string nameGenerator(std::string MimeType, std::string upload_path, bool isCgi) {
 
   std::cerr << "-------------nameGenerator----------------" << std::endl;
   std::map<std::string, std::string> MimeTypeMap;
@@ -97,7 +97,8 @@ std::string nameGenerator(std::string MimeType, std::string upload_path) {
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   //if path is ending with "/" remove it (instead of removing it from the end of the string) don't add it
   name = "/tmp/file_";
-  (void)upload_path;
+  if (!isCgi)
+    name = upload_path + "/file_";
   for (int i = 0; i < 5; ++i) {
     int index = rand() % (sizeof(charset) - 1);
     name += charset[index];
@@ -110,43 +111,37 @@ std::string nameGenerator(std::string MimeType, std::string upload_path) {
   return name + ".bin";
 }
 
-static void ParseContentDisposition(client_info& client, std::map<int, server_config>& server) {
+static bool ParseContentDisposition(client_info& client, std::map<int, server_config>& server) {
   client.pos = client.data.find("name=\"");
   client.data = client.data.substr(client.pos + 6, client.data.size());//problem
-  std::string sub = client.data.substr(0, client.data.find("\""));
+  client.name = client.data.substr(0, client.data.find("\""));
   client.data = client.data.substr(client.data.find("\"") + 3 , client.data.size());
-  client.name = sub;
   close(client.file_fd);
   client.file_fd = -42;
 
   client.pos = client.data.find("filename=\"");
   if (client.pos == std::string::npos || client.pos != 0)
   {
-    close(client.file_fd);
     client.filename.clear();
-    client.filename = nameGenerator(client.contentTypeform, client.upload_path);
-    std::string filename = client.filename;
-    client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    client.filename = nameGenerator(client.contentTypeform, client.upload_path, client.isCgi);
+    client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (client.file_fd == -1) {
-      std::cerr << "Error opening file" << std::endl;
-      return ;//
       error_response(client, server[client.index_server], 500);//is it 500?
+      return true;
     }
-      client.post_cgi_filename = filename;
     client.data = client.data.substr(2 + (client.pos != 0 && client.bodyTypeTaken != 3) * 2, client.data.size());
   } else if (client.pos != std::string::npos) {
-    close(client.file_fd); 
     client.data = client.data.substr(client.pos + 10, client.data.size());
     client.filename = client.upload_path + "/" + client.data.substr(0, client.data.find("\""));
-    std::cerr << "filename: " << client.filename << std::endl;
     client.data = client.data.substr(client.data.find("\"") + 3 , client.data.size());
     client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (client.file_fd == -1) {
-      std::cerr << "Error opening file" << std::endl;
-      return ;//
       error_response(client, server[client.index_server], 500);//is it 500?
+      return true;
     }
   }
+  client.post_cgi_filename = client.filename;
+  return false;
 }
 
 static void ParseContentType(client_info& client) {
@@ -161,18 +156,20 @@ static void ParseContentType(client_info& client) {
     client.data = client.data.substr(client.data.find("\r\n") + 4, client.data.size());
 }
 
-void NewFile(client_info &client, std::map<int, server_config> &server) {
+bool NewFile(client_info &client, std::map<int, server_config> &server) {
   client.chunkData = "", client.chunkSize = 0;// close(client.file_fd);
 
   client.data = client.data.substr(client.boundary.size() + 2);
   client.pos = client.data.find("Content-Disposition: form-data;");
   if (client.pos != std::string::npos && client.pos == 0) {
     client.data = client.data.substr(client.pos + 32, client.data.size());
-    ParseContentDisposition(client, server);
+    if (ParseContentDisposition(client, server))
+      return true; 
   }
 
   client.pos = client.data.find("Content-Type:");
   if (client.pos != std::string::npos && client.pos == 0) {
     ParseContentType(client);
   }
+  return false;
 }
