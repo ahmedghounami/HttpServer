@@ -168,6 +168,12 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 			found = 1;
 			if (client.method == "GET")
 			{
+				if (std::find(it->second.allowed_methods.begin(), it->second.allowed_methods.end(), client.method) == it->second.allowed_methods.end())
+				{
+					std::cerr << "Error: method: not allowed: " << client.method << std::endl;
+					error_response(client, server[client.index_server], 405); // 405
+					return false; // respond and clear client;
+				}
 				if (it->second.redirect.first.empty() == true)
 				{
 					if (autoindex(client, it->second, server[client.index_server]) == false)
