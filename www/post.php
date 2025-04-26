@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             const reader = new FileReader();
 
             reader.onload = function(e) {
-                fetch(`http://localhost:9090/post_raw.php?filename=${encodeURIComponent(file.name)}`, {
+                fetch(`http://localhost:9090/post.php?filename=${encodeURIComponent(file.name)}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/octet-stream'
