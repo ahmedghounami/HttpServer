@@ -30,7 +30,8 @@ struct location
     std::vector<std::string> allowed_methods;
     bool autoindex;
     std::vector<std::string> cgi_extension;
-    std::string cgi_path;
+    std::string cgi_path_php;
+    std::string cgi_path_py;
     int cgi_timeout;
     std::pair<std::string, std::string> redirect;
     std::string upload_path;
