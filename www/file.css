@@ -1,0 +1,37 @@
+.bungee-spice-regular {
+  font-family: "Lilita One", sans-serif;
+  font-size: 3em;
+  font-weight: normal;
+}
+.bungee-spice-regular-btn {
+  font-family: "Lilita One", sans-serif;
+  font-size: 1.6em;
+  font-weight: normal;
+}
+
+.img{
+  background-size: cover;
+  background-position: top;
+  object-fit: cover;
+
+}
+
+.img1{
+
+  background-image: url("https://cdn.intra.42.fr/users/7ec5d8829b0f0d9e26713b331df85178/aghounam.JPG");
+}
+.img2{
+
+  background-image: url("https://cdn.intra.42.fr/users/97b3e0b26c46476b7e994dc8f3b9fb22/mkibous.jpg");
+}
+.img3{
+
+  background-image: url("https://cdn.intra.42.fr/users/692657feab9a885ceac0f646479b0ab7/hboudar.jpg");
+}
+
+.bg_img{
+  background-size: cover;
+  background-position: top;
+  object-fit: cover;
+  background-image: url("upload.png");
+}

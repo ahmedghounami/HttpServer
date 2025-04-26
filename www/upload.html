@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee+Spice&family=Lilita+One&display=swap" rel="stylesheet">
+    <link href="file.css" rel="stylesheet">
+</head>
+
+
+<body
+    class="bg-gradient-to-br flex flex-col text-white from-black via-[#02274a] to-[#021636]  h-[100vh] w-screen relative items-center justify-center ">
+    <h2 class="bungee-spice-regular absolute top-6">📤 File Upload</h2>
+    <main class=" p-5 flex flex-col relative justify-center items-center gap-4">
+    <div class="flex gap-6">
+        <p id="fileName" class="text-[#d2d2d2] font-extralight">No file selected</p>
+        <img src="" alt="upload icon"
+        class="hidden w-20 h-20 top-16 animate-bounce " id="uploadIcon">
+    </div>
+    <!-- File upload form -->
+    <form action="#" method="POST" enctype="multipart/form-data" class="flex flex-col gap-6 text-white border border-gray-700 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 rounded-2xl shadow-lg  ">
+        <label for="fileInput" class="bg_img hover:opacity-70 p-40 cursor-pointer hover:shadow-xl transition-transform duration-300"></label>
+        <input type="file" id="fileInput" class=" hidden" name="file" required>
+        <br><br>
+        <button type="submit" class="  bg-gradient-to-br from-[black] hover:scale-105 via-[#060b92] to-[#3a1bd2] bungee-spice-regular-btn p-2 rounded-full border border-[#3025ab] px-16 hover:shadow-xl transition-transform duration-300">Upload</button>
+    </form>
+</main>
+    <script>
+        // Get the file input and file name display elements
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('fileName');
+
+        // Event listener for file input change
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0]; // Get the selected file
+            if (file) {
+                fileNameDisplay.textContent = `Selected file: ${file.name}`; // Display the file name
+            } else {
+                fileNameDisplay.textContent = 'No file selected'; // If no file is selected
+            }
+            const uploadIcon = document.getElementById('uploadIcon');
+            uploadIcon.src = URL.createObjectURL(file); // Set the image source to the selected file
+            uploadIcon.classList.remove('hidden'); // Show the image
+        });
+    </script>
+
+</body>
+
+</html>
