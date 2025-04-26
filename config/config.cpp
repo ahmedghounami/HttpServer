@@ -1,5 +1,17 @@
 #include "../server.hpp"
 
+void tracing_uri(std::string &uri) {
+  std::string new_uri;
+  for (size_t i = 0; i < uri.size(); ++i) {
+    if (uri[i] == '/' && (i == 0 || uri[i - 1] != '/')) {
+      new_uri += '/';
+    } else if (uri[i] != '/') {
+      new_uri += uri[i];
+    }
+  }
+  uri = new_uri;
+}
+
 void server::parse_config(std::string config_file)
 {
 	int i = 0;
@@ -36,6 +48,7 @@ void server::parse_config(std::string config_file)
 			if (close != "{")
 				throw std::runtime_error("location block not opened");
 			stack.push("location");
+			tracing_uri(location_index);
 			servers[i].locations[location_index].location_index = location_index;
 			continue;
 		}
