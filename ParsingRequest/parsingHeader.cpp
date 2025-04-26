@@ -239,11 +239,6 @@ bool TakeBodyType(client_info& client, std::map<int, server_config>& server) {
 
 void ParseChunk(client_info &client, std::map<int, server_config> &server)
 {
-	// int fd = open("data.txt", O_WRONLY | O_APPEND | O_CREAT, 0644);
-	// write(fd, client.data.c_str(), client.data.size());
-	// client.data.clear();
-	// return;
-
 	if (RequestLine(client, server) == false || ParseHeaders(client, server) == false)
 		return;
 
@@ -264,7 +259,6 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 			FormData(client,server);
 		else if (client.bodyTypeTaken == 4)
 			OtherData(client, server);
-		// std::cerr << "config size :" << server[client.index_server].max_body_size << std::endl;
 	}
 	if (client.bodyTaken == true)
 	{

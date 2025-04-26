@@ -1,5 +1,6 @@
 #include "../server.hpp"
 
+//finished
 void OtherData(client_info &client, std::map<int, server_config> &server) {
 
   while (!client.data.empty()) {
@@ -16,6 +17,7 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
         std::istringstream iss(it->second);
         iss >> client.chunkSize;
         if (client.chunkSize > server[client.index_server].max_body_size) {
+          close(client.file_fd);
           std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
           std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
           error_response(client, server[client.index_server], 413);//payload too large
@@ -23,6 +25,7 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
         }
       } else {
         std::cerr << "content-length not found" << std::endl;
+        close(client.file_fd);
         error_response(client, server[client.index_server], 411); //length required
         return ;
       }
@@ -37,14 +40,15 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
     }
     if (client.chunkSize == 0) {
       std::cerr << "data cleared." << std::endl;
+      close(client.file_fd);
       client.bodyTaken = true;
       client.data.clear();
       return ;
     }
   }
-
 }
 
+//finished
 void ChunkedOtherData(client_info& client, std::map<int, server_config> &server) {
 
   if (client.isCgi) {
@@ -63,13 +67,23 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
     if (!client.data.empty())
       writeToFile(client.data, client.file_fd);
     client.data.clear();
+    if (client.bodyTaken == true)
+      close(client.file_fd);
     return ;
   }
 
   while (!client.data.empty()) {
 
     if (client.ReadFlag ==  true) {
-      client.pos = client.data.find("\r\n");
+      if (client.file_fd == -42) {
+        std::string fileName = nameGenerator(client.ContentType, client.upload_path);
+        client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (client.file_fd == -1) {
+          error_response(client, server[client.index_server], 500);//is it 500?
+          return ;
+        }
+      }
+      client.pos = client.data.find("\r\n");//check wether it is found or not
       std::string ChunkSizeString = client.data.substr(0, client.pos);
       client.data = client.data.substr(client.pos + 2);
       std::istringstream iss(ChunkSizeString);
@@ -79,16 +93,9 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
       if (client.FileSize > server[client.index_server].max_body_size) {
         std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
         std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        close(client.file_fd);
         error_response(client, server[client.index_server], 413);//payload too large
         return ;
-      }
-      if (client.file_fd == -42) {
-        std::string fileName = nameGenerator(client.ContentType, client.upload_path);
-        client.file_fd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (client.file_fd == -1) {
-          error_response(client, server[client.index_server], 500);//is it 500?
-          return ;
-        }
       }
       client.ReadFlag = false;
     }
@@ -109,7 +116,7 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
 
         if (client.data.find("0\r\n\r\n") != std::string::npos && client.data.size() <= 5) {
           std::cerr << "the ending was found of Raw data |" << client.data << "|" << std::endl;
-          close(client.file_fd), client.file_fd = -42;
+          close(client.file_fd);
           client.bodyTaken = true;
           client.data.clear();
         }
@@ -118,6 +125,7 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
   }
 }
 
+//finished
 void ChunkedFormData(client_info& client, std::map<int, server_config> &server) {
   
   if (client.isCgi) {
@@ -135,6 +143,8 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
     if (!client.data.empty())
       writeToFile(client.data, client.file_fd);
     client.data.clear();
+    if (client.bodyTaken == true)
+      close(client.file_fd);
     return ;
   }
 
@@ -145,7 +155,10 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
       client.data = client.data.substr(client.pos);
       if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos)
         break;
-      NewFile(client, server);
+      if (NewFile(client, server)) {
+        std::cerr << "NewFile failed." << std::endl;
+        return ;
+      }
       if (client.data.empty())
         break ;
     }
@@ -162,6 +175,7 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
       if (client.FileSize > server[client.index_server].max_body_size) {
         std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
         std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        close(client.file_fd);
         error_response(client, server[client.index_server], 413);//payload too large
         return ;
       }
@@ -191,7 +205,6 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
         if (client.data.find(client.boundary + "--") != std::string::npos && client.data.size() <= 69) {
           std::cerr << "clean ending |" << client.data << "|" << std::endl;
           close(client.file_fd);
-          client.file_fd = -42;
           client.bodyTaken = true;
           client.data.clear();
           return ;
@@ -201,6 +214,7 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
   }
 }
 
+//finished
 void FormData(client_info& client, std::map<int, server_config> &server) {
 
   if (client.isCgi) {
@@ -208,7 +222,6 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
       std::string filename = nameGenerator(client.ContentType, client.upload_path);
       client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (client.file_fd == -1) {
-        std::cerr << "Error opening file" << std::endl;
         error_response(client, server[client.index_server], 500);//is it 500?
         return ;
       }
@@ -218,6 +231,8 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
     if (!client.data.empty())
       writeToFile(client.data, client.file_fd);
     client.data.clear();
+    if (client.bodyTaken == true)
+      close(client.file_fd);
     return ;
   }
 
@@ -229,7 +244,10 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
         // std::cerr << "'CRLF' found." << std::endl;
         break;
       }
-      NewFile(client, server);
+      if (NewFile(client, server)) {
+        std::cerr << "NewFile failed." << std::endl;
+        return ;
+      }
       client.ReadFlag = false;
       if (client.data.empty()) {
         // std::cerr << "data is empty." << std::endl;
@@ -245,6 +263,7 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
       if (client.FileSize > server[client.index_server].max_body_size) {
         std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
         std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        close(client.file_fd);
         error_response(client, server[client.index_server], 413);//payload too large
         return ;
       }
@@ -256,7 +275,6 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
       if (client.pos != std::string::npos && client.pos == 0) {
         std::cerr << "end boundary found |" << client.data << "|" << std::endl;
         close(client.file_fd);
-        client.file_fd = -42;
         client.bodyTaken = true;
         client.data.clear();
         return ;
@@ -266,6 +284,7 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
       if (client.FileSize > server[client.index_server].max_body_size) {
         std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
         std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        close(client.file_fd);
         error_response(client, server[client.index_server], 413);//payload too large
         return ;
       }
