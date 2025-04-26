@@ -50,88 +50,126 @@ void writeToFile(std::string &body, int fd) {
   }
 }
 
-std::string nameGenerator() {
+std::string nameGenerator(std::string MimeType, std::string upload_path, bool isCgi) {
+
+  std::cerr << "-------------nameGenerator----------------" << std::endl;
+  std::map<std::string, std::string> MimeTypeMap;
+
+  MimeTypeMap["application/octet-stream"] = ".bin";
+  MimeTypeMap["application/json"] = ".json";
+  MimeTypeMap["application/xml"] = ".xml";
+  MimeTypeMap["application/zip"] = ".zip";
+  MimeTypeMap["application/gzip"] = ".gz";
+  MimeTypeMap["application/x-tar"] = ".tar";
+  MimeTypeMap["application/x-7z-compressed"] = ".7z";
+  MimeTypeMap["application/pdf"] = ".pdf";
+  MimeTypeMap["application/x-www-form-urlencoded"] = ".txt";
+  MimeTypeMap["application/x-bzip"] = ".bz";
+  MimeTypeMap["application/x-bzip2"] = ".bz2";
+  MimeTypeMap["application/x-rar-compressed"] = ".rar";
+  MimeTypeMap["application/x-msdownload"] = ".exe";
+  MimeTypeMap["application/vnd.ms-excel"] = ".xls";
+  MimeTypeMap["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] = ".xlsx";
+  MimeTypeMap["text/plain"] = ".txt";
+  MimeTypeMap["text/html"] = ".html";
+  MimeTypeMap["text/css"] = ".css";
+  MimeTypeMap["text/csv"] = ".csv";
+  MimeTypeMap["text/javascript"] = ".js";
+  MimeTypeMap["application/javascript"] = ".js";
+  MimeTypeMap["image/jpeg"] = ".jpg";
+  MimeTypeMap["image/png"] = ".png";
+  MimeTypeMap["image/gif"] = ".gif";
+  MimeTypeMap["image/svg+xml"] = ".svg";
+  MimeTypeMap["image/webp"] = ".webp";
+  MimeTypeMap["image/bmp"] = ".bmp";
+  MimeTypeMap["audio/mpeg"] = ".mp3";
+  MimeTypeMap["audio/wav"] = ".wav";
+  MimeTypeMap["audio/ogg"] = ".ogg";
+  MimeTypeMap["video/mp4"] = ".mp4";
+  MimeTypeMap["video/x-msvideo"] = ".avi";
+  MimeTypeMap["video/webm"] = ".webm";
+  MimeTypeMap["video/quicktime"] = ".mov";
+  MimeTypeMap["video/x-flv"] = ".flv";
+
+
+
   std::string name;
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  name += "default_";
+  //if path is ending with "/" remove it (instead of removing it from the end of the string) don't add it
+  name = "/tmp/file_";
+  if (!isCgi)
+    name = upload_path + "/file_";
   for (int i = 0; i < 5; ++i) {
     int index = rand() % (sizeof(charset) - 1);
     name += charset[index];
   }
-  name += ".txt";//memtypes
-  return name;
+  if (MimeTypeMap.find(MimeType) != MimeTypeMap.end()) {
+    std::cerr << "name generated : " << name + MimeTypeMap[MimeType] << std::endl;
+    return name + MimeTypeMap[MimeType];
+  }
+  std::cerr << "name generated : " << name + ".bin" << std::endl;
+  return name + ".bin";
 }
 
-static void ParseContentDisposition(client_info& client, std::map<int, server_config>& server) {
-  // std::cerr << "-------------ParseContentDisposition------------" << std::endl;
+static bool ParseContentDisposition(client_info& client, std::map<int, server_config>& server) {
   client.pos = client.data.find("name=\"");
   client.data = client.data.substr(client.pos + 6, client.data.size());//problem
-  std::string sub = client.data.substr(0, client.data.find("\""));
+  client.name = client.data.substr(0, client.data.find("\""));
   client.data = client.data.substr(client.data.find("\"") + 3 , client.data.size());
-  client.name = sub;
   close(client.file_fd);
   client.file_fd = -42;
 
   client.pos = client.data.find("filename=\"");
   if (client.pos == std::string::npos || client.pos != 0)
   {
-    // close(client.file_fd);
     client.filename.clear();
-    client.filename = nameGenerator();
-    std::string filename = "www/" + client.filename;
-    client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    client.filename = nameGenerator(client.contentTypeform, client.upload_path, client.isCgi);
+    client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (client.file_fd == -1) {
-      std::cerr << "Error opening file" << std::endl;
-      return ;//
       error_response(client, server[client.index_server], 500);//is it 500?
+      return true;
     }
     client.data = client.data.substr(2 + (client.pos != 0 && client.bodyTypeTaken != 3) * 2, client.data.size());
   } else if (client.pos != std::string::npos) {
-    // close(client.file_fd);
     client.data = client.data.substr(client.pos + 10, client.data.size());
-    sub = client.data.substr(0, client.data.find("\""));
+    client.filename = client.upload_path + "/" + client.data.substr(0, client.data.find("\""));
     client.data = client.data.substr(client.data.find("\"") + 3 , client.data.size());
-    client.filename = sub;
-    std::string filename = "www/" + client.filename;
-    client.file_fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (client.file_fd == -1) {
-      std::cerr << "Error opening file" << std::endl;
-      return ;//
       error_response(client, server[client.index_server], 500);//is it 500?
+      return true;
     }
   }
-  // std::cerr << "name: |" << client.name << "|" << std::endl;
-  // std::cerr << "filename: |" << client.filename << "|" << std::endl;
-  // std::cerr << "-------------End ParseContentDisposition--------" << std::endl;
+  client.post_cgi_filename = client.filename;
+  return false;
 }
 
 static void ParseContentType(client_info& client) {
-  // std::cerr << "--------------ParseContentType----------------" << std::endl;
   client.data = client.data.substr(client.pos + 14, client.data.size());
   client.pos = client.data.find("/");
   client.data = client.data.substr(client.pos + 1, client.data.size());
   client.contentTypeform = client.data.substr(0, client.data.find("\r\n"));
+  std::cerr << "contentTypeform: " << client.contentTypeform << std::endl;
   if (client.bodyTypeTaken == 1 || client.bodyTypeTaken == 2)
     client.data = client.data.substr(client.data.find("\r\n") + 6, client.data.size());
   else
     client.data = client.data.substr(client.data.find("\r\n") + 4, client.data.size());
-
-  // std::cerr << "Content-Type: |" << client.contentTypeform << "|" << std::endl;
-  // std::cerr << "--------------End ParseContentType-------------" << std::endl;
 }
 
-void NewFile(client_info &client, std::map<int, server_config> &server) {
+bool NewFile(client_info &client, std::map<int, server_config> &server) {
   client.chunkData = "", client.chunkSize = 0;// close(client.file_fd);
 
   client.data = client.data.substr(client.boundary.size() + 2);
   client.pos = client.data.find("Content-Disposition: form-data;");
   if (client.pos != std::string::npos && client.pos == 0) {
     client.data = client.data.substr(client.pos + 32, client.data.size());
-    ParseContentDisposition(client, server);
+    if (ParseContentDisposition(client, server))
+      return true; 
   }
 
   client.pos = client.data.find("Content-Type:");
   if (client.pos != std::string::npos && client.pos == 0) {
     ParseContentType(client);
   }
+  return false;
 }
