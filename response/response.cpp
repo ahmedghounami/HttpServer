@@ -17,6 +17,14 @@ std::string getresponse(int error_code, std::string &path, server_config &server
         response = "HTTP/1.1 504 Gateway Timeout\r\n";
     else if (error_code == 505)
         response = "HTTP/1.1 505 HTTP Version Not Supported\r\n";
+    else if (error_code == 413)
+        response = "HTTP/1.1 413 Payload Too Large\r\n";
+    else if (error_code == 408)
+        response = "HTTP/1.1 408 Request Timeout\r\n";
+    else if (error_code == 429)
+        response = "HTTP/1.1 429 Too Many Requests\r\n";
+    else if (error_code == 415)
+        response = "HTTP/1.1 415 Unsupported Media Type\r\n";
     else
         response = "HTTP/1.1 500 Internal Server Error\r\n", error_code = 500;
     if(server.error_pages.find(std::to_string(error_code)) != server.error_pages.end())

@@ -164,7 +164,7 @@ bool NewFile(client_info &client, std::map<int, server_config> &server) {
   if (client.pos != std::string::npos && client.pos == 0) {
     client.data = client.data.substr(client.pos + 32, client.data.size());
     if (ParseContentDisposition(client, server))
-      return true; 
+      return true;
   }
 
   client.pos = client.data.find("Content-Type:");

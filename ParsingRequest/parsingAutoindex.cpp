@@ -159,6 +159,7 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 
 bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 {
+	std::cerr << client.uri << " " << client.method << std::endl;
 	client.index_server = findMatchingServer(client, server);
 	int found = 0;
 	std::string location = getlocation(client, server[client.index_server]);
@@ -167,28 +168,27 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 		std::cout << "location: " << getlocation(client, server[client.index_server]) << std::endl;
 
 		found = 1;
-		if (client.method == "GET")
+		if (std::find(server[client.index_server].locations[location].allowed_methods.begin(), server[client.index_server].locations[location].allowed_methods.end(), client.method) == server[client.index_server].locations[location].allowed_methods.end())
 		{
-			if (std::find(server[client.index_server].locations[location].allowed_methods.begin(), server[client.index_server].locations[location].allowed_methods.end(), client.method) == server[client.index_server].locations[location].allowed_methods.end())
-			{
-				std::cerr << "Error: method: not allowed: " << client.method << std::endl;
-				error_response(client, server[client.index_server], 405); // 405
-				return false;											  // respond and clear client;
-			}
+			std::cerr << "Error: method: not allowed: " << client.method << std::endl;
+			error_response(client, server[client.index_server], 405); // 405
+			return false;											  // respond and clear client;
+		}
+		if (client.method != "DELETE")
+		{
 			if (server[client.index_server].locations[location].redirect.first.empty() == true && client.uri == location)
 			{
 				if (autoindex(client, server[client.index_server].locations[location], server[client.index_server]) == false)
 					return false; // respond and clear client;
 			}
+			else if (location == client.uri && server[client.index_server].locations[location].redirect.first.empty() == false)
+			{
+				redirect(client, server[client.index_server].locations[location].redirect);
+				return false; // respond and clear client;
+			}
 		}
 		else if (client.method == "POST")
 			client.upload_path = server[client.index_server].locations[location].upload_path;
-
-		else if (location == client.uri && server[client.index_server].locations[location].redirect.first.empty() == false)
-		{
-			redirect(client, server[client.index_server].locations[location].redirect);
-			return false; // respond and clear client;
-		}
 	}
 
 	if (found == 0 && client.uri == "/" && client.method == "GET")
@@ -206,5 +206,6 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 		error_response(client, server[client.index_server], 405); // 405
 		return false;											  // respond and clear client;
 	}
+	std::cout << "upload_path: " << client.upload_path << std::endl;
 	return true;
 }
