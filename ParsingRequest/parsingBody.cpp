@@ -18,8 +18,7 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
       iss >> client.chunkSize;
       if (client.chunkSize > server[client.index_server].max_body_size) {
         close(client.file_fd);
-        std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
-        std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
+        std::cerr << "size exceeded" << std::endl;
         error_response(client, server[client.index_server], 413);//payload too large
         return ;
       } else if (client.chunkSize == 0) {
@@ -100,10 +99,14 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
       iss >> std::hex >> client.chunkSize;
       client.FileSize += client.chunkSize;
       if (client.FileSize > server[client.index_server].max_body_size) {
-        std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
-        std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        std::cerr << "size exceeded" << std::endl;
         close(client.file_fd);
         error_response(client, server[client.index_server], 413);//payload too large
+        return ;
+      } else if (client.chunkSize == 0) {
+        std::cerr << "client.chunkSize is 0" << std::endl;
+        close(client.file_fd);
+        client.bodyTaken = true;
         return ;
       }
       client.ReadFlag = false;
@@ -182,8 +185,7 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
       iss >> std::hex >> client.chunkSize;
       client.FileSize += client.chunkSize;
       if (client.FileSize > server[client.index_server].max_body_size) {
-        std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
-        std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        std::cerr << "size exceeded" << std::endl;
         close(client.file_fd);
         error_response(client, server[client.index_server], 413);//payload too large
         return ;
@@ -271,8 +273,7 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
       client.chunkData = client.data.substr(0, client.pos);
       client.FileSize += client.chunkData.size();
       if (client.FileSize > server[client.index_server].max_body_size) {
-        std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
-        std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        std::cerr << "size exceeded" << std::endl;
         close(client.file_fd);
         error_response(client, server[client.index_server], 413);//payload too large
         return ;
@@ -292,8 +293,7 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
     } else if (!client.data.empty()) {
       client.FileSize += client.data.size();
       if (client.FileSize > server[client.index_server].max_body_size) {
-        std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
-        std::cerr << "client.FileSize: " << client.FileSize << std::endl;
+        std::cerr << "size exceeded" << std::endl;
         close(client.file_fd);
         error_response(client, server[client.index_server], 413);//payload too large
         return ;

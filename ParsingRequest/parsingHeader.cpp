@@ -240,15 +240,6 @@ bool TakeBodyType(client_info& client, std::map<int, server_config>& server) {
 
 void ParseChunk(client_info &client, std::map<int, server_config> &server)
 {
-	// int fd = open ("data", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	// if (fd == -1)
-	// {
-	// 	std::cerr << "Error opening file" << std::endl;
-	// 	return;
-	// }
-	// write(fd, client.data.c_str(), client.data.size());
-	// return;
-
 	if (RequestLine(client, server) == false || ParseHeaders(client, server) == false)
 		return;
 
@@ -277,33 +268,11 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 	if (client.bodyTaken == true)
 	{
 		if (client.isCgi == true) {
-			// std::cout << "handle post cgi" << std::endl;
-			// std::ifstream file("www/forcgi");
-			// if (!file.is_open()) {
-			// 	std::cerr << "Error opening file" << std::endl;
-			// 	return;
-			// }
-			// std::string line;
-			// while (std::getline(file, line)) {
-			// 	std::cout << line << std::endl;
-			// }
-			// file.close();
-			// // std::remove("www/forcgi");
-			// std::cerr << "cgi started-------------------------------------------" << std::endl;
-			// std::cerr << "client.post_cgi_filename: " << client.post_cgi_filename << std::endl;
-			// exit(0);
 			handleCgi(client, server, client.uri);
-			// if(client.datafinished)
-				// std::remove(client.post_cgi_filename.c_str());
 			std::cerr << "cgi finished-------------------------------------------" << std::endl;
 			return;
-			// exit(0);// l file li fih data smito : www/forcgi o fd dyalo kayn f client.file_fd
-			//test raw o lbinary 'form data baqi kanqadha'
 		}
 		std::string body = "<html><body><h1>File uploaded successfully!</h1></body></html>";
 		post_success(client, body);
 	}
 }
-/*notes
-	close file descriptor
-*/

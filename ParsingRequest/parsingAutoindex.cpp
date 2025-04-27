@@ -181,15 +181,14 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 				if (autoindex(client, server[client.index_server].locations[location], server[client.index_server]) == false)
 					return false; // respond and clear client;
 			}
+			else if (location == client.uri && server[client.index_server].locations[location].redirect.first.empty() == false)
+			{
+				redirect(client, server[client.index_server].locations[location].redirect);
+				return false; // respond and clear client;
+			}
 		}
 		else if (client.method == "POST")
 			client.upload_path = server[client.index_server].locations[location].upload_path;
-
-		else if (location == client.uri && server[client.index_server].locations[location].redirect.first.empty() == false)
-		{
-			redirect(client, server[client.index_server].locations[location].redirect);
-			return false; // respond and clear client;
-		}
 	}
 
 	if (found == 0 && client.uri == "/" && client.method == "GET")
