@@ -1,5 +1,5 @@
 <?php
-$targetDir = "/Users/aghounam/goinfre/";
+$targetDir = "/Users/hboudar/goinfre/";
 
 if (!file_exists($targetDir)) {
 	mkdir($targetDir, 0777, true);

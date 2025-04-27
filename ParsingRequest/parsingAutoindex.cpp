@@ -159,6 +159,7 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 
 bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 {
+	std::cerr << client.uri << " " << client.method << std::endl;
 	client.index_server = findMatchingServer(client, server);
 	int found = 0;
 	std::string location = getlocation(client, server[client.index_server]);
