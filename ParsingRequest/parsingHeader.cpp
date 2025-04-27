@@ -166,11 +166,11 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 		error_response(client, server[client.index_server], 400); // 500
 		return false;											  // respond and clear client;
 	}
-	// if (check_autoindex(client, server) == false)
-	// {
-	// 	std::cerr << "im in hte check_autoindex" << std::endl;
-	// 	return false; // respond and clear client;
-	// }
+	if (check_autoindex(client, server) == false)
+	{
+		std::cerr << "something happended" << std::endl;
+		return false; // respond and clear client;
+	}
 
 	// std::map<std::string, std::string>::iterator it;
 	// for (it = client.headers.begin(); it != client.headers.end(); ++it)
@@ -239,6 +239,15 @@ bool TakeBodyType(client_info& client, std::map<int, server_config>& server) {
 
 void ParseChunk(client_info &client, std::map<int, server_config> &server)
 {
+	// int fd = open ("data", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	// if (fd == -1)
+	// {
+	// 	std::cerr << "Error opening file" << std::endl;
+	// 	return;
+	// }
+	// write(fd, client.data.c_str(), client.data.size());
+	// return;
+
 	if (RequestLine(client, server) == false || ParseHeaders(client, server) == false)
 		return;
 
@@ -249,6 +258,7 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 		handleDeleteRequest(client, server);
 	else if (client.method == "POST" && !client.bodyTaken)
 	{
+		std::cerr << "ParseChunk" << std::endl;
 		if (TakeBodyType(client, server) == false)
 			return;
 		if (client.bodyTypeTaken == 1)
