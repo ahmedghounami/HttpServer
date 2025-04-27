@@ -134,7 +134,6 @@ void server::listen_for_connections()
                 usleep(1000);
                 if (clients[clients_fds[i].fd].datafinished == true)
                 {
-                    std::cerr << "Client finished ---------------------------------------------------------------" << clients_fds[i].fd << std::endl;
                     close(clients_fds[i].fd);
                     clients_fds.erase(clients_fds.begin() + i);
                     i--;
