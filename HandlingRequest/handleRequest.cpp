@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/26 19:32:26 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/27 19:59:32 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,7 +167,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         std::vector<std::string>::iterator end = server[client.index_server].locations[location].cgi_extension.end();
         if(std::find(start, end, client.uri.substr(client.uri.find_last_of("."))) == end)
         {
-            error_response(client, server[client.index_server], 500); // 500
+            error_response(client, server[client.index_server], 405); // 500
             return;
         }
     }
@@ -378,21 +378,23 @@ bool handlepathinfo(client_info &client){
     bool is_php = false;
     bool is_cgi = false;
     size_t pos = client.uri.find(".php");
+    if (client.uri.find("#") != std::string::npos)
+        client.uri = client.uri.substr(0, client.uri.find("#"));
+    if(client.uri.find("?") != std::string::npos)
+    {
+        client.query = client.uri.substr(client.uri.find("?") + 1);
+        client.uri = client.uri.substr(0, client.uri.find("?"));
+    }
     if (pos == std::string::npos)
         pos = client.uri.find(".py");
     else
         is_php = true;
-    if (pos != std::string::npos && (client.uri[pos + is_php + 3] == '\\' || client.uri[pos + is_php + 3] == '?'))
+    if (pos != std::string::npos && (client.uri[pos + is_php + 3] == '/' || client.uri[pos + is_php + 3] == '?'))
     {
         int add = 3 + is_php;
         std::string path_info = client.uri.substr(pos + add);
         client.path_info = path_info;
         client.uri = client.uri.substr(0, pos + add);
-        if(client.path_info.find("?") != std::string::npos)
-        {
-            client.query = client.path_info.substr(client.path_info.find("?") + 1);
-            client.path_info = client.path_info.substr(0, client.path_info.find("?"));
-        }
     }
     size_t dot = client.uri.find_last_of(".");
     if (dot != std::string::npos)
