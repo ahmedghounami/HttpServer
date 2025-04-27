@@ -167,14 +167,14 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 		std::cout << "location: " << getlocation(client, server[client.index_server]) << std::endl;
 
 		found = 1;
+		if (std::find(server[client.index_server].locations[location].allowed_methods.begin(), server[client.index_server].locations[location].allowed_methods.end(), client.method) == server[client.index_server].locations[location].allowed_methods.end())
+		{
+			std::cerr << "Error: method: not allowed: " << client.method << std::endl;
+			error_response(client, server[client.index_server], 405); // 405
+			return false;											  // respond and clear client;
+		}
 		if (client.method == "GET")
 		{
-			if (std::find(server[client.index_server].locations[location].allowed_methods.begin(), server[client.index_server].locations[location].allowed_methods.end(), client.method) == server[client.index_server].locations[location].allowed_methods.end())
-			{
-				std::cerr << "Error: method: not allowed: " << client.method << std::endl;
-				error_response(client, server[client.index_server], 405); // 405
-				return false;											  // respond and clear client;
-			}
 			if (server[client.index_server].locations[location].redirect.first.empty() == true && client.uri == location)
 			{
 				if (autoindex(client, server[client.index_server].locations[location], server[client.index_server]) == false)
