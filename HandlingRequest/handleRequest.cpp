@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/27 19:59:32 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/27 21:29:07 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -456,9 +456,16 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 void handleDeleteRequest(client_info &client, std::map<int, server_config> &server)
 {
     std::cout << "in delete funciton" << std::endl;
+    if(client.error_code != 0)
+    {
+        error_response(client, server[client.index_server], client.error_code); // 500
+        return;
+    }
     std::string path = getcorectserver_path(client, server) + client.uri;
+    std::cout << "path: " << path << std::endl;
     if (std::remove(path.c_str()) != 0)
     {
+        std::cerr << "Error deleting file: " << path << std::endl;
         switch (errno)
         {
         case ENOENT:
