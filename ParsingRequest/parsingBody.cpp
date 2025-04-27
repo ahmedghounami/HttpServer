@@ -37,11 +37,9 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
 
   while (!client.data.empty()) {
     if (client.chunkSize > 0) {
-      std::cerr << "before chunkSize: " << client.chunkSize << std::endl;
       if (!client.data.empty())
         writeToFile(client.data, client.file_fd);
       client.chunkSize -= client.data.size();
-      std::cerr << "after reading chunkSize: " << client.chunkSize << std::endl;
       client.data.clear();
     }
     if (client.chunkSize == 0) {
