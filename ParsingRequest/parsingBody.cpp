@@ -25,7 +25,7 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
       } else if (client.chunkSize == 0) {
         std::cerr << "client.chunkSize is 0" << std::endl;
         close(client.file_fd);
-        error_response(client, server[client.index_server], 411); //length required
+        client.bodyTaken = true;
         return ;
       }
     } else {
