@@ -168,7 +168,7 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	}
 	if (check_autoindex(client, server) == false)
 	{
-		std::cerr << "something happended" << std::endl;
+		std::cerr << "im in hte check_autoindex" << std::endl;
 		return false; // respond and clear client;
 	}
 
@@ -234,6 +234,7 @@ bool TakeBodyType(client_info& client, std::map<int, server_config>& server) {
       return false;
     }
   }
+  std::cerr << "client.bodyTypeTaken: " << client.bodyTypeTaken << std::endl;
   return true;
 }
 
@@ -258,7 +259,6 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 		handleDeleteRequest(client, server);
 	else if (client.method == "POST" && !client.bodyTaken)
 	{
-		std::cerr << "ParseChunk" << std::endl;
 		if (TakeBodyType(client, server) == false)
 			return;
 		if (client.bodyTypeTaken == 1)
@@ -269,6 +269,10 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 			FormData(client,server);
 		else if (client.bodyTypeTaken == 4)
 			OtherData(client, server);
+		else if (client.bodyTypeTaken == 0) {
+			error_response(client, server[client.index_server], 400);
+			return;
+		}
 	}
 	if (client.bodyTaken == true)
 	{
@@ -298,7 +302,6 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 		}
 		std::string body = "<html><body><h1>File uploaded successfully!</h1></body></html>";
 		post_success(client, body);
-		std::cerr << "data finished-------------------------------------------" << std::endl;
 	}
 }
 /*notes

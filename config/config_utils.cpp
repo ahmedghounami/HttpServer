@@ -92,15 +92,25 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc)
         if (loc.cgi_extension.size() == 0)
             throw std::runtime_error("location: Empty cgi_extension");
     }
-    else if (key == "cgi_path")
+    else if (key == "cgi_path_php")
     {
-        std::string cgi_path;
-        ss >> cgi_path;
-        if (loc.cgi_path != "")
-            throw std::runtime_error("location: Duplicate cgi_path ");
-        path_checker(cgi_path);
+        std::string cgi_path_php;
+        ss >> cgi_path_php;
+        if (loc.cgi_path_php != "")
+            throw std::runtime_error("location: Duplicate cgi_path_php ");
+        path_checker(cgi_path_php);
         somthing_after(ss);
-        loc.cgi_path = cgi_path;
+        loc.cgi_path_php = cgi_path_php;
+    }
+    else if (key == "cgi_path_py")
+    {
+        std::string cgi_path_py;
+        ss >> cgi_path_py;
+        if (loc.cgi_path_py != "")
+            throw std::runtime_error("location: Duplicate cgi_path_py ");
+        path_checker(cgi_path_py);
+        somthing_after(ss);
+        loc.cgi_path_py = cgi_path_py;
     }
     else if (key == "cgi_timeout")
     {

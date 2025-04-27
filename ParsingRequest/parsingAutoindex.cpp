@@ -23,7 +23,7 @@ bool autoindex_server(client_info &client, server_config &server)
 	else if (server.index.empty() == false && (stat((server.path + "/" + server.index[0].c_str()).c_str(), &info) != 0 || access((server.path + "/" + server.index[0].c_str()).c_str(), R_OK) != 0) && server.autoindex == false)
 	{
 		error_response(client, server, 404); // 404
-		return false; // respond and clear client;
+		return false;						 // respond and clear client;
 	}
 	if (server.index.empty() == true && stat((server.path + "/index.html").c_str(), &info) == 0 && access((server.path + "/index.html").c_str(), R_OK) == 0)
 	{
@@ -44,7 +44,7 @@ bool autoindex_server(client_info &client, server_config &server)
 	else if (server.index.empty() == true && (stat((server.path + "/index.html").c_str(), &info) != 0 || access((server.path + "/index.html").c_str(), R_OK) != 0) && server.autoindex == false)
 	{
 		error_response(client, server, 404); // 404
-		return false; // respond and clear client;
+		return false;						 // respond and clear client;
 	}
 	return true;
 }
@@ -71,7 +71,7 @@ bool autoindex(client_info &client, location &loc, server_config &server)
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
 		error_response(client, server, 404); // 404
-		return false; // respond and clear client;
+		return false;						 // respond and clear client;
 	}
 	if (loc.index.empty() == true && stat((loc.path + "/index.html").c_str(), &info) == 0 && access((loc.path + "/index.html").c_str(), R_OK) == 0)
 	{
@@ -92,7 +92,7 @@ bool autoindex(client_info &client, location &loc, server_config &server)
 	else if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
 		error_response(client, server, 404); // 404
-		return false; // respond and clear client;
+		return false;						 // respond and clear client;
 	}
 	return true;
 }
@@ -159,37 +159,39 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 
 bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 {
+	std::cerr << client.uri << " " << client.method << std::endl;
 	client.index_server = findMatchingServer(client, server);
 	int found = 0;
-	for (std::map<std::string, location>::iterator it = server[client.index_server].locations.begin(); it != server[client.index_server].locations.end(); ++it)
+	std::string location = getlocation(client, server[client.index_server]);
+	if (location.empty() == false)
 	{
-		if (it->first == client.uri && it->second.redirect.first.empty() == true)
+		std::cout << "location: " << getlocation(client, server[client.index_server]) << std::endl;
+
+		found = 1;
+		if (client.method == "GET")
 		{
-			found = 1;
-			if (client.method == "GET")
+			if (std::find(server[client.index_server].locations[location].allowed_methods.begin(), server[client.index_server].locations[location].allowed_methods.end(), client.method) == server[client.index_server].locations[location].allowed_methods.end())
 			{
-				if (std::find(it->second.allowed_methods.begin(), it->second.allowed_methods.end(), client.method) == it->second.allowed_methods.end())
-				{
-					std::cerr << "Error: method: not allowed: " << client.method << std::endl;
-					error_response(client, server[client.index_server], 405); // 405
-					return false; // respond and clear client;
-				}
-				if (it->second.redirect.first.empty() == true)
-				{
-					if (autoindex(client, it->second, server[client.index_server]) == false)
-						return false; // respond and clear client;
-				}
+				std::cerr << "Error: method: not allowed: " << client.method << std::endl;
+				error_response(client, server[client.index_server], 405); // 405
+				return false;											  // respond and clear client;
 			}
-			else if (client.method == "POST")
-				client.upload_path = it->second.upload_path;
-			break;
+			if (server[client.index_server].locations[location].redirect.first.empty() == true && client.uri == location)
+			{
+				if (autoindex(client, server[client.index_server].locations[location], server[client.index_server]) == false)
+					return false; // respond and clear client;
+			}
 		}
-		else if (it->first == client.uri && it->second.redirect.first.empty() == false )
+		else if (client.method == "POST")
+			client.upload_path = server[client.index_server].locations[location].upload_path;
+
+		else if (location == client.uri && server[client.index_server].locations[location].redirect.first.empty() == false)
 		{
-			redirect(client, it->second.redirect);
+			redirect(client, server[client.index_server].locations[location].redirect);
 			return false; // respond and clear client;
 		}
 	}
+
 	if (found == 0 && client.uri == "/" && client.method == "GET")
 	{
 		if (autoindex_server(client, server[client.index_server]) == false)
@@ -203,7 +205,8 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 	if (client.method == "POST" && client.upload_path.empty() == true)
 	{
 		error_response(client, server[client.index_server], 405); // 405
-		return false; // respond and clear client;
+		return false;											  // respond and clear client;
 	}
+	std::cout << "upload_path: " << client.upload_path << std::endl;
 	return true;
 }

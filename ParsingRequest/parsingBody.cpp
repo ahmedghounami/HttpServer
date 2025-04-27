@@ -3,36 +3,42 @@
 //finished
 void OtherData(client_info &client, std::map<int, server_config> &server) {
 
-  while (!client.data.empty()) {
-    if (client.ReadFlag == true) {
-      client.ReadFlag = false;
-      client.filename = nameGenerator(client.ContentType, client.upload_path, client.isCgi);
-      client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-      if (client.file_fd == -1) {
-        error_response(client, server[client.index_server], 500);//server error
+  if (client.ReadFlag == true) {
+    client.ReadFlag = false;
+    client.filename = nameGenerator(client.ContentType, client.upload_path, client.isCgi);
+    client.file_fd = open(client.filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (client.file_fd == -1) {
+      error_response(client, server[client.index_server], 500);//server error
+      return ;
+    }
+    client.post_cgi_filename = client.filename;
+    std::map<std::string, std::string>::iterator it = client.headers.find("content-length");
+    if (it != client.headers.end()) {
+      std::istringstream iss(it->second);
+      iss >> client.chunkSize;
+      if (client.chunkSize > server[client.index_server].max_body_size) {
+        close(client.file_fd);
+        std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
+        std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
+        error_response(client, server[client.index_server], 413);//payload too large
         return ;
-      }
-      client.post_cgi_filename = client.filename;
-      std::map<std::string, std::string>::iterator it = client.headers.find("content-length");
-      if (it != client.headers.end()) {
-        std::istringstream iss(it->second);
-        iss >> client.chunkSize;
-        if (client.chunkSize > server[client.index_server].max_body_size) {
-          close(client.file_fd);
-          std::cerr << "client.chunkSize: " << client.chunkSize << std::endl;
-          std::cerr << "confing size: " << server[client.index_server].max_body_size << std::endl;
-          error_response(client, server[client.index_server], 413);//payload too large
-          return ;
-        }
-      } else {
-        std::cerr << "content-length not found" << std::endl;
+      } else if (client.chunkSize == 0) {
+        std::cerr << "client.chunkSize is 0" << std::endl;
         close(client.file_fd);
         error_response(client, server[client.index_server], 411); //length required
         return ;
       }
+    } else {
+      std::cerr << "content-length not found" << std::endl;
+      close(client.file_fd);
+      error_response(client, server[client.index_server], 411); //length required
+      return ;
     }
-    
+  }
+
+  while (!client.data.empty()) {
     if (client.chunkSize > 0) {
+      std::cerr << "before chunkSize: " << client.chunkSize << std::endl;
       if (!client.data.empty())
         writeToFile(client.data, client.file_fd);
       client.chunkSize -= client.data.size();
