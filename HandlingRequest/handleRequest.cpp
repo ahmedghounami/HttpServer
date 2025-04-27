@@ -405,6 +405,7 @@ bool handlepathinfo(client_info &client){
 }
 void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 {
+    std::cout << "uri: " << client.uri << std::endl;
     if(client.error_code != 0)
     {
         error_response(client, server[client.index_server], client.error_code); // 500
