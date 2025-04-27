@@ -158,6 +158,8 @@ std::string getBoundary(const std::string &contentType);
 void writeToFile(std::string &body, int fd);
 bool NewFile(client_info &client, std::map<int, server_config> &server);
 std::string nameGenerator(std::string MimeType, std::string upload_path, bool isCgi);
+bool validateAndNormalizePath(client_info &client, std::map<int, server_config> &server);
+void tracing_uri(std::string &uri);
 
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);
