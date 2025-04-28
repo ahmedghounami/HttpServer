@@ -38,5 +38,4 @@ void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, st
     std::string ip = ipToString(client_addr.sin_addr.s_addr);
     clients[client_sock].ip = ip;
     std::cout << "Client IP: " << client_addr.sin_addr.s_addr << std::endl;
-    
 }
