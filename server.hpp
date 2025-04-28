@@ -96,6 +96,7 @@ struct client_info
     bool isGet;
     std::string upload_path;
     std::string post_cgi_filename;
+    std::string ip;
   time_t last_time;
 };
 

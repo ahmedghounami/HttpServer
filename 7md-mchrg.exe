@@ -1,5 +1,5 @@
 file without the right permissions (should throw forbiden)
-folder traversal (should be parsed correctly)
+folder traversal (should be parsed correctly) .//./././//
 server_name (mchrgin)
 
 

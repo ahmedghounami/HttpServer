@@ -18,4 +18,5 @@ void accept_connection(int sock_connection, std::vector<pollfd> &clients_fds, st
     clients[client_sock].poll_status = 0;
     clients[client_sock].bytes_sent = 0;
     clients[client_sock].datafinished = false;
+    clients[client_sock].ip = inet_ntoa(client_addr.sin_addr);
 }
