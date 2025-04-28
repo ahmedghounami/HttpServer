@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/27 21:29:07 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/04/28 11:45:28 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
             {
                 if (std::find(it->second.ports.begin(), it->second.ports.end(), port) != it->second.ports.end() && server_index == -1)
                     server_index = it->second.server_index;
-                if (it->second.host == host && std::find(it->second.server_names.begin(), it->second.server_names.end(), host) != it->second.server_names.end() && std::find(it->second.ports.begin(), it->second.ports.end(), port) != it->second.ports.end())
+                if (std::find(it->second.server_names.begin(), it->second.server_names.end(), host) != it->second.server_names.end() && std::find(it->second.ports.begin(), it->second.ports.end(), port) != it->second.ports.end())
                 {
                     server_index = it->second.server_index;
                     break;
@@ -71,6 +71,8 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
             }
         }
     }
+    std::cout << "server index: " << server_index << " " << client.headers["host"] << std::endl;
+    
     return server_index;
 }
 void success(client_info &client, std::string body, bool whith_header, std::string path ="", std::string content_type = "", long long file_size = -1)
@@ -152,14 +154,42 @@ std::string readheadercgi(int fd, std::string &body)
     }
     return headers;
 }
-void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path)
+void cgienv(std::vector<std::string> &envStrings, client_info &client, std::map<int, server_config> &server)
 {
-    int fd;
-    std::string body;
-    std::string content_type = "";
+
+    envStrings.push_back("REQUEST_METHOD=" + client.method);
+    if(client.headers["authorization"].find("Basic") != std::string::npos)
+        envStrings.push_back("AUTH_TYPE=Basic");
+    else if (client.headers["authorization"].find("Digest") != std::string::npos)
+        envStrings.push_back("AUTH_TYPE=Digest");
+    else
+        envStrings.push_back("AUTH_TYPE=");
+    envStrings.push_back("SCRIPT_NAME=" + client.uri);
+    envStrings.push_back("PATH_INFO=" + client.path_info);
+    envStrings.push_back("QUERY_STRING=" + client.query);
+    envStrings.push_back("CONTENT_TYPE=" + client.ContentType);
+    envStrings.push_back("CONTENT_LENGTH=" + client.headers["content-length"]);
+    envStrings.push_back("SERVER_NAME=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
+    envStrings.push_back("SERVER_PORT=" + client.headers["host"].substr(client.headers["host"].find(":") + 1));
+    envStrings.push_back("SERVER_PROTOCOL=" + client.version);
+    envStrings.push_back("GATEWAY_INTERFACE=CGI/1.1");
+    envStrings.push_back("REMOTE_ADDR=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
+    envStrings.push_back("REMOTE_HOST=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
+    envStrings.push_back("REMOTE_IDENT=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
+    envStrings.push_back("REMOTE_USER=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
+    envStrings.push_back("SERVER_SOFTWARE=webserv/1.0");
+    envStrings.push_back("PATH_TRANSLATED=" + getcorectserver_path(client, server) + client.uri);
+    for (std::map<std::string, std::string>::iterator it = client.headers.begin(); it != client.headers.end(); ++it)
+    {
+        std::string header = it->first;
+        std::transform(header.begin(), header.end(), header.begin(), ::toupper);
+        envStrings.push_back("HTTP_" + header + "=" + it->second);
+    }
+    envStrings.push_back("REDIRECT_STATUS=200");
+}
+bool checkfiles(client_info &client,  std::map<int, server_config> &server, int &fdin, int &fd, bool &already)
+{
     char filename[] = "/tmp/cgi_outputXXXXXX";
-    bool already = false;
-    int fdin;
     std::string location = getlocation(client, server[client.index_server]);
     if(location != "")
     {
@@ -167,106 +197,121 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         std::vector<std::string>::iterator end = server[client.index_server].locations[location].cgi_extension.end();
         if(std::find(start, end, client.uri.substr(client.uri.find_last_of("."))) == end)
         {
-            error_response(client, server[client.index_server], 405); // 500
-            return;
+            error_response(client, server[client.index_server], 405);
+            return true;
         }
     }
-    if(!client.isGet && client.method.find("POST") != std::string::npos){
-    fdin = open(client.post_cgi_filename.c_str(), O_RDWR , 0666);
-    if (fdin == -1)
+    if(!client.isGet && client.method.find("POST") != std::string::npos)
     {
-        std::cerr << "open failed" << std::endl;
-        return;
-    }}
+        fdin = open(client.post_cgi_filename.c_str(), O_RDWR , 0666);
+        if (fdin == -1)
+        {
+            std::cerr << "open failed" << std::endl;
+            error_response(client, server[client.index_server], 500); // 500
+            return true;
+        }
+    }
     client.isGet = 1;
     if(client.cgi_output != "")
     {
         fd = open(client.cgi_output.c_str(), O_RDWR , 0666);
+        if (fd == -1)
+        {
+            std::cerr << "open failed" << std::endl;
+            error_response(client, server[client.index_server], 500); // 500
+            close(fdin);
+            std::remove(client.post_cgi_filename.c_str());
+            std::remove(client.cgi_output.c_str());
+            return true;
+        }
         already = true;
     }
-    else{
-        fd = mkstemp(filename);// create a temporary file whit unique name
-        client.cgi_output = filename;}
-    if (fd == -1)
+    else
     {
-        std::cerr << "mkstemp failed" << std::endl;
-        return;
+        fd = mkstemp(filename);// create a temporary file whit unique name
+        if (fd == -1)
+        {
+            std::cerr << "mkstemp failed" << std::endl;
+            error_response(client, server[client.index_server], 500); // 500
+            close(fdin);
+            std::remove(client.post_cgi_filename.c_str());
+            return true;
+        }
+        client.cgi_output = filename;
     }
+    return false;
+}
+void close_cgi_in_out(client_info &client, int &fdin, int &fd)
+{
+    close(fd);
+    close(fdin);
+    std::remove(client.cgi_output.c_str());
+    std::remove(client.post_cgi_filename.c_str());
+}
+void child_process(client_info &client, int &fd, int &fdin, std::map<int, server_config> &server, std::string &path, bool already)
+{
+    std::string location = getlocation(client, server[client.index_server]);
+    if(already)
+    {
+        exit(0);
+    }
+    dup2(fd, STDOUT_FILENO);
+    close(fd);
+    std::vector<std::string> envStrings;
+    cgienv(envStrings, client, server);
+    if (client.method.find("POST") != std::string::npos)
+    {
+        dup2(fdin, STDIN_FILENO);
+        close(fdin);
+    }
+    
+    char* envp[envStrings.size() + 1];
+    size_t i = 0;
+    for (std::vector<std::string>::iterator it = envStrings.begin(); it != envStrings.end(); ++it)
+    {
+        envp[i] = (char *)it->c_str();
+        i++;
+    }
+    envp[i] = NULL;
+    char *cgi_path;
+    if (path.substr(path.find_last_of(".") + 1) == "php" && server[client.index_server].locations[location].cgi_path_php != "")
+        cgi_path = (char *)server[client.index_server].locations[location].cgi_path_php.c_str();
+    else if (path.substr(path.find_last_of(".") + 1) == "php")
+        cgi_path = (char *)"CGI/php-cgi";
+    else if (path.substr(path.find_last_of(".") + 1) == "py" && server[client.index_server].locations[location].cgi_path_py != "")
+        cgi_path = (char *)server[client.index_server].locations[location].cgi_path_py.c_str();
+    else
+        cgi_path = (char *)"CGI/python-cgi";
+    char *args[] = {cgi_path, (char *)path.c_str(), NULL};
+    if(server[client.index_server].locations[location].cgi_timeout > 0)
+        alarm(server[client.index_server].locations[location].cgi_timeout);
+    else
+        alarm(5);
+    if(execve(args[0], args, envp) == -1)
+        exit(1);
+    exit(0); // execve only returns on error
+}
+void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path)
+{
+    int fd;
+    std::string body;
+    std::string content_type = "";
+    bool already = false;
+    int fdin;
+    std::cout << "in cgi function" << std::endl;
+    if( checkfiles(client, server, fdin, fd, already))
+        return;
     pid_t pid = fork();
     if (pid == -1)
     {
         std::cerr << "fork failed" << std::endl;
+        error_response(client, server[client.index_server], 500); // 500
+        close_cgi_in_out(client, fdin, fd);
         return;
     }
     else if (pid == 0)
     {
-        if(already)
-        {
-            exit(0);
-        }
-        dup2(fd, STDOUT_FILENO);
-        close(fd);
-        std::vector<std::string> envStrings;
-        envStrings.push_back("REQUEST_METHOD=" + client.method);
-        if(client.headers["authorization"].find("Basic") != std::string::npos)
-            envStrings.push_back("AUTH_TYPE=Basic");
-        else if (client.headers["authorization"].find("Digest") != std::string::npos)
-            envStrings.push_back("AUTH_TYPE=Digest");
-        else
-            envStrings.push_back("AUTH_TYPE=");
-        envStrings.push_back("SCRIPT_NAME=" + client.uri);
-        envStrings.push_back("PATH_INFO=" + client.path_info);
-        envStrings.push_back("QUERY_STRING=" + client.query);
-        envStrings.push_back("CONTENT_TYPE=" + client.ContentType);
-        envStrings.push_back("CONTENT_LENGTH=" + client.headers["content-length"]);
-        envStrings.push_back("SERVER_NAME=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
-        envStrings.push_back("SERVER_PORT=" + client.headers["host"].substr(client.headers["host"].find(":") + 1));
-        envStrings.push_back("SERVER_PROTOCOL=" + client.version);
-        envStrings.push_back("GATEWAY_INTERFACE=CGI/1.1");
-        envStrings.push_back("REMOTE_ADDR=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
-        envStrings.push_back("REMOTE_HOST=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
-        envStrings.push_back("REMOTE_IDENT=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
-        envStrings.push_back("REMOTE_USER=" + client.headers["host"].substr(0, client.headers["host"].find(":")));
-        envStrings.push_back("SERVER_SOFTWARE=webserv/1.0");
-        envStrings.push_back("PATH_TRANSLATED=" + getcorectserver_path(client, server) + client.uri);
-        for (std::map<std::string, std::string>::iterator it = client.headers.begin(); it != client.headers.end(); ++it)
-        {
-            std::string header = it->first;
-            std::transform(header.begin(), header.end(), header.begin(), ::toupper);
-            envStrings.push_back("HTTP_" + header + "=" + it->second);
-        }
-        envStrings.push_back("REDIRECT_STATUS=200");
-        if (client.method.find("POST") != std::string::npos)
-        {
-            dup2(fdin, STDIN_FILENO);
-            close(fdin);
-        }
-        
-        char* envp[envStrings.size() + 1];
-        size_t i = 0;
-        for (std::vector<std::string>::iterator it = envStrings.begin(); it != envStrings.end(); ++it)
-        {
-            envp[i] = (char *)it->c_str();
-            i++;
-        }
-        envp[i] = NULL;
-        char *cgi_path;
-        if (path.substr(path.find_last_of(".") + 1) == "php" && server[client.index_server].locations[location].cgi_path_php != "")
-            cgi_path = (char *)server[client.index_server].locations[location].cgi_path_php.c_str();
-        else if (path.substr(path.find_last_of(".") + 1) == "php")
-            cgi_path = (char *)"CGI/php-cgi";
-        else if (path.substr(path.find_last_of(".") + 1) == "py" && server[client.index_server].locations[location].cgi_path_py != "")
-            cgi_path = (char *)server[client.index_server].locations[location].cgi_path_py.c_str();
-        else
-            cgi_path = (char *)"CGI/python-cgi";
-        char *args[] = {cgi_path, (char *)path.c_str(), NULL};
-        if(server[client.index_server].locations[location].cgi_timeout > 0)
-            alarm(server[client.index_server].locations[location].cgi_timeout);
-        else
-            alarm(5);
-        if(execve(args[0], args, envp) == -1)
-            exit(1);
-        exit(0); // execve only returns on error
+        child_process(client, fd, fdin, server, path, already);
     }
     else
     {
@@ -281,10 +326,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             {
                 std::cerr << "CGI process exited with status: " << exitstatus << std::endl;
                 error_response(client, server[client.index_server], 500); // 500
-                close(fd);
-                close(fdin);
-                std::remove(client.cgi_output.c_str());
-				std::remove(client.post_cgi_filename.c_str());
+                close_cgi_in_out(client, fdin, fd);
                 return;
             }
         }else if (WIFSIGNALED(status))
@@ -295,10 +337,7 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
                 error_response(client, server[client.index_server], 504); // 504
             else
                 error_response(client, server[client.index_server], 500); // 500
-            close(fd);
-            close(fdin);
-            std::remove(client.cgi_output.c_str());
-			std::remove(client.post_cgi_filename.c_str());
+            close_cgi_in_out(client, fdin, fd);
             return;
         }
         std::cerr << "CGI process finished" << std::endl;
@@ -310,18 +349,13 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         {
             std::cerr << "CGI process failed no valid headers" << std::endl;
             error_response(client, server[client.index_server], 500); // 500
-            close(fd);
-            close(fdin);
-            std::remove(client.cgi_output.c_str());
-            std::remove(client.post_cgi_filename.c_str());
+            close_cgi_in_out(client, fdin, fd);
             return;
         }
         if(client.bytes_sent <= 0 && client.bytes_sent != -1 )
         {
             while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0)
                 body+= std::string(buffer, bytes_read);
-            // std::cerr << "CGI process finished" << std::endl;
-            // std::cout <<"headers: " << headers << std::endl;
             content_type = headers.erase(headers.find("\r\n\r\n"), 4);
             close(fd);
             close(fdin);
@@ -342,11 +376,9 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
         if(read(fd, buffer, sizeof(buffer)) == 0)
         {
             client.datafinished = 1;
-            std::remove(client.cgi_output.c_str());
-            std::remove(client.post_cgi_filename.c_str());
+            close_cgi_in_out(client, fdin, fd);
             client.cgi_output = "";
         }
-        alarm(0);
         close(fd);
         close(fdin);
         success(client, body, false, path, content_type);
@@ -354,7 +386,6 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
     }
     close(fd);
     close(fdin);
-    (void)server;
 }
 void sendbodypart(client_info &client, std::string path)
 {
