@@ -187,7 +187,7 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 				return false; // respond and clear client;
 			}
 		}
-		if (client.method == "POST")
+		 if (client.method == "POST")
 			client.upload_path = server[client.index_server].locations[location].upload_path;
 	}
 

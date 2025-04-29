@@ -28,20 +28,20 @@ bool validateAndNormalizePath(client_info &client, std::map<int, server_config> 
 	  tracing_uri(client.uri);
     std::cerr << "after tracing_uri: " << client.uri << std::endl;
     client.uri = decodeURIComponent(client.uri);
-
     // 2. Extract and store client.query
-    size_t qpos = client.uri.find('?');
-    if (qpos != std::string::npos) {
-        client.query = client.uri.substr(qpos + 1);
-        client.uri = client.uri.substr(0, qpos);
-    } else {
-        client.query.clear();
-    }
+    // size_t qpos = client.uri.find('?');
+    // if (qpos != std::string::npos) {
+    //     client.query = client.uri.substr(qpos + 1);
+    //     client.uri = client.uri.substr(0, qpos);
+    // } else {
+    //     client.query.clear();
+    // }
 
-    // 3. Strip fragment (if ever present)
-    size_t fragPos = client.uri.find('#');
-    if (fragPos != std::string::npos)
-        client.uri = client.uri.substr(0, fragPos);
+    // // 3. Strip fragment (if ever present)
+    // size_t fragPos = client.uri.find('#');
+    // if (fragPos != std::string::npos)
+    //     client.uri = client.uri.substr(0, fragPos);
+	client.isCgi =  handlepathinfo(client);
 
     // 4. Normalize segments
     std::istringstream ss(client.uri);

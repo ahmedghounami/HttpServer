@@ -23,5 +23,5 @@ server {
 }
 
 
-localhost:8090/index.html?asdasd=asdasd
-localhost:8090/delete.php/?asdasd=asdasd
+localhost:8090/index.html?asdasd=asdasd //
+localhost:8090/delete.php/?asdasd=asdasd //
