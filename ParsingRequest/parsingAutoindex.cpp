@@ -174,7 +174,7 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 			error_response(client, server[client.index_server], 405); // 405
 			return false;											  // respond and clear client;
 		}
-		if (client.method == "GET")
+		if (client.method != "DELETE")
 		{
 			if (server[client.index_server].locations[location].redirect.first.empty() == true && client.uri == location)
 			{
@@ -187,7 +187,7 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 				return false; // respond and clear client;
 			}
 		}
-		else if (client.method == "POST")
+		if (client.method == "POST")
 			client.upload_path = server[client.index_server].locations[location].upload_path;
 	}
 

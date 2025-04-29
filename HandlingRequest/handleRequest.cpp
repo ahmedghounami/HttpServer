@@ -61,16 +61,23 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
             iss >> port;
             for (std::map<int, server_config>::iterator it = server.begin(); it != server.end(); ++it)
             {
-                if (std::find(it->second.ports.begin(), it->second.ports.end(), port) != it->second.ports.end() && server_index == -1)
-                    server_index = it->second.server_index;
-                if (it->second.host == host && std::find(it->second.server_names.begin(), it->second.server_names.end(), host) != it->second.server_names.end() && std::find(it->second.ports.begin(), it->second.ports.end(), port) != it->second.ports.end())
+                if(client.ip == it->second.host || (client.ip == "127.0.0.1" && (it->second.host == "localhost" || it->second.host == "127.0.0.1")))
                 {
-                    server_index = it->second.server_index;
-                    break;
+                    if (std::find(it->second.ports.begin(), it->second.ports.end(), port) != it->second.ports.end() && server_index == -1)
+                        server_index = it->second.server_index;
+                    if (std::find(it->second.server_names.begin(), it->second.server_names.end(), host) != it->second.server_names.end() && std::find(it->second.ports.begin(), it->second.ports.end(), port) != it->second.ports.end())
+                    {
+                        server_index = it->second.server_index;
+                        break;
+                    }
                 }
             }
         }
     }
+    // std::cout << "server_index: " << server_index << std::endl;
+    // std::cerr << "client ip: " << client.ip << std::endl;
+    // std::cout << "client host: " << host << std::endl;
+    // exit(0);
     return server_index;
 }
 void success(client_info &client, std::string body, bool whith_header, std::string path ="", std::string content_type = "", long long file_size = -1)
