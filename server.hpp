@@ -97,7 +97,9 @@ struct client_info
     std::string upload_path;
     std::string post_cgi_filename;
     std::string ip;
-  time_t last_time;
+    time_t last_time;
+    std::string location;
+    
 };
 
 struct port_used
@@ -159,6 +161,8 @@ std::string getBoundary(const std::string &contentType);
 void writeToFile(std::string &body, int fd);
 bool NewFile(client_info &client, std::map<int, server_config> &server);
 std::string nameGenerator(std::string MimeType, std::string upload_path, bool isCgi);
+bool validateAndNormalizePath(client_info &client, std::map<int, server_config> &server);
+void tracing_uri(std::string &uri);
 
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);

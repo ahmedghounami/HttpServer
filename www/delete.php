@@ -1,5 +1,5 @@
 <?php
-$targetDir = "/Users/hboudar/goinfre/";
+$targetDir = "/Users/mkibous/Desktop/webserver/www/uploads/"; // Change this to your target directory
 
 if (!file_exists($targetDir)) {
 	mkdir($targetDir, 0777, true);

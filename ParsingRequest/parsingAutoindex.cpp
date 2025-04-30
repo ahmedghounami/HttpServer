@@ -163,10 +163,10 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 	client.index_server = findMatchingServer(client, server);
 	int found = 0;
 	std::string location = getlocation(client, server[client.index_server]);
+	client.location = location;
 	if (location.empty() == false)
 	{
-		std::cout << "location: " << getlocation(client, server[client.index_server]) << std::endl;
-
+		std::cout << "location: " << location << std::endl;
 		found = 1;
 		if (std::find(server[client.index_server].locations[location].allowed_methods.begin(), server[client.index_server].locations[location].allowed_methods.end(), client.method) == server[client.index_server].locations[location].allowed_methods.end())
 		{

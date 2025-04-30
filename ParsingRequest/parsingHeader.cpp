@@ -1,5 +1,78 @@
 #include "../server.hpp"
 
+
+std::string decodeURIComponent(const std::string& encoded) {
+    std::ostringstream decoded;
+    for (size_t i = 0; i < encoded.length(); ++i) {
+        if (encoded[i] == '%' && i + 2 < encoded.length()) {
+            char hex[3] = { encoded[i + 1], encoded[i + 2], '\0' };
+            if (isxdigit(hex[0]) && isxdigit(hex[1])) {
+                decoded << static_cast<char>(std::strtol(hex, nullptr, 16));
+                i += 2;
+            } else {
+                decoded << '%'; // leave it if malformed
+            }
+        } else if (encoded[i] == '+') {
+            decoded << ' '; // optional
+        } else {
+            decoded << encoded[i];
+        }
+    }
+    return decoded.str();
+}
+
+// Main function
+bool validateAndNormalizePath(client_info &client, std::map<int, server_config> &server) {
+    // 1. Decode URI
+    std::cerr << "before tracing_uri: " << client.uri << std::endl;
+	  tracing_uri(client.uri);
+    std::cerr << "after tracing_uri: " << client.uri << std::endl;
+    client.uri = decodeURIComponent(client.uri);
+    // 2. Extract and store client.query
+    // size_t qpos = client.uri.find('?');
+    // if (qpos != std::string::npos) {
+    //     client.query = client.uri.substr(qpos + 1);
+    //     client.uri = client.uri.substr(0, qpos);
+    // } else {
+    //     client.query.clear();
+    // }
+
+    // // 3. Strip fragment (if ever present)
+    // size_t fragPos = client.uri.find('#');
+    // if (fragPos != std::string::npos)
+    //     client.uri = client.uri.substr(0, fragPos);
+	client.isCgi =  handlepathinfo(client);
+
+    // 4. Normalize segments
+    std::istringstream ss(client.uri);
+    std::string segment;
+    std::vector<std::string> segments;
+
+    while (std::getline(ss, segment, '/')) {
+        if (segment.empty() || segment == ".")
+          continue;
+        if (segment == "..") {
+            std::cerr << "❌ Path contains '..' which is not allowed.\n";
+            error_response(client, server[client.index_server], 400);
+            return false;
+        }
+        segments.push_back(segment);
+    }
+
+    // 5. Rebuild normalized path
+    std::ostringstream cleanPath;
+    cleanPath << "/";
+    for (size_t i = 0; i < segments.size(); ++i) {
+        cleanPath << segments[i];
+        if (i != segments.size() - 1)
+            cleanPath << "/";
+    }
+
+    client.uri = cleanPath.str();
+    return true;
+}
+
+
 bool RequestLine(client_info &client, std::map<int, server_config> &server)
 {
 	(void)server;
@@ -73,6 +146,8 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 		error_response(client, server[client.index_server], 404); // 404
 		return false;											  // respond and clear client;
 	}
+	validateAndNormalizePath(client, server);
+	std::cerr << "client.uri: " << client.uri << std::endl;
 
 	if (client.version != "HTTP/1.1" || client.version.find(' ') != std::string::npos)
 	{
@@ -276,3 +351,4 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 		post_success(client, body);
 	}
 }
+

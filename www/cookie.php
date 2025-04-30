@@ -23,7 +23,6 @@ if (!isset($_SESSION["username"])) {
 }
 
 // Set the response header for HTML content
-header("Content-Type: text/html");
 
 // Output HTML content
 echo "<html><body>";
