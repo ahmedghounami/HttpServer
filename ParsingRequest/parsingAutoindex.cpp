@@ -1,32 +1,50 @@
 
 #include "../server.hpp"
 
-bool autoindex_server(client_info &client, server_config &loc)
+bool autoindex_server(client_info &client, server_config &server)
 {
 	struct stat info;
-	if (loc.index.empty() == false && stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) == 0 && access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) == 0)
-		client.uri = "/" + loc.index[0];
-	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == true)
+	if (server.index.empty() == false && stat((server.path + "/" + server.index[0].c_str()).c_str(), &info) == 0 && access((server.path + "/" + server.index[0].c_str()).c_str(), R_OK) == 0)
 	{
-		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/direc.html");
+		if (stat((server.path + "/" + server.index[0].c_str()).c_str(), &info) == 0 && access((server.path + "/" + server.index[0].c_str()).c_str(), R_OK) == 0)
+			client.uri = "/" + server.index[0];
+		else
+		{
+			generateAutoindexToFile(client.uri, server.path, server.path + "/direc.html");
+			client.uri = "/direc.html";
+		}
+	}
+
+	else if (server.index.empty() == false && (stat((server.path + "/" + server.index[0].c_str()).c_str(), &info) != 0 || access((server.path + "/" + server.index[0].c_str()).c_str(), R_OK) != 0) && server.autoindex == true)
+	{
+		generateAutoindexToFile(client.uri, server.path, server.path + "/direc.html");
 		client.uri = "/direc.html";
 	}
-	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == false)
+	else if (server.index.empty() == false && (stat((server.path + "/" + server.index[0].c_str()).c_str(), &info) != 0 || access((server.path + "/" + server.index[0].c_str()).c_str(), R_OK) != 0) && server.autoindex == false)
 	{
-		error_response(client, loc, 404); // 404
-		return false; // respond and clear client;
+		error_response(client, server, 404); // 404
+		return false;						 // respond and clear client;
 	}
-	if (loc.index.empty() == true && stat((loc.path + "/index.html").c_str(), &info) == 0 && access((loc.path + "/index.html").c_str(), R_OK) == 0)
+	if (server.index.empty() == true && stat((server.path + "/index.html").c_str(), &info) == 0 && access((server.path + "/index.html").c_str(), R_OK) == 0)
+	{
 		client.uri = "/index.html";
-	if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == true)
+		if (stat((server.path + "/index.html").c_str(), &info) == 0 && access((server.path + "/index.html").c_str(), R_OK) == 0)
+			client.uri = "/index.html";
+		else
+		{
+			generateAutoindexToFile(client.uri, server.path, server.path + "/direc.html");
+			client.uri = "/direc.html";
+		}
+	}
+	if (server.index.empty() == true && (stat((server.path + "/index.html").c_str(), &info) != 0 || access((server.path + "/index.html").c_str(), R_OK) != 0) && server.autoindex == true)
 	{
-		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/direc.html");
+		generateAutoindexToFile(client.uri, server.path, server.path + "/direc.html");
 		client.uri = "/direc.html";
 	}
-	else if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == false)
+	else if (server.index.empty() == true && (stat((server.path + "/index.html").c_str(), &info) != 0 || access((server.path + "/index.html").c_str(), R_OK) != 0) && server.autoindex == false)
 	{
-		error_response(client, loc, 404); // 404
-		return false; // respond and clear client;
+		error_response(client, server, 404); // 404
+		return false;						 // respond and clear client;
 	}
 	return true;
 }
@@ -35,30 +53,46 @@ bool autoindex(client_info &client, location &loc, server_config &server)
 {
 	struct stat info;
 	if (loc.index.empty() == false && stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) == 0 && access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) == 0)
-		client.uri = "/" + loc.index[0];
+	{
+		if (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) == 0 && access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) == 0)
+			client.uri = "/" + loc.index[0];
+		else
+		{
+			generateAutoindexToFile(client.uri, loc.path, loc.path + "/direc.html");
+			client.uri = "/direc.html";
+		}
+	}
+
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == true)
 	{
-		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/direc.html");
+		generateAutoindexToFile(client.uri, loc.path, loc.path + "/direc.html");
 		client.uri = "/direc.html";
 	}
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
 		error_response(client, server, 404); // 404
-		return false; // respond and clear client;
+		return false;						 // respond and clear client;
 	}
 	if (loc.index.empty() == true && stat((loc.path + "/index.html").c_str(), &info) == 0 && access((loc.path + "/index.html").c_str(), R_OK) == 0)
 	{
 		client.uri = "/index.html";
+		if (stat((loc.path + "/index.html").c_str(), &info) == 0 && access((loc.path + "/index.html").c_str(), R_OK) == 0)
+			client.uri = "/index.html";
+		else
+		{
+			generateAutoindexToFile(client.uri, loc.path, loc.path + "/direc.html");
+			client.uri = "/direc.html";
+		}
 	}
 	if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == true)
 	{
-		generateAutoindexToFile(client.uri, loc.path, "/Users/aghounam/Desktop/www.webserv/www/direc.html");
+		generateAutoindexToFile(client.uri, loc.path, loc.path + "/direc.html");
 		client.uri = "/direc.html";
 	}
 	else if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
 		error_response(client, server, 404); // 404
-		return false; // respond and clear client;
+		return false;						 // respond and clear client;
 	}
 	return true;
 }
@@ -91,7 +125,7 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 	while ((entry = readdir(dir)) != NULL)
 	{
 		std::string name = entry->d_name;
-		std::cout << "name: " << name << std::endl;
+		// std::cout << "name: " << name << std::endl;
 		if (name == ".")
 			continue;
 
@@ -125,28 +159,38 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 
 bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 {
+	std::cerr << client.uri << " " << client.method << std::endl;
 	client.index_server = findMatchingServer(client, server);
 	int found = 0;
-	for (std::map<std::string, location>::iterator it = server[client.index_server].locations.begin(); it != server[client.index_server].locations.end(); ++it)
+	std::string location = getlocation(client, server[client.index_server]);
+	client.location = location;
+	if (location.empty() == false)
 	{
-		if (it->first == client.uri && it->second.redirect.first.empty() == true)
+		std::cout << "location: " << location << std::endl;
+		found = 1;
+		if (std::find(server[client.index_server].locations[location].allowed_methods.begin(), server[client.index_server].locations[location].allowed_methods.end(), client.method) == server[client.index_server].locations[location].allowed_methods.end())
 		{
-			found = 1;
-			if (client.method == "GET")
+			std::cerr << "Error: method: not allowed: " << client.method << std::endl;
+			error_response(client, server[client.index_server], 405); // 405
+			return false;											  // respond and clear client;
+		}
+		if (client.method != "DELETE")
+		{
+			if (server[client.index_server].locations[location].redirect.first.empty() == true && client.uri == location)
 			{
-				if (it->second.redirect.first.empty() == true)
-				{
-					if (autoindex(client, it->second, server[client.index_server]) == false)
-						return false; // respond and clear client;
-				}
+				if (autoindex(client, server[client.index_server].locations[location], server[client.index_server]) == false)
+					return false; // respond and clear client;
+			}
+			else if (location == client.uri && server[client.index_server].locations[location].redirect.first.empty() == false)
+			{
+				redirect(client, server[client.index_server].locations[location].redirect);
+				return false; // respond and clear client;
 			}
 		}
-		else if (it->first == client.uri && it->second.redirect.first.empty() == false && client.method == "GET")
-		{
-			redirect(client, it->second.redirect);
-			return false; // respond and clear client;
-		}
+		if (client.method == "POST")
+			client.upload_path = server[client.index_server].locations[location].upload_path;
 	}
+
 	if (found == 0 && client.uri == "/" && client.method == "GET")
 	{
 		if (autoindex_server(client, server[client.index_server]) == false)
@@ -155,14 +199,13 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 			return false; // respond and clear client;
 		}
 	}
-	else if (found == 0 && client.uri == "/" && client.method == "POST")
+	else if (client.method == "POST" && found == 0)
+		client.upload_path = server[client.index_server].upload_path;
+	if (client.method == "POST" && client.upload_path.empty() == true)
 	{
-		if (server[client.index_server].upload_path.empty())
-		{
-			error_response(client, server[client.index_server], 501); // 501
-			return false; // respond and clear client;
-		}
+		error_response(client, server[client.index_server], 405); // 405
+		return false;											  // respond and clear client;
 	}
-	std::cout << "----------------------------------autoindex_server-------------------------------" << client.method << std::endl;
+	std::cout << "upload_path: " << client.upload_path << std::endl;
 	return true;
 }

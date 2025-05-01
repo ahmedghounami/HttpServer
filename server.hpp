@@ -30,7 +30,8 @@ struct location
     std::vector<std::string> allowed_methods;
     bool autoindex;
     std::vector<std::string> cgi_extension;
-    std::string cgi_path;
+    std::string cgi_path_php;
+    std::string cgi_path_py;
     int cgi_timeout;
     std::pair<std::string, std::string> redirect;
     std::string upload_path;
@@ -55,33 +56,34 @@ struct server_config
 
 class server;
 
-struct FormPart {
-    std::string name;
-    std::string filename;
-    std::string contentType;
-    std::string data;
-};
+// struct FormPart {
+//     std::string name;
+//     std::string filename;
+//     std::string contentType;
+//     std::string data;
+// };
 
 struct client_info
 {
     int file_fd;
     int poll_status;
     int bodyTypeTaken;//flag
-    size_t chunkSize, pos;
+    size_t FileSize, chunkSize, pos;
     int index_server;
+    bool isCgi;
     bool ReadFlag;
-    bool autoindex;
     bool ReadSize;
     bool isChunked;
     bool bodyTaken;
     bool bodyReached;
     bool headersTaken;
 
+    bool file_opened;
     std::string name, filename, contentTypeform;
     std::string data;
     std::string boundary;
     std::string chunkData;
-    std::vector<FormPart> formParts;
+    // std::vector<FormPart> formParts;
     std::string ContentType;
     std::string method, uri, version, path_info;
     std::string query;
@@ -89,9 +91,15 @@ struct client_info
     bool datafinished;
     int error_code;
     std::string response;
+    std::string cgi_output;
     double bytes_sent;
     bool isGet;
-  time_t last_time;
+    std::string upload_path;
+    std::string post_cgi_filename;
+    std::string ip;
+    time_t last_time;
+    std::string location;
+    
 };
 
 struct port_used
@@ -138,10 +146,10 @@ void parse_location(std::istringstream &ss, std::string &key, location &loc);
 
 //Parsing
 void ParseChunk(client_info &client, std::map<int, server_config> &server);
-void FormData(client_info& client);//         Raw/Binary data
-void OtherData(client_info &client);//for other data
-void ChunkedFormData(client_info &client);//  Chunked data -> Multipart/form-data
-void ChunkedOtherData(client_info &client);// Chunked data -> Raw/Binary data
+void FormData(client_info& client, std::map<int, server_config> &server);// Multipart/form-data
+void OtherData(client_info &client, std::map<int, server_config> &server);// Raw/Binary data
+void ChunkedFormData(client_info &client, std::map<int, server_config> &server);// Chunked data -> Multipart/form-data
+void ChunkedOtherData(client_info &client, std::map<int, server_config> &server);// Chunked data -> Raw/Binary data
 
 //Parsing Utils
 std::string trim(const std::string &str);
@@ -151,15 +159,10 @@ bool isValidHeaderValue(const std::string &value);
 std::string toLower(const std::string& str);
 std::string getBoundary(const std::string &contentType);
 void writeToFile(std::string &body, int fd);
-void NewFileChunked(client_info &client);
-void NewFile(client_info &client);
-void ParseContentDisposition(client_info& client);
-void ParseContentType(client_info& client);
-
-//handling methods
-void handleGetRequest(client_info &client, std::map<int, server_config> &server);
-void handleDeleteRequest(client_info &client, std::map<int, server_config> &server);
-// void handlePostRequest(client_info &client, std::map<int, server_config> &server);
+bool NewFile(client_info &client, std::map<int, server_config> &server);
+std::string nameGenerator(std::string MimeType, std::string upload_path, bool isCgi);
+bool validateAndNormalizePath(client_info &client, std::map<int, server_config> &server);
+void tracing_uri(std::string &uri);
 
 //handling methods
 void handleGetRequest(client_info &client, std::map<int, server_config> &server);
@@ -184,3 +187,5 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server);
 
 // redirect
 void redirect(client_info &client, std::pair<std::string, std::string> &redirect);
+bool handlepathinfo(client_info &client);
+void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path);

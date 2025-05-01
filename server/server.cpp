@@ -1,14 +1,5 @@
 #include "../server.hpp"
 
-void check_ports(int port, std::string server_name, std::vector<port_used> &ports_used)
-{
-    for (unsigned int i = 0; i < ports_used.size(); i++)
-    {
-        if (ports_used[i].port == port && ports_used[i].server_name == server_name)
-            throw std::runtime_error("Port already in use");
-    }
-}
-
 server::server(std::string &config_file)
 {
     signal(SIGPIPE, SIG_IGN);
@@ -17,7 +8,6 @@ server::server(std::string &config_file)
     {
         for (unsigned int j = 0; j < servers[i].ports.size(); j++)
         {
-            // check_ports(servers[i].ports[j], servers[i].server_names, ports_used);
             start_connection = socket(AF_INET, SOCK_STREAM, 0);
             listners.push_back(start_connection);
             if (start_connection == -1)
@@ -56,13 +46,6 @@ server::server(std::string &config_file)
             server_fd.fd = start_connection;
             server_fd.events = POLLIN;
             clients_fds.push_back(server_fd);
-
-            // port_used port;
-            // port.port = servers[i].ports[j];
-            // port.server_name = servers[i].server_name;
-            // ports_used.push_back(port);
-
-            // std::cout << "Server started on port " << servers[i].ports[j] << std::endl;
         }
     }
 }
@@ -85,18 +68,6 @@ void server::check_timeout(std::vector<pollfd> &clients_fds, std::map<int, clien
 
 void server::listen_for_connections()
 {
-
-    ///////////////////////////////////////////////
-    // std::string filename = "data";
-    // std::ofstream file(filename);
-    // if (file.good())
-    //     std::cerr << "File opened successfully\n";
-    // else
-    // {
-    //     std::cerr << "File open failed\n";
-    //     throw std::runtime_error("File open failed");
-    // }
-    ///////////////////////////////////////////////
     while (true)
     {
         int ret = poll(&clients_fds[0], clients_fds.size(), 5000);
@@ -108,7 +79,7 @@ void server::listen_for_connections()
         check_timeout(clients_fds, clients);
         if (ret == 0)
         {
-            std::cerr << "No data, timeout\n";
+            // std::cerr << "No data, timeout\n";
             continue;
         }
         for (unsigned int i = 0; i < clients_fds.size(); i++)
@@ -153,7 +124,6 @@ void server::listen_for_connections()
                 usleep(1000);
                 if (clients[clients_fds[i].fd].datafinished == true)
                 {
-                    std::cerr << "Client finished ---------------------------------------------------------------" << clients_fds[i].fd << std::endl;
                     close(clients_fds[i].fd);
                     clients_fds.erase(clients_fds.begin() + i);
                     i--;
