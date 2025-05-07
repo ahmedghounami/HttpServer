@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/04/28 11:45:28 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/05/07 18:28:07 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,6 +94,7 @@ void success(client_info &client, std::string body, bool whith_header, std::stri
             std::ifstream file(path.c_str());
             if (!file.is_open())
             {
+                std::cerr << "Error opening file: " << path << std::endl;
                 return;
             }
             file.seekg(0, std::ios::end);
@@ -105,7 +106,7 @@ void success(client_info &client, std::string body, bool whith_header, std::stri
             conection = "keep-alive";
         client.response = "HTTP/1.1 200 OK\r\n";
         client.response += content_type + "\r\n";
-        client.response += "Content-Length: " + std::to_string(file_size) + "\r\n";
+        client.response += "Content-Length: " + to_string_custom(file_size) + "\r\n";
         client.response += "Connection: " + conection + "\r\n";
         client.response += "\r\n";
         client.bytes_sent = ((double)client.response.size()  * -1) - 1;
@@ -281,12 +282,10 @@ void child_process(client_info &client, int &fd, int &fdin, std::map<int, server
     char *cgi_path;
     if (path.substr(path.find_last_of(".") + 1) == "php" && server[client.index_server].locations[location].cgi_path_php != "")
         cgi_path = (char *)server[client.index_server].locations[location].cgi_path_php.c_str();
-    else if (path.substr(path.find_last_of(".") + 1) == "php")
-        cgi_path = (char *)"CGI/php-cgi";
     else if (path.substr(path.find_last_of(".") + 1) == "py" && server[client.index_server].locations[location].cgi_path_py != "")
         cgi_path = (char *)server[client.index_server].locations[location].cgi_path_py.c_str();
     else
-        cgi_path = (char *)"CGI/python-cgi";
+        exit(12);
     char *args[] = {cgi_path, (char *)path.c_str(), NULL};
     if(server[client.index_server].locations[location].cgi_timeout > 0)
         alarm(server[client.index_server].locations[location].cgi_timeout);
@@ -329,6 +328,13 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             int exitstatus = WEXITSTATUS(status);
             if (exitstatus != 0)
             {
+                if(exitstatus == 12)
+                {
+                    std::cerr << "CGI path not found" << std::endl;
+                    error_response(client, server[client.index_server], 404); // 404
+                    close_cgi_in_out(client, fdin, fd);
+                    return;
+                }
                 std::cerr << "CGI process exited with status: " << exitstatus << std::endl;
                 error_response(client, server[client.index_server], 500); // 500
                 close_cgi_in_out(client, fdin, fd);
@@ -520,7 +526,7 @@ void handleDeleteRequest(client_info &client, std::map<int, server_config> &serv
         std::string body = "File deleted successfully";
         client.response = "HTTP/1.1 200 OK\r\n";
         client.response += "Content-Type: text/plain\r\n";
-        client.response += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+        client.response += "Content-Length: " + to_string_custom(body.size()) + "\r\n";
         client.response += "Connection: keep-alive\r\n";
         client.response += "\r\n";
         client.response += body;

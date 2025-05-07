@@ -27,7 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             const reader = new FileReader();
 
             reader.onload = function(e) {
-                fetch(`http://localhost:9090/post.php`, {
+                // Send actual filename via query parameter
+                fetch(`http://localhost:9090/post.php?filename=${encodeURIComponent(file.name)}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/octet-stream'
@@ -39,17 +40,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                         statusMsg.innerText = "✅ File uploaded successfully!";
                         statusMsg.classList.remove('hidden');
                         statusMsg.classList.add('bg-green-500', 'text-white', 'p-4', 'rounded-lg');
-                        failureMsg.classList.add('hidden'); // Hide failure message if upload is successful
+                        failureMsg.classList.add('hidden');
                     } else {
-                    failureMsg.innerText = "❌ File upload failed. Please try again!";
-                    failureMsg.classList.remove('hidden');
-                    failureMsg.classList.add('bg-red-500', 'text-white', 'p-4', 'rounded-lg');
-                    statusMsg.classList.add('hidden'); // Hide success message on failure
-                        // throw new Error('Upload failed');
+                        failureMsg.innerText = "❌ File upload failed. Please try again!";
+                        failureMsg.classList.remove('hidden');
+                        failureMsg.classList.add('bg-red-500', 'text-white', 'p-4', 'rounded-lg');
+                        statusMsg.classList.add('hidden');
                     }
-                })
-                // .catch(error => {
-                // });
+                });
             };
 
             reader.readAsArrayBuffer(file);
@@ -68,13 +66,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         <p id="upload-status" class="hidden font-semibold text-center">✅ File uploaded successfully!</p>
         <p id="failure-msg" class="hidden font-semibold text-center">❌ File upload failed. Please try again!</p>
-
     </main>
 </body>
 </html>
 <?php
 } else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rawData = file_get_contents('php://input');
+
+    // Use original filename from GET parameter, or fall back to timestamped .bin
     $fileName = basename($_GET['filename'] ?? ('upload_' . time() . '.bin'));
 
     if (!empty($rawData)) {

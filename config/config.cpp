@@ -16,7 +16,7 @@ void server::parse_config(std::string config_file)
 {
 	int i = 0;
 	std::stack<std::string> stack;
-	std::ifstream file(config_file);
+	std::ifstream file(config_file.c_str());
 	if (!file.good())
 		throw std::runtime_error("Config file could not be opened");
 	std::string line;

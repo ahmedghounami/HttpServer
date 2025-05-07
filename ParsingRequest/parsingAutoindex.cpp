@@ -146,7 +146,7 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 	closedir(dir);
 
 	// Write to output file
-	std::ofstream file(output_file_path);
+	std::ofstream file(output_file_path.c_str());
 	if (!file.good())
 	{
 		std::cerr << "Error: Unable to open file for writing: " << output_file_path << std::endl;

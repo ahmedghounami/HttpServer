@@ -7,7 +7,7 @@ std::string decodeURIComponent(const std::string& encoded) {
         if (encoded[i] == '%' && i + 2 < encoded.length()) {
             char hex[3] = { encoded[i + 1], encoded[i + 2], '\0' };
             if (isxdigit(hex[0]) && isxdigit(hex[1])) {
-                decoded << static_cast<char>(std::strtol(hex, nullptr, 16));
+                decoded << static_cast<char>(std::strtol(hex, NULL, 16));
                 i += 2;
             } else {
                 decoded << '%'; // leave it if malformed
