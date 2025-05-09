@@ -167,8 +167,13 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 		return true;
 
 	size_t pos = client.data.find("\r\n\r\n");
-	if (pos == std::string::npos) // not enough data
+	if (pos == std::string::npos) {
+		static int i = 0;
+		i++;
+		if (i == 2)
+			error_response(client, server[client.index_server], 400);
 		return false;
+	} // not enough data
 
 	std::string headers = client.data.substr(0, pos);
 	client.data.erase(0, pos + 4);
