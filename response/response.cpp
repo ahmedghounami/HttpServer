@@ -116,3 +116,19 @@ void post_success(client_info &client, std::string body)
     std::cout << "------------------------------------POST SUCCESS------------------------------------" << std::endl;
 }
 
+void listingdirec(client_info &client, std::string body)
+{
+    client.poll_status = 1;
+    client.datafinished = true;
+    client.response = "HTTP/1.1 200 OK\r\n";
+    client.response += "Content-Type: text/html\r\n";
+    client.response += "Content-Length: ";
+    client.response += to_string_custom(body.size()) + "\r\n";
+    client.response += "Connection: close\r\n";
+    client.response += "\r\n";
+    client.response += body;
+    if (client.uri != "/")
+        client.isGet = true;
+    std::cout << "------------------------------------LISTING DIREC------------------------------------" << std::endl;
+}
+
