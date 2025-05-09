@@ -11,14 +11,14 @@ bool autoindex_server(client_info &client, server_config &server)
 		else
 		{
 			generateAutoindexToFile(client.uri, server.path, client);
-			client.uri = "/direc.html";
+			return false;
 		}
 	}
 
 	else if (server.index.empty() == false && (stat((server.path + "/" + server.index[0].c_str()).c_str(), &info) != 0 || access((server.path + "/" + server.index[0].c_str()).c_str(), R_OK) != 0) && server.autoindex == true)
 	{
 		generateAutoindexToFile(client.uri, server.path, client);
-		client.uri = "/direc.html";
+		return false;
 	}
 	else if (server.index.empty() == false && (stat((server.path + "/" + server.index[0].c_str()).c_str(), &info) != 0 || access((server.path + "/" + server.index[0].c_str()).c_str(), R_OK) != 0) && server.autoindex == false)
 	{
@@ -33,13 +33,13 @@ bool autoindex_server(client_info &client, server_config &server)
 		else
 		{
 			generateAutoindexToFile(client.uri, server.path, client);
-			client.uri = "/direc.html";
+			return false;
 		}
 	}
 	if (server.index.empty() == true && (stat((server.path + "/index.html").c_str(), &info) != 0 || access((server.path + "/index.html").c_str(), R_OK) != 0) && server.autoindex == true)
 	{
 		generateAutoindexToFile(client.uri, server.path, client);
-		client.uri = "/direc.html";
+		return false;
 	}
 	else if (server.index.empty() == true && (stat((server.path + "/index.html").c_str(), &info) != 0 || access((server.path + "/index.html").c_str(), R_OK) != 0) && server.autoindex == false)
 	{
@@ -59,14 +59,14 @@ bool autoindex(client_info &client, location &loc, server_config &server)
 		else
 		{
 			generateAutoindexToFile(client.uri, loc.path,  client);
-			client.uri = "/direc.html";
+			return false;
 		}
 	}
 
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == true)
 	{
 		generateAutoindexToFile(client.uri, loc.path,  client);
-		client.uri = "/direc.html";
+		return false;
 	}
 	else if (loc.index.empty() == false && (stat((loc.path + "/" + loc.index[0].c_str()).c_str(), &info) != 0 || access((loc.path + "/" + loc.index[0].c_str()).c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
@@ -81,13 +81,13 @@ bool autoindex(client_info &client, location &loc, server_config &server)
 		else
 		{
 			generateAutoindexToFile(client.uri, loc.path,  client);
-			client.uri = "/direc.html";
+			return false;
 		}
 	}
 	if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == true)
 	{
 		generateAutoindexToFile(client.uri, loc.path,  client);
-		client.uri = "/direc.html";
+		return false;
 	}
 	else if (loc.index.empty() == true && (stat((loc.path + "/index.html").c_str(), &info) != 0 || access((loc.path + "/index.html").c_str(), R_OK) != 0) && loc.autoindex == false)
 	{
@@ -144,7 +144,6 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 
 	html << "</tbody>\n</table>\n</body>\n</html>\n";
 	listingdirec(client, html.str());
-
 }
 
 bool check_autoindex(client_info &client, std::map<int, server_config> &server)
