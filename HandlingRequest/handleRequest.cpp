@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/05/07 18:28:07 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/05/09 20:16:13 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,10 +74,6 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
             }
         }
     }
-    // std::cout << "server_index: " << server_index << std::endl;
-    // std::cerr << "client ip: " << client.ip << std::endl;
-    // std::cout << "client host: " << host << std::endl;
-    // exit(0);
     return server_index;
 }
 void success(client_info &client, std::string body, bool whith_header, std::string path ="", std::string content_type = "", long long file_size = -1)
@@ -95,6 +91,7 @@ void success(client_info &client, std::string body, bool whith_header, std::stri
             if (!file.is_open())
             {
                 std::cerr << "Error opening file: " << path << std::endl;
+                client.error_code = 500;
                 return;
             }
             file.seekg(0, std::ios::end);
@@ -291,8 +288,9 @@ void child_process(client_info &client, int &fd, int &fdin, std::map<int, server
         alarm(server[client.index_server].locations[location].cgi_timeout);
     else
         alarm(5);
-    if(execve(args[0], args, envp) == -1)
-        exit(1);
+    if(execve(args[0], args, envp) == -1){
+        std::cerr << "execve failed" << std::endl;
+        exit(1);}
     exit(0); // execve only returns on error
 }
 void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path)
@@ -302,7 +300,6 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
     std::string content_type = "";
     bool already = false;
     int fdin;
-    std::cout << "in cgi function" << std::endl;
     if( checkfiles(client, server, fdin, fd, already))
         return;
     pid_t pid = fork();
@@ -351,23 +348,21 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
             close_cgi_in_out(client, fdin, fd);
             return;
         }
-        std::cerr << "CGI process finished" << std::endl;
         lseek(fd, 0, SEEK_SET);
         char buffer[1024];
         int bytes_read;
         std::string headers = readheadercgi(fd, body);
         if(headers.find("\r\n\r\n") == std::string::npos)
         {
-            std::cerr << "CGI process failed no valid headers" << std::endl;
-            error_response(client, server[client.index_server], 500); // 500
-            close_cgi_in_out(client, fdin, fd);
-            return;
+            headers.clear();
+            lseek(fd, 0, SEEK_SET);
         }
         if(client.bytes_sent <= 0 && client.bytes_sent != -1 )
         {
             while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0)
                 body+= std::string(buffer, bytes_read);
-            content_type = headers.erase(headers.find("\r\n\r\n"), 4);
+            if(!headers.empty())
+                content_type = headers.erase(headers.find("\r\n\r\n"), 4);
             close(fd);
             close(fdin);
             success(client, body, true, path, content_type, body.size());
@@ -410,7 +405,7 @@ void sendbodypart(client_info &client, std::string path)
     file.read(buffer, READ_BUFFER_SIZE);
     if (file.eof())
     {
-        client.datafinished = 1, std::cout << "file end reached" << std::endl;
+        client.datafinished = 1;
     }
     body = std::string(buffer, file.gcount());
     success(client, body, false);
@@ -427,6 +422,10 @@ bool handlepathinfo(client_info &client){
         client.query = client.uri.substr(client.uri.find("?") + 1);
         client.uri = client.uri.substr(0, client.uri.find("?"));
     }
+    //check if .php is directory
+    // std::cout << "uri: " << client.uri << std::endl;
+    // exit(0);
+    
     if (pos == std::string::npos)
         pos = client.uri.find(".py");
     else
@@ -449,7 +448,6 @@ bool handlepathinfo(client_info &client){
 }
 void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 {
-    std::cout << "uri: " << client.uri << std::endl;
     if(client.error_code != 0)
     {
         error_response(client, server[client.index_server], client.error_code); // 500
@@ -461,18 +459,25 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
     handlepathinfo(client);
     std::string path = getcorectserver_path(client, server) + client.uri;
     std::ifstream file(path.c_str());
-    if (!file.is_open())
+    if (!file.fail() || !file.is_open())
     {
+        std::cout << "errorcode: " << errno << std::endl;
         switch (errno)
         {
         case ENOENT:
-            error_response(client, server[client.index_server], 404); // 404
+            error_response(client, server[client.index_server], 404);
             break;
         case EACCES:
-            error_response(client, server[client.index_server], 403); // 403
+            error_response(client, server[client.index_server], 403);
+            break;
+        case ENOTDIR:
+            error_response(client, server[client.index_server], 404);
+            break;
+        case EISDIR:
+            error_response(client, server[client.index_server], 403);
             break;
         default:
-            error_response(client, server[client.index_server], 500); // 500
+            error_response(client, server[client.index_server], 500);
             break;
         }
         return;
@@ -497,14 +502,12 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 
 void handleDeleteRequest(client_info &client, std::map<int, server_config> &server)
 {
-    std::cout << "in delete funciton" << std::endl;
     if(client.error_code != 0)
     {
         error_response(client, server[client.index_server], client.error_code); // 500
         return;
     }
     std::string path = getcorectserver_path(client, server) + client.uri;
-    std::cout << "path: " << path << std::endl;
     if (std::remove(path.c_str()) != 0)
     {
         std::cerr << "Error deleting file: " << path << std::endl;

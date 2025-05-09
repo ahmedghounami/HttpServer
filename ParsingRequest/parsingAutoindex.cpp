@@ -106,7 +106,7 @@ void generateAutoindexToFile(const std::string &uri, const std::string &director
 	std::stringstream html;
 	html << "<!DOCTYPE html>\n"
 			"<html>\n"
-			"<head><meta charset='UTF-8'><title>Directory Listing</title></head>\n"
+			"<head><meta charset='UTF-8'><title>Directoqry Listing</title></head>\n"
 			"<style>\n"
 			"body { font-family: Arial, sans-serif; }\n"
 			"table { width: 100%; border-collapse: collapse; }\n"
