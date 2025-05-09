@@ -69,6 +69,7 @@ class server;
 
 struct client_info
 {
+    std::string Path;
     int file_fd;
     int poll_status;
     int bodyTypeTaken;//flag
