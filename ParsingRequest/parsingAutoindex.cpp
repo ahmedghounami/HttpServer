@@ -179,6 +179,12 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 		if (client.method == "POST")
 			client.upload_path = server[client.index_server].locations[location].upload_path;
 	}
+	else if (client.method == "DELETE" && found == 0)
+	{
+		std::cerr << "Error: method: not allowed: " << client.method << std::endl;
+		error_response(client, server[client.index_server], 405); // 405
+		return false;											  // respond and clear client;
+	}
 
 	if (found == 0 && client.uri == "/" && client.method == "GET")
 	{
