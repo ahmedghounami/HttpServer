@@ -150,7 +150,6 @@ bool check_autoindex(client_info &client, std::map<int, server_config> &server)
 {
 	std::cerr << client.uri << " " << client.method << std::endl;
 	client.index_server = findMatchingServer(client, server);
-	client.Path = server[client.index_server].path;
 	int found = 0;
 	std::string location = getlocation(client, server[client.index_server]);
 	client.location = location;

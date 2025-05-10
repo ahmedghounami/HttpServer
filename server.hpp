@@ -104,6 +104,7 @@ struct client_info
     std::string ip;
     time_t last_time;
     std::string location;
+    pid_t pid;
     
 };
 

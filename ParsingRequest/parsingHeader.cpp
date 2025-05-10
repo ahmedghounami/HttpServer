@@ -41,7 +41,18 @@ bool validateAndNormalizePath(client_info &client, std::map<int, server_config> 
     // size_t fragPos = client.uri.find('#');
     // if (fragPos != std::string::npos)
     //     client.uri = client.uri.substr(0, fragPos);
-	client.isCgi =  handlepathinfo(client);
+	// client.index_server = findMatchingServer(client, server);
+	// std::cout << "index_server: " << client.index_server << std::endl;
+	// client.Path = server[client.index_server].path;
+	// std::cout << "server_path: " << client.Path << std::endl;
+	// client.isCgi =  handlepathinfo(client);
+    if (client.uri.find("#") != std::string::npos)
+        client.uri = client.uri.substr(0, client.uri.find("#"));
+    if(client.uri.find("?") != std::string::npos)
+    {
+        client.query = client.uri.substr(client.uri.find("?") + 1);
+        client.uri = client.uri.substr(0, client.uri.find("?"));
+    }
 
     // 4. Normalize segments
     std::istringstream ss(client.uri);
@@ -263,6 +274,11 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	client.FileSize = 0;
 	client.headersTaken = true;
 	client.file_fd = -42;
+
+	client.index_server = findMatchingServer(client, server);
+	std::cout << "index_server: " << client.index_server << std::endl;
+	client.Path = server[client.index_server].path;
+	std::cout << "server_path: " << client.Path << std::endl;
 	client.isCgi = handlepathinfo(client);
 
 	return true;

@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/05/09 20:16:13 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/05/10 13:02:43 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,9 +51,10 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
     std::string host;
     int port;
     int server_index = -1;
-
+    // std::cout << "client.headers: " << client.headers.size() << std::endl;
     for (std::map<std::string, std::string>::iterator it = client.headers.begin(); it != client.headers.end(); ++it)
     {
+        // std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
         if (it->first == "host")
         {
             std::istringstream iss(it->second);
@@ -217,14 +218,16 @@ bool checkfiles(client_info &client,  std::map<int, server_config> &server, int 
     client.isGet = 1;
     if(client.cgi_output != "")
     {
-        fd = open(client.cgi_output.c_str(), O_RDWR , 0666);
+        fd = open(client.cgi_output.c_str(), O_RDWR);
         if (fd == -1)
         {
             std::cerr << "open failed" << std::endl;
             error_response(client, server[client.index_server], 500); // 500
             close(fdin);
             std::remove(client.post_cgi_filename.c_str());
+            client.post_cgi_filename = "";
             std::remove(client.cgi_output.c_str());
+            client.cgi_output = "";
             return true;
         }
         already = true;
@@ -238,6 +241,7 @@ bool checkfiles(client_info &client,  std::map<int, server_config> &server, int 
             error_response(client, server[client.index_server], 500); // 500
             close(fdin);
             std::remove(client.post_cgi_filename.c_str());
+            client.post_cgi_filename = "";
             return true;
         }
         client.cgi_output = filename;
@@ -249,7 +253,9 @@ void close_cgi_in_out(client_info &client, int &fdin, int &fd)
     close(fd);
     close(fdin);
     std::remove(client.cgi_output.c_str());
+    client.cgi_output = "";
     std::remove(client.post_cgi_filename.c_str());
+    client.post_cgi_filename = "";
 }
 void child_process(client_info &client, int &fd, int &fdin, std::map<int, server_config> &server, std::string &path, bool already)
 {
@@ -302,15 +308,16 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
     int fdin;
     if( checkfiles(client, server, fdin, fd, already))
         return;
-    pid_t pid = fork();
-    if (pid == -1)
+    if (client.pid == 0)
+        client.pid = fork();
+    if (client.pid == -1)
     {
         std::cerr << "fork failed" << std::endl;
         error_response(client, server[client.index_server], 500); // 500
         close_cgi_in_out(client, fdin, fd);
         return;
     }
-    else if (pid == 0)
+    else if (client.pid == 0)
     {
         child_process(client, fd, fdin, server, path, already);
     }
@@ -318,7 +325,11 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
     {
         // parent process
         int status;
-        waitpid(pid, &status, 0);
+        int ret = waitpid(client.pid, &status, WNOHANG);
+        if(ret == 0){
+            close(fd);
+            close(fdin);
+            return;}
         alarm(0);
         if (WIFEXITED(status))
         {
@@ -415,17 +426,29 @@ bool handlepathinfo(client_info &client){
     bool is_php = false;
     bool is_cgi = false;
     size_t pos = client.uri.find(".php");
-    if (client.uri.find("#") != std::string::npos)
-        client.uri = client.uri.substr(0, client.uri.find("#"));
-    if(client.uri.find("?") != std::string::npos)
-    {
-        client.query = client.uri.substr(client.uri.find("?") + 1);
-        client.uri = client.uri.substr(0, client.uri.find("?"));
-    }
+    // if (client.uri.find("#") != std::string::npos)
+    //     client.uri = client.uri.substr(0, client.uri.find("#"));
+    // if(client.uri.find("?") != std::string::npos)
+    // {
+    //     client.query = client.uri.substr(client.uri.find("?") + 1);
+    //     client.uri = client.uri.substr(0, client.uri.find("?"));
+    // }
     //check if .php is directory
     // std::cout << "uri: " << client.uri << std::endl;
+    // std::cout << "server path: " << client.Path << std::endl;
     // exit(0);
-    
+    std::string path = client.Path + client.uri.substr(0, pos + 4);
+    struct stat info;
+    while (stat(path.c_str(), &info) == 0)
+    {
+        if((info.st_mode & S_IFDIR) == 0)
+            break;
+        pos = client.uri.find(".php", pos + 4);
+        if (pos == std::string::npos)
+            break;
+        path = client.Path + client.uri.substr(0, pos + 4);
+        
+    }
     if (pos == std::string::npos)
         pos = client.uri.find(".py");
     else
@@ -448,6 +471,7 @@ bool handlepathinfo(client_info &client){
 }
 void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 {
+    // std::cout << "uri: " << client.uri << std::endl;
     if(client.error_code != 0)
     {
         error_response(client, server[client.index_server], client.error_code); // 500
@@ -459,7 +483,7 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
     handlepathinfo(client);
     std::string path = getcorectserver_path(client, server) + client.uri;
     std::ifstream file(path.c_str());
-    if (!file.fail() || !file.is_open())
+    if (file.fail() || !file.is_open())
     {
         std::cout << "errorcode: " << errno << std::endl;
         switch (errno)
