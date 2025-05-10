@@ -7,7 +7,7 @@ std::string decodeURIComponent(const std::string& encoded) {
         if (encoded[i] == '%' && i + 2 < encoded.length()) {
             char hex[3] = { encoded[i + 1], encoded[i + 2], '\0' };
             if (isxdigit(hex[0]) && isxdigit(hex[1])) {
-                decoded << static_cast<char>(std::strtol(hex, nullptr, 16));
+                decoded << static_cast<char>(std::strtol(hex, NULL, 16));
                 i += 2;
             } else {
                 decoded << '%'; // leave it if malformed
@@ -91,7 +91,7 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 	{
 		std::cerr << "ERROR: Request line start with a space" << std::endl;
 		error_response(client, server[client.index_server], 400); // 500
-		return false;											  // respond and clear client;
+		return false;											  
 	}
 
 	size_t start = requestLine.find_first_not_of(" ");
@@ -100,14 +100,14 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 	{
 		std::cerr << "ERROR: Request line ends with extra character(s)" << std::endl;
 		error_response(client, server[client.index_server], 400); // 500
-		return false;											  // respond and clear client;
+		return false;											  
 	}
 
 	if (start == std::string::npos)
 	{
 		std::cerr << "ERROR: Empty request line" << std::endl;
 		error_response(client, server[client.index_server], 400); // 500
-		return false;											  // respond and clear client;
+		return false;											  
 	}
 
 	requestLine = requestLine.substr(start, end - start + 1);
@@ -120,7 +120,7 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 	{
 		std::cerr << "Error: Malformed request line (Incorrect spaces)" << std::endl;
 		error_response(client, server[client.index_server], 400); // 500
-		return false;											  // respond and clear client;
+		return false;											  
 	}
 
 	client.method = requestLine.substr(0, firstSP);
@@ -131,20 +131,20 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 	{
 		std::cerr << "Error: method: not allowed: " << client.method << std::endl;
 		error_response(client, server[client.index_server], 405); // 405
-		return false;											  // respond and clear client;
+		return false;											  
 	}
 	else if (client.method != "GET" && client.method != "POST" && client.method != "DELETE")
 	{
 		std::cerr << "Error: Method not implemented: " << client.method << std::endl;
 		error_response(client, server[client.index_server], 501); // 501
-		return false;											  // respond and clear client;
+		return false;											  
 	}
 
 	if (client.uri.empty() || client.uri[0] != '/')
 	{
 		std::cerr << "Error: Invalid request-target (URI must start with '/')" << std::endl;
 		error_response(client, server[client.index_server], 404); // 404
-		return false;											  // respond and clear client;
+		return false;											  
 	}
 	validateAndNormalizePath(client, server);
 	std::cerr << "client.uri: " << client.uri << std::endl;
@@ -153,7 +153,7 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 	{
 		std::cerr << "Error: Invalid or malformed HTTP version: " << client.version << std::endl;
 		error_response(client, server[client.index_server], 505); // 505
-		return false;											  // respond and clear client;
+		return false;											  
 	}
 
 	// std::cerr << "method '" << client.method << "'\nuri '" << client.uri << "'\nversion '" << client.version << "'\n" << std::endl;
@@ -167,8 +167,13 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 		return true;
 
 	size_t pos = client.data.find("\r\n\r\n");
-	if (pos == std::string::npos) // not enough data
+	if (pos == std::string::npos) {
+		static int i = 0;
+		i++;
+		if (i == 2)
+			error_response(client, server[client.index_server], 400);
 		return false;
+	} // not enough data
 
 	std::string headers = client.data.substr(0, pos);
 	client.data.erase(0, pos + 4);
@@ -199,7 +204,7 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 			std::cerr << "Error: Malformed header (missing ':'): " << line
 					  << std::endl;
 			error_response(client, server[client.index_server], 400); // 500
-			return false;											  // respond and clear client;
+			return false;											  
 		}
 
 		std::string key = trim(line.substr(0, delimiterPos));
@@ -209,7 +214,7 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 		{
 			std::cerr << "Error: Empty header name or value" << std::endl;
 			error_response(client, server[client.index_server], 400); // 500
-			return false;											  // respond and clear client;
+			return false;											  
 		}
 
 		std::transform(key.begin(), key.end(), key.begin(), ::tolower);
@@ -217,13 +222,13 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 		{
 			std::cerr << "Error: Invalid header name: " << key << std::endl;
 			error_response(client, server[client.index_server], 400); // 500
-			return false;											  // respond and clear client;
+			return false;											  
 		}
 		if (!isValidHeaderValue(value))
 		{
 			std::cerr << "Error: Invalid header value: " << value << std::endl;
 			error_response(client, server[client.index_server], 400); // 500
-			return false;											  // respond and clear client;
+			return false;											  
 		}
 		if (client.headers.find(key) != client.headers.end())
 		{
@@ -239,12 +244,12 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	{
 		std::cerr << "Error: Missing 'Host' header" << std::endl;
 		error_response(client, server[client.index_server], 400); // 500
-		return false;											  // respond and clear client;
+		return false;											  
 	}
 	if (check_autoindex(client, server) == false)
 	{
 		std::cerr << "im in hte check_autoindex" << std::endl;
-		return false; // respond and clear client;
+		return false; 
 	}
 
 	// std::map<std::string, std::string>::iterator it;

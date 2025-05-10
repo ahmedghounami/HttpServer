@@ -27,11 +27,11 @@ std::string getresponse(int error_code, std::string &path, server_config &server
         response = "HTTP/1.1 415 Unsupported Media Type\r\n";
     else
         response = "HTTP/1.1 500 Internal Server Error\r\n", error_code = 500;
-    if(server.error_pages.find(std::to_string(error_code)) != server.error_pages.end())
-        path = server.error_pages[std::to_string(error_code)];
+    if(server.error_pages.find(to_string_custom(error_code)) != server.error_pages.end())
+        path = server.error_pages[to_string_custom(error_code)];
     if(path == "" || std::ifstream(path.c_str()).fail())
     {
-        path = "./errors/" + std::to_string(error_code) + ".html";
+        path = "./errors/" + to_string_custom(error_code) + ".html";
         if (std::ifstream(path.c_str()).fail())
         {
             path = "./error_pages/500.html";
@@ -63,7 +63,7 @@ void error_response(client_info &client, server_config& server, int error_code)
         client.response += "Content-Length: ";
         std::ifstream file(path.c_str());
         file.seekg(0, std::ios::end);
-        client.response += std::to_string(file.tellg()) + "\r\n";
+        client.response += to_string_custom(file.tellg()) + "\r\n";
         client.response += "Connection: " + conection + "\r\n";
         client.response += "\r\n";
         client.bytes_sent = ((double)client.response.size() * -1) - 1;
@@ -107,12 +107,28 @@ void post_success(client_info &client, std::string body)
     client.response = "HTTP/1.1 200 OK\r\n";
     client.response += "Content-Type: text/html\r\n";
     client.response += "Content-Length: ";
-    client.response += std::to_string(body.size()) + "\r\n";
+    client.response += to_string_custom(body.size()) + "\r\n";
     client.response += "Connection: close\r\n";
     client.response += "\r\n";
     client.response += body;
     if (client.uri != "/")
         client.isGet = true;
     std::cout << "------------------------------------POST SUCCESS------------------------------------" << std::endl;
+}
+
+void listingdirec(client_info &client, std::string body)
+{
+    client.poll_status = 1;
+    client.datafinished = true;
+    client.response = "HTTP/1.1 200 OK\r\n";
+    client.response += "Content-Type: text/html\r\n";
+    client.response += "Content-Length: ";
+    client.response += to_string_custom(body.size()) + "\r\n";
+    client.response += "Connection: close\r\n";
+    client.response += "\r\n";
+    client.response += body;
+    if (client.uri != "/")
+        client.isGet = true;
+    std::cout << "------------------------------------LISTING DIREC------------------------------------" << std::endl;
 }
 

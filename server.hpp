@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include <sys/_types/_ssize_t.h>
+// #include <sys/_types/_ssize_t.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -20,6 +20,10 @@
 #include <algorithm>
 #include <arpa/inet.h>
 #include <dirent.h>
+#include <limits>
+#include <string>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #define READ_BUFFER_SIZE 100000
 struct location
@@ -65,6 +69,7 @@ class server;
 
 struct client_info
 {
+    std::string Path;
     int file_fd;
     int poll_status;
     int bodyTypeTaken;//flag
@@ -180,12 +185,27 @@ std::string getContentType(const std::string &path);
 
 
 // autoindex
-void generateAutoindexToFile(const std::string &uri, const std::string &directory_path, const std::string &output_file_path);
+void generateAutoindexToFile(const std::string &uri, const std::string &directory_path, client_info &client);
 bool autoindex_server(client_info &client, server_config &loc);
 bool autoindex(client_info &client, location &loc);
 bool check_autoindex(client_info &client, std::map<int, server_config> &server);
+void listingdirec(client_info &client, std::string body);
 
 // redirect
 void redirect(client_info &client, std::pair<std::string, std::string> &redirect);
 bool handlepathinfo(client_info &client);
 void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path);
+
+
+
+
+
+#include <sstream>
+#include <string>
+
+template <typename T>
+std::string to_string_custom(const T& value) {
+    std::ostringstream oss;
+    oss << value;  // Converts any type that can be streamed into a string
+    return oss.str();
+}
