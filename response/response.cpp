@@ -1,5 +1,4 @@
 #include "../server.hpp"
-#include <fstream>
 std::string getresponse(int error_code, std::string &path, server_config &server)
 {
     std::string response;

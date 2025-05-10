@@ -20,7 +20,6 @@ server::server(std::string &config_file)
             if (inet_pton(AF_INET, servers[i].host.c_str(), &server_addr.sin_addr) <= 0 && 
                 servers[i].host != "localhost")
             {
-                std::cerr << "Invalid address/ Address not supported" << std::endl;
                 throw std::runtime_error("Invalid address");
             }
             

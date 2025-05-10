@@ -52,7 +52,6 @@ void writeToFile(std::string &body, int fd) {
 
 std::string nameGenerator(std::string MimeType, std::string upload_path, bool isCgi) {
 
-  std::cerr << "-------------nameGenerator----------------" << std::endl;
   std::map<std::string, std::string> MimeTypeMap;
 
   MimeTypeMap["application/octet-stream"] = ".bin";
@@ -104,10 +103,8 @@ std::string nameGenerator(std::string MimeType, std::string upload_path, bool is
     name += charset[index];
   }
   if (MimeTypeMap.find(MimeType) != MimeTypeMap.end()) {
-    std::cerr << "name generated : " << name + MimeTypeMap[MimeType] << std::endl;
     return name + MimeTypeMap[MimeType];
   }
-  std::cerr << "name generated : " << name + ".bin" << std::endl;
   return name + ".bin";
 }
 
@@ -149,7 +146,6 @@ static void ParseContentType(client_info& client) {
   client.pos = client.data.find("/");
   client.data = client.data.substr(client.pos + 1, client.data.size());
   client.contentTypeform = client.data.substr(0, client.data.find("\r\n"));
-  std::cerr << "contentTypeform: " << client.contentTypeform << std::endl;
   if (client.bodyTypeTaken == 1 || client.bodyTypeTaken == 2)
     client.data = client.data.substr(client.data.find("\r\n") + 6, client.data.size());
   else

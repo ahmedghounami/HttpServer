@@ -24,28 +24,8 @@ std::string decodeURIComponent(const std::string& encoded) {
 // Main function
 bool validateAndNormalizePath(client_info &client, std::map<int, server_config> &server) {
     // 1. Decode URI
-    std::cerr << "before tracing_uri: " << client.uri << std::endl;
 	  tracing_uri(client.uri);
-    std::cerr << "after tracing_uri: " << client.uri << std::endl;
     client.uri = decodeURIComponent(client.uri);
-    // 2. Extract and store client.query
-    // size_t qpos = client.uri.find('?');
-    // if (qpos != std::string::npos) {
-    //     client.query = client.uri.substr(qpos + 1);
-    //     client.uri = client.uri.substr(0, qpos);
-    // } else {
-    //     client.query.clear();
-    // }
-
-    // // 3. Strip fragment (if ever present)
-    // size_t fragPos = client.uri.find('#');
-    // if (fragPos != std::string::npos)
-    //     client.uri = client.uri.substr(0, fragPos);
-	// client.index_server = findMatchingServer(client, server);
-	// std::cout << "index_server: " << client.index_server << std::endl;
-	// client.Path = server[client.index_server].path;
-	// std::cout << "server_path: " << client.Path << std::endl;
-	// client.isCgi =  handlepathinfo(client);
     if (client.uri.find("#") != std::string::npos)
         client.uri = client.uri.substr(0, client.uri.find("#"));
     if(client.uri.find("?") != std::string::npos)
@@ -158,7 +138,6 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 		return false;											  
 	}
 	validateAndNormalizePath(client, server);
-	std::cerr << "client.uri: " << client.uri << std::endl;
 
 	if (client.version != "HTTP/1.1" || client.version.find(' ') != std::string::npos)
 	{
@@ -167,7 +146,6 @@ bool RequestLine(client_info &client, std::map<int, server_config> &server)
 		return false;											  
 	}
 
-	// std::cerr << "method '" << client.method << "'\nuri '" << client.uri << "'\nversion '" << client.version << "'\n" << std::endl;
 	return true;
 }
 
@@ -259,13 +237,9 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	}
 	if (check_autoindex(client, server) == false)
 	{
-		std::cerr << "im in hte check_autoindex" << std::endl;
 		return false; 
 	}
 
-	// std::map<std::string, std::string>::iterator it;
-	// for (it = client.headers.begin(); it != client.headers.end(); ++it)
-	// 	std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
 
 	client.chunkData = "";
 	client.ReadFlag = true;
@@ -276,9 +250,7 @@ bool ParseHeaders(client_info &client, std::map<int, server_config> &server)
 	client.file_fd = -42;
 
 	client.index_server = findMatchingServer(client, server);
-	std::cout << "index_server: " << client.index_server << std::endl;
 	client.Path = server[client.index_server].path;
-	std::cout << "server_path: " << client.Path << std::endl;
 	client.isCgi = handlepathinfo(client);
 
 	return true;
@@ -330,7 +302,6 @@ bool TakeBodyType(client_info& client, std::map<int, server_config>& server) {
       return false;
     }
   }
-  std::cerr << "client.bodyTypeTaken: " << client.bodyTypeTaken << std::endl;
   return true;
 }
 
@@ -365,7 +336,6 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 	{
 		if (client.isCgi == true) {
 			handleCgi(client, server);
-			std::cerr << "cgi finished-------------------------------------------" << std::endl;
 			return;
 		}
 		std::string body = "<html><body><h1>File uploaded successfully!</h1></body></html>";

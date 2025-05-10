@@ -1,14 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   handleRequest.cpp                                  :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/05/10 19:19:45 by mkibous          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "../server.hpp"
 
@@ -531,7 +520,6 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 
 void handleDeleteRequest(client_info &client, std::map<int, server_config> &server)
 {
-    std::cout << "in delete" << std::endl;
     if(client.error_code != 0)
     {
         error_response(client, server[client.index_server], client.error_code); // 500

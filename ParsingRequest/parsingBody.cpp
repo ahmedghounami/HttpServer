@@ -22,7 +22,6 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
         error_response(client, server[client.index_server], 413);//payload too large
         return ;
       } else if (client.chunkSize == 0) {
-        std::cerr << "client.chunkSize is 0" << std::endl;
         close(client.file_fd);
         client.bodyTaken = true;
         return ;
@@ -43,7 +42,6 @@ void OtherData(client_info &client, std::map<int, server_config> &server) {
       client.data.clear();
     }
     if (client.chunkSize == 0) {
-      std::cerr << "data cleared." << std::endl;
       close(client.file_fd);
       client.bodyTaken = true;
       client.data.clear();
@@ -66,7 +64,6 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
       client.post_cgi_filename = client.filename;
     }
     if (client.data.find("0\r\n\r\n") != std::string::npos) {
-      std::cerr << "ending for cgi was found" << std::endl;
       client.bodyTaken = true;
     }
     if (!client.data.empty())
@@ -102,7 +99,6 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
         error_response(client, server[client.index_server], 413);//payload too large
         return ;
       } else if (client.chunkSize == 0) {
-        std::cerr << "client.chunkSize is 0" << std::endl;
         close(client.file_fd);
         client.bodyTaken = true;
         return ;
@@ -125,7 +121,6 @@ void ChunkedOtherData(client_info& client, std::map<int, server_config> &server)
         client.ReadFlag = true;
 
         if (client.data.find("0\r\n\r\n") != std::string::npos && client.data.size() <= 5) {
-          std::cerr << "the ending was found of Raw data |" << client.data << "|" << std::endl;
           close(client.file_fd);
           client.bodyTaken = true;
           client.data.clear();
@@ -166,7 +161,6 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
       if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos)
         break;
       if (NewFile(client, server)) {
-        std::cerr << "NewFile failed." << std::endl;
         return ;
       }
       if (client.data.empty())
@@ -191,7 +185,6 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
       if (client.data.find(client.boundary + "\r\n") == std::string::npos
           && client.data.find(client.boundary + "--") != std::string::npos
           && client.data.size() <= 65) {
-        std::cerr << "data ended |" << client.data << "|" << std::endl;
         client.bodyTaken = true;
         close(client.file_fd);
         return ;
@@ -212,7 +205,6 @@ void ChunkedFormData(client_info& client, std::map<int, server_config> &server) 
         client.chunkSize = 0;
 
         if (client.data.find(client.boundary + "--") != std::string::npos && client.data.size() <= 69) {
-          std::cerr << "clean ending |" << client.data << "|" << std::endl;
           close(client.file_fd);
           client.bodyTaken = true;
           client.data.clear();
@@ -251,16 +243,13 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
     client.pos = client.data.find(client.boundary + "\r\n");
     if (client.pos != std::string::npos && client.ReadFlag == true) {
       if (client.data.find("\r\n", client.boundary.size() + 2) == std::string::npos) {
-        // std::cerr << "'CRLF' found." << std::endl;
         break;
       }
       if (NewFile(client, server)) {
-        std::cerr << "NewFile failed." << std::endl;
         return ;
       }
       client.ReadFlag = false;
       if (client.data.empty()) {
-        // std::cerr << "data is empty." << std::endl;
         break ;
       }
     }
@@ -282,7 +271,6 @@ void FormData(client_info& client, std::map<int, server_config> &server) {
       
       client.pos = client.data.find(client.boundary + "--");
       if (client.pos != std::string::npos && client.pos == 0) {
-        std::cerr << "end boundary found |" << client.data << "|" << std::endl;
         close(client.file_fd);
         client.bodyTaken = true;
         client.data.clear();
