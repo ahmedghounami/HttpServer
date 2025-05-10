@@ -88,5 +88,4 @@ void server::parse_config(std::string config_file)
 	else if (servers.empty())
 		throw std::runtime_error("no server block found");
 	file.close();
-	std::cout << "------------config file parsed------------" << std::endl;
 }
