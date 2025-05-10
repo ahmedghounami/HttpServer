@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delete File</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gradient-to-br text-white flex from-black via-[#02274a] to-[#021636] h-screen w-screen justify-center items-center">
+    <main class="flex flex-col items-center gap-8 w-[500px]">
+        <h1 class="text-3xl font-bold text-center">Enter Filename to Delete</h1>
+
+        <form onsubmit="return sendDelete();" class="border rounded-3xl p-8 grid gap-4 w-full">
+            <label for="filename" class="text-white">Filename:</label>
+            <input type="text" id="filename" class="bg-white/10 backdrop-blur-2xl rounded-3xl p-4 text-white w-full" placeholder="example.txt" required>
+
+            <input type="submit" value="Delete File" class="bg-white/10 backdrop-blur-2xl rounded-3xl p-4 cursor-pointer w-full">
+        </form>
+
+        <p id="status-msg" class="hidden font-semibold text-center"></p>
+    </main>
+
+    <script>
+    function sendDelete() {
+    const filename = document.getElementById('filename').value.trim();
+    const statusMsg = document.getElementById('status-msg');
+
+    if (!filename) return false;
+
+    fetch(`http://localhost:9090/${encodeURIComponent(filename)}`, {
+        method: 'DELETE'
+    })
+    .then(res => {
+        statusMsg.classList.remove('hidden');
+        return res.text().then(data => {
+            if (res.ok) {
+                statusMsg.className = 'bg-green-500 text-white p-4 rounded-lg font-semibold text-center';
+                statusMsg.textContent = data;  // Show success message
+            } else {
+                // Only print status code (e.g., 404)
+                statusMsg.className = 'bg-red-500 text-white p-4 rounded-lg font-semibold text-center';
+                statusMsg.textContent = `Error ${res.status}`;  // Print status code only
+            }
+        });
+    })
+    .catch(err => {
+        statusMsg.classList.remove('hidden');
+        statusMsg.className = 'bg-red-500 text-white p-4 rounded-lg font-semibold text-center';
+        statusMsg.textContent = `Network error: ${err.message}`;
+    });
+
+    return false; // Prevent form from reloading page
+}
+
+
+    </script>
+</body>
+</html>

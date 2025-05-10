@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/05/10 13:02:43 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/05/10 18:31:16 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,10 +51,8 @@ int findMatchingServer(client_info &client, std::map<int, server_config> &server
     std::string host;
     int port;
     int server_index = -1;
-    // std::cout << "client.headers: " << client.headers.size() << std::endl;
     for (std::map<std::string, std::string>::iterator it = client.headers.begin(); it != client.headers.end(); ++it)
     {
-        // std::cout << "header-> " << it->first << ": '" << it->second << "'" << std::endl;
         if (it->first == "host")
         {
             std::istringstream iss(it->second);
@@ -297,15 +295,16 @@ void child_process(client_info &client, int &fd, int &fdin, std::map<int, server
     if(execve(args[0], args, envp) == -1){
         std::cerr << "execve failed" << std::endl;
         exit(1);}
-    exit(0); // execve only returns on error
+    exit(0);
 }
-void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path)
+void handleCgi(client_info &client, std::map<int, server_config> &server)
 {
     int fd;
     std::string body;
     std::string content_type = "";
     bool already = false;
     int fdin;
+    std::string path = getcorectserver_path(client, server) + client.uri;
     if( checkfiles(client, server, fdin, fd, already))
         return;
     if (client.pid == 0)
@@ -323,7 +322,6 @@ void handleCgi(client_info &client, std::map<int, server_config> &server, std::s
     }
     else
     {
-        // parent process
         int status;
         int ret = waitpid(client.pid, &status, WNOHANG);
         if(ret == 0){
@@ -426,18 +424,19 @@ bool handlepathinfo(client_info &client){
     bool is_php = false;
     bool is_cgi = false;
     size_t pos = client.uri.find(".php");
-    // if (client.uri.find("#") != std::string::npos)
-    //     client.uri = client.uri.substr(0, client.uri.find("#"));
-    // if(client.uri.find("?") != std::string::npos)
-    // {
-    //     client.query = client.uri.substr(client.uri.find("?") + 1);
-    //     client.uri = client.uri.substr(0, client.uri.find("?"));
-    // }
-    //check if .php is directory
-    // std::cout << "uri: " << client.uri << std::endl;
-    // std::cout << "server path: " << client.Path << std::endl;
-    // exit(0);
-    std::string path = client.Path + client.uri.substr(0, pos + 4);
+    if (pos == std::string::npos)
+        pos = client.uri.find(".py");
+    else{
+        is_php = true;
+    }
+    if (pos == std::string::npos)
+    {
+        is_cgi = false;
+        return false;
+    }
+    else
+        is_cgi = true;
+    std::string path = client.Path + client.uri.substr(0, pos + 3 + is_php);
     struct stat info;
     while (stat(path.c_str(), &info) == 0)
     {
@@ -445,15 +444,23 @@ bool handlepathinfo(client_info &client){
             break;
         pos = client.uri.find(".php", pos + 4);
         if (pos == std::string::npos)
-            break;
-        path = client.Path + client.uri.substr(0, pos + 4);
+        {
+            pos = client.uri.find(".py");
+            if (pos == std::string::npos)
+                return false;
+            else
+                is_php = false;
+        }
+        else
+            is_php = true;
+        path = client.Path + client.uri.substr(0, pos + 3 + is_php);
         
     }
     if (pos == std::string::npos)
         pos = client.uri.find(".py");
     else
         is_php = true;
-    if (pos != std::string::npos && (client.uri[pos + is_php + 3] == '/' || client.uri[pos + is_php + 3] == '?'))
+    if (pos != std::string::npos && (client.uri[pos + is_php + 3] == '/'))
     {
         int add = 3 + is_php;
         std::string path_info = client.uri.substr(pos + add);
@@ -471,7 +478,6 @@ bool handlepathinfo(client_info &client){
 }
 void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 {
-    // std::cout << "uri: " << client.uri << std::endl;
     if(client.error_code != 0)
     {
         error_response(client, server[client.index_server], client.error_code); // 500
@@ -510,7 +516,7 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
     {
         if(path.substr(path.find_last_of(".") + 1) == "php" || path.substr(path.find_last_of(".") + 1) == "py")
         {
-            handleCgi(client, server, path);
+            handleCgi(client, server);
             return;
         }
     }
@@ -526,6 +532,7 @@ void handleGetRequest(client_info &client, std::map<int, server_config> &server)
 
 void handleDeleteRequest(client_info &client, std::map<int, server_config> &server)
 {
+    std::cout << "in delete" << std::endl;
     if(client.error_code != 0)
     {
         error_response(client, server[client.index_server], client.error_code); // 500

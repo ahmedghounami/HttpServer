@@ -364,7 +364,7 @@ void ParseChunk(client_info &client, std::map<int, server_config> &server)
 	if (client.bodyTaken == true)
 	{
 		if (client.isCgi == true) {
-			handleCgi(client, server, client.uri);
+			handleCgi(client, server);
 			std::cerr << "cgi finished-------------------------------------------" << std::endl;
 			return;
 		}

@@ -195,7 +195,7 @@ void listingdirec(client_info &client, std::string body);
 // redirect
 void redirect(client_info &client, std::pair<std::string, std::string> &redirect);
 bool handlepathinfo(client_info &client);
-void handleCgi(client_info &client, std::map<int, server_config> &server, std::string &path);
+void handleCgi(client_info &client, std::map<int, server_config> &server);
 
 
 
