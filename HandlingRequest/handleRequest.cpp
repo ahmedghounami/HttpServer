@@ -6,7 +6,7 @@
 /*   By: mkibous <mkibous@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/19 22:39:03 by hboudar           #+#    #+#             */
-/*   Updated: 2025/05/10 18:31:16 by mkibous          ###   ########.fr       */
+/*   Updated: 2025/05/10 18:56:03 by mkibous          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -442,19 +442,18 @@ bool handlepathinfo(client_info &client){
     {
         if((info.st_mode & S_IFDIR) == 0)
             break;
-        pos = client.uri.find(".php", pos + 4);
-        if (pos == std::string::npos)
+        if(client.uri.find(".php", pos + 3 + is_php) != std::string::npos)
+            pos = client.uri.find(".php", pos + 3 + is_php), is_php = true;
+        else
         {
-            pos = client.uri.find(".py");
-            if (pos == std::string::npos)
-                return false;
+            pos = client.uri.find(".py", pos + 3 + is_php);
+            if (pos == std::string::npos){
+                is_cgi = false;
+                return false;}
             else
                 is_php = false;
         }
-        else
-            is_php = true;
         path = client.Path + client.uri.substr(0, pos + 3 + is_php);
-        
     }
     if (pos == std::string::npos)
         pos = client.uri.find(".py");
