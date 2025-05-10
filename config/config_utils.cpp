@@ -27,8 +27,8 @@ void path_checker(std::string path)
         throw std::runtime_error(path + " : path does not exist");
     else if (access(path.c_str(), R_OK) != 0)
         throw std::runtime_error(path + " : path is not readable");
-    // else if (access(path.c_str(), W_OK) != 0)
-    //     throw std::runtime_error(path + " : path is not writable");
+    else if (access(path.c_str(), W_OK) != 0)
+        throw std::runtime_error(path + " : path is not writable");
 }
 
 void parse_location(std::istringstream &ss, std::string &key, location &loc)

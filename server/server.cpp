@@ -25,6 +25,7 @@ server::server(std::string &config_file)
             }
             
             int opt = 1;
+            // 1 to enable, 0 to disable
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
             setsockopt(start_connection, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
 
@@ -58,7 +59,7 @@ void server::check_timeout(std::vector<pollfd> &clients_fds, std::map<int, clien
         if (std::find(listners.begin(), listners.end(), clients_fds[i].fd) == listners.end() && \
              current_time - clients[clients_fds[i].fd].last_time > 15)
         {
-            std::cerr << "Client timeout " << clients_fds[i].fd << std::endl;
+            std::cerr << "Client timeout :" << clients_fds[i].fd << std::endl;
             close(clients_fds[i].fd);
             clients_fds.erase(clients_fds.begin() + i);
             i--;
@@ -78,13 +79,9 @@ void server::listen_for_connections()
         }
         check_timeout(clients_fds, clients);
         if (ret == 0)
-        {
-            // std::cerr << "No data, timeout\n";
             continue;
-        }
         for (unsigned int i = 0; i < clients_fds.size(); i++)
         {
-
             if (clients_fds[i].revents & POLLIN)
             {
                 if (std::find(listners.begin(), listners.end(), clients_fds[i].fd) != listners.end())
@@ -129,20 +126,14 @@ void server::listen_for_connections()
                     i--;
                 }
                 else
-                {
                     clients[clients_fds[i].fd].response.clear();
-                }
             }
         }
     }
 }
 
-
-
 server::~server()
-
 {
-    
     for (unsigned int i = 0; i < clients_fds.size(); i++)
         close(clients_fds[i].fd);
 }
