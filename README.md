@@ -76,8 +76,8 @@ The config file lets you:
 ### 👥 Contributors
 
 <p align="center">
-  <a href="https://github.com/aghounam" target="_blank">
-    <img src="https://github.com/aghounam.png" width="96" height="96" alt="Ahmed Ghounami" style="border-radius: 50%;" />
+  <a href="https://github.com/ahmedghounami" target="_blank">
+    <img src="https://github.com/ahmedghounami.png" width="96" height="96" alt="Ahmed Ghounami" style="border-radius: 50%;" />
   </a>
   &nbsp;
   <a href="https://github.com/mkibous" target="_blank">
