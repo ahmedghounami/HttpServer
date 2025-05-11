@@ -77,6 +77,7 @@ The config file lets you:
 <p align="center">
   <a href="https://github.com/ahmedghounami" target="_blank">
     <img src="https://github.com/ahmedghounami.png" width="80" alt="Ahmed Ghounami" />
+     <h1>Ahmed ghounami</h1>
   </a>
   &nbsp;&nbsp;
   <a href="https://github.com/mkibous" target="_blank">
