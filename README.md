@@ -94,16 +94,6 @@ The config file lets you:
 
 ---
 
-### 👥 Contributors
-
-
-
-
-## 📸 Screenshots & Demos
-
-> [Add GIFs, screenshots, or terminal recordings here showing file uploads, routing, error pages, etc.]
-
----
 ### 📁 Project Structure
 
 ```
