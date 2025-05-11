@@ -81,7 +81,7 @@ The config file lets you:
   </a>
   &nbsp;
   <a href="https://github.com/mkibous" target="_blank">
-    <img src="https://github.com/mkibous.png" width="96" height="96" alt="Mehdi Kibous" style="border-radius: 50%;" />
+    <img src="https://github.com/mkibous.png" width="96" height="96" alt="Mehdi Kibous" style="margin-top: 10rem border-radius: 50%;" />
   </a>
   &nbsp;
   <a href="https://github.com/hboudar" target="_blank">
