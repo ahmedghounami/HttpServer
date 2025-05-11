@@ -71,11 +71,11 @@ The config file lets you:
 
 ---
 
-## 👥 Contributors
+### 👥 Contributors
 
-- **Ahmed Ghounami**
-- **Hamza Boudar**
-- **Mehdi Kibous**
+- [**Ahmed Ghounami**](#)
+- [**Hamza Boudar**](https://github.com/hboudar)
+- [**Mehdi Kibous**](https://github.com/mkibous)
 
 ---
 
@@ -84,20 +84,25 @@ The config file lets you:
 > [Add GIFs, screenshots, or terminal recordings here showing file uploads, routing, error pages, etc.]
 
 ---
-
-## 📁 Project Structure
+### 📁 Project Structure
 
 ```
-webserv/
+www.webserv/
 │
-├── src/                 # Source files
-├── include/             # Headers
-├── conf/                # Example config files
-├── www/                 # Sample static site
-├── cgi-bin/             # Sample CGI scripts
+├── CGI/               # CGI execution logic (PHP/Python)
+├── HandlingRequest/   # HTTP request handling logic
 ├── Makefile
-└── README.md
+├── ParsingRequest/    # Request parsing and validation
+├── config/            # Sample server configuration files
+├── errors/            # Default error pages
+├── main.cpp           # Main server entry point
+├── response/          # HTTP response building and sending
+├── server/            # Server class and listener logic
+├── server.hpp         # Server header definitions
+├── upload/            # File upload directory
+└── www/               # Static website root
 ```
+
 
 ---
 
