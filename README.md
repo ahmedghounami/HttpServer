@@ -79,22 +79,6 @@ The config file lets you:
 
 ---
 
-<p align="center">
-  <a href="https://profile.intra.42.fr/users/aghounam" target="_blank">
-    <img src="https://profile.intra.42.fr/users/aghounam/avatar" alt="Ahmed Ghounami" width="96" height="96" style="border-radius: 50%; border: 1px solid #9d99a0;" />
-  </a>
-  &nbsp;
-  <a href="https://profile.intra.42.fr/users/mkibous" target="_blank">
-    <img src="https://profile.intra.42.fr/users/mkibous/avatar" alt="Mehdi Kibous" width="96" height="96" style="border-radius: 50%; border: 1px solid #9d99a0;" />
-  </a>
-  &nbsp;
-  <a href="https://profile.intra.42.fr/users/hboudar" target="_blank">
-    <img src="https://profile.intra.42.fr/users/hboudar/avatar" alt="Hamza Boudar" width="96" height="96" style="border-radius: 50%; border: 1px solid #9d99a0;" />
-  </a>
-</p>
-
----
-
 ### 👥 Contributors
 
 
