@@ -1,7 +1,10 @@
 
 
 # 🌐 Webserv
+<p align="center">
+<img src="https://miro.medium.com/v2/resize:fit:1200/1*age3Dgxl8sz6LZgDIwOSNQ.png" width="80" alt="Ahmed Ghounami" />
 
+</p>
 > "This is when you finally understand why a URL starts with HTTP."
 
 A high-performance, non-blocking HTTP/1.1 web server written from scratch in **C++98** — built as part of the 1337/42 curriculum.  
