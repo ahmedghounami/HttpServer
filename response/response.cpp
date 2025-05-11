@@ -1,48 +1,133 @@
 #include "../server.hpp"
-#include <fstream>
-
-void not_allowed_method(client_info &client)
+std::string getresponse(int error_code, std::string &path, server_config &server)
 {
+    std::string response;
+    if (error_code == 400)
+        response = "HTTP/1.1 400 Bad Request\r\n";
+    else if (error_code == 403)
+        response = "HTTP/1.1 403 Forbidden\r\n";
+    else if (error_code == 404)
+        response = "HTTP/1.1 404 Not Found\r\n";
+    else if (error_code == 405)
+        response = "HTTP/1.1 405 Method Not Allowed\r\n";
+    else if (error_code == 501)
+        response = "HTTP/1.1 501 Not Implemented\r\n";
+    else if (error_code == 504)
+        response = "HTTP/1.1 504 Gateway Timeout\r\n";
+    else if (error_code == 505)
+        response = "HTTP/1.1 505 HTTP Version Not Supported\r\n";
+    else if (error_code == 413)
+        response = "HTTP/1.1 413 Payload Too Large\r\n";
+    else if (error_code == 408)
+        response = "HTTP/1.1 408 Request Timeout\r\n";
+    else if (error_code == 429)
+        response = "HTTP/1.1 429 Too Many Requests\r\n";
+    else if (error_code == 415)
+        response = "HTTP/1.1 415 Unsupported Media Type\r\n";
+    else
+        response = "HTTP/1.1 500 Internal Server Error\r\n", error_code = 500;
+    if(server.error_pages.find(to_string_custom(error_code)) != server.error_pages.end())
+        path = server.error_pages[to_string_custom(error_code)];
+    if(path == "" || std::ifstream(path.c_str()).fail())
+    {
+        path = "./errors/" + to_string_custom(error_code) + ".html";
+        if (std::ifstream(path.c_str()).fail())
+        {
+            path = "./error_pages/500.html";
+            if (std::ifstream(path.c_str()).fail())
+            {
+                path = "";
+                return response;
+            }
+        }
+    }
+    return response;
+}
+void error_response(client_info &client, server_config& server, int error_code)
+{
+    (void)server;
+    std::string path = "";
+    client.isGet = true;
+    std::string response = getresponse(error_code, path, server);
+    client.response.clear();
+    client.error_code = error_code;
     client.poll_status = 1;
-    client.response = "HTTP/1.1 405 Method Not Allowed\r\nContent-Type: text/html\r\nContent-Length: ";
-    std::ifstream file("errors/405.html");
-    std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
+
+    if (client.bytes_sent <= 0 && client.bytes_sent != -1)
+    {
+
+        std::string conection = client.headers["connection"];
+        client.response = response;
+        client.response += "Content-Type: " + getContentType(path) + "\r\n";
+        client.response += "Content-Length: ";
+        std::ifstream file(path.c_str());
+        file.seekg(0, std::ios::end);
+        client.response += to_string_custom(file.tellg()) + "\r\n";
+        client.response += "Connection: " + conection + "\r\n";
+        client.response += "\r\n";
+        client.bytes_sent = ((double)client.response.size() * -1) - 1;
+    }
+    else
+        sendbodypart(client, path);
 }
 
-void not_implemented_method(client_info &client)
+
+
+void redirect(client_info &client, std::pair<std::string, std::string> &redirect)
 {
     client.poll_status = 1;
-    client.response = "HTTP/1.1 501 Not Implemented\r\nContent-Type: text/html\r\nContent-Length: ";
-    std::ifstream file("errors/501.html");
-    std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
+    client.datafinished = true;
+    std::string status_code = redirect.first;
+    std::string location_url = redirect.second;
+    client.response += "HTTP/1.1 " ;
+    client.response += status_code += " ";
+    if (status_code == "301")
+        client.response += "Moved Permanently";
+    else if (status_code == "302")
+        client.response += "Found";
+    else
+        client.response += "Redirect"; // fallback
+
+    client.response += "\r\n";
+    client.response += "Location: ";
+    client.response += location_url;
+    client.response += "\r\n";
+    client.response += "Content-Length: 0\r\n";
+    client.response += "Connection: close\r\n";
+    client.response += "\r\n";
+
+    // Send response to client
 }
 
-void http_version_not_supported(client_info &client)
+void post_success(client_info &client, std::string body)
 {
     client.poll_status = 1;
-    client.response = "HTTP/1.1 505 HTTP Version Not Supported\r\nContent-Type: text/html\r\nContent-Length: ";
-    std::ifstream file("errors/505.html");
-    std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
+    client.datafinished = true;
+    client.response = "HTTP/1.1 200 OK\r\n";
+    client.response += "Content-Type: text/html\r\n";
+    client.response += "Content-Length: ";
+    client.response += to_string_custom(body.size()) + "\r\n";
+    client.response += "Connection: close\r\n";
+    client.response += "\r\n";
+    client.response += body;
+    if (client.uri != "/")
+        client.isGet = true;
+    std::cout << "------------------------------------POST SUCCESS------------------------------------" << std::endl;
 }
 
-void bad_request(client_info &client)
+void listingdirec(client_info &client, std::string body)
 {
     client.poll_status = 1;
-    client.response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\nContent-Length: ";
-    std::ifstream file("errors/400.html");
-    std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
-    
+    client.datafinished = true;
+    client.response = "HTTP/1.1 200 OK\r\n";
+    client.response += "Content-Type: text/html\r\n";
+    client.response += "Content-Length: ";
+    client.response += to_string_custom(body.size()) + "\r\n";
+    client.response += "Connection: close\r\n";
+    client.response += "\r\n";
+    client.response += body;
+    if (client.uri != "/")
+        client.isGet = true;
+    std::cout << "------------------------------------LISTING DIREC------------------------------------" << std::endl;
 }
 
-void not_found(client_info &client)
-{
-    client.poll_status = 1;
-    client.response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nContent-Length: ";
-    std::ifstream file("errors/404.html");
-    std::string body((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    client.response += std::to_string(body.size()) + "\r\n\r\n" + body;
-}
