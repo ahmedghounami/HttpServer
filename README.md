@@ -76,15 +76,17 @@ The config file lets you:
 
 <p align="center">
   <a href="https://github.com/ahmedghounami" target="_blank">
+     <h4>Ahmed ghounami</h4>
     <img src="https://github.com/ahmedghounami.png" width="80" alt="Ahmed Ghounami" />
-     <h1>Ahmed ghounami</h1>
   </a>
   &nbsp;&nbsp;
   <a href="https://github.com/mkibous" target="_blank">
+     <h4>mehdi kibous</h4>
     <img src="https://github.com/mkibous.png" width="80" alt="Mehdi Kibous" />
   </a>
   &nbsp;&nbsp;
   <a href="https://github.com/hboudar" target="_blank">
+     <h4>hamza boudar</h4>
     <img src="https://github.com/hboudar.png" width="80" alt="Hamza Boudar" />
   </a>
 </p>
