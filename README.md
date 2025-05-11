@@ -1,7 +1,7 @@
 
 
 # 🌐 Webserv
-<p align="center">
+<p align="">
 <img src="https://miro.medium.com/v2/resize:fit:1200/1*age3Dgxl8sz6LZgDIwOSNQ.png" width="80" alt="Ahmed Ghounami" />
 
 </p>
